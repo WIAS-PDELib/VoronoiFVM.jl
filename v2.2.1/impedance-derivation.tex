@@ -1,0 +1,378 @@
+\documentclass[12pt]{amsproc}
+\usepackage[a4paper]{geometry}
+\usepackage{float}
+\usepackage{fouriernc}
+\usepackage{verbatim}
+
+\begin{comment}
+  Where to publish this ? JOSS is merely a software journal.
+  - CPC ?
+  - WIAS TR
+  - As part of documenter ?
+    After all, yes
+
+    Computing in Science \& Engineering (CiSE)
+    
+cite:  https://www.researchgate.net/publication/223773028_A_frequency-domain_approach_to_dynamical_modeling_of_electrochemical_power_sources
+https://www.sciencedirect.com/science/article/abs/pii/S0013468697002387
+https://www.gamry.com/application-notes/EIS/basics-of-electrochemical-impedance-spectroscopy/
+https://iopscience.iop.org/article/10.1149/09401.0251ecst
+
+
+\end{comment}
+
+
+
+\title{Small signal analysis for nonlinear evolution equations\\ Draft.}
+\author{J. Fuhrmann}
+\newcommand{\CV}{{\mathcal{V}}}
+\newcommand{\VV}{\mathbb{V}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\TT}{\mathbb{T}}
+\newcommand{\MM}{\mathbb{M}}
+\newcommand{\RR}{\mathbb{R}}
+\newtheorem{example}{Example}
+
+\newcommand{\Exp}[1]{e^{#1}}
+\begin{document}
+\maketitle
+%\begin{multicols}{2}
+\section{Frequency response of an electrical network}
+  
+The  current  dependency  on  voltage   of  basic  basic  elements  of
+electrical networks  can be subsummed  using the notion  of impedance.
+Let $U(t)$  be a given  voltage difference  applied to as  device, and
+$I(t)$ be the resulting current.  For a periodic voltage perturbation,
+the  frequency dependent  impedance  describes the  ratio between  the
+amplitudes  of the  voltagee and  the current  response, respectitvely.
+Assuming a an applied  periodic voltage $U(t)=U_a\Exp{i\omega t}$ with
+amplitude $U_a$ and frequency $\omega$, we get
+\begin{table}[H]
+  \begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lllll}
+Circuit Element     & Law     & Standard form & Complex Form & Impedance\\ 
+Resistance  & Ohm     & $ I(t)=\frac1R U(t)$                                & $I(t)=\frac1R U(t)$       &  $Z(\omega)=R$ \\
+Capacity    & Faraday & $ I(t)=C(t)\frac{d}{dt}U(t)$                        & $I(t)=Ci\omega U(t)$&          $Z(\omega)=\frac1{Ci\omega}$\\
+Inductivity & Henry   & $ I(t)=I_0+\frac1L\int\limits_{t_0}^tU(\tau) d\tau$ & $I(t)=\frac1{Li\omega}$ U(t)&$Z(\omega)=Li\omega$ \\
+\end{tabular}
+\caption{\label{tab:impedance} Impedance of three basic elements of electric circuits}\hfill
+\end{center}
+\end{table}
+
+Any  network consisting  of  these  elements can  be  analyzed in  the
+complex domain  using Kirchoffs law  and regarding the impedance  as a
+complex resistance.
+
+\section{Impedance spectroscopy in nonlinear evolution equations}
+
+Usually, the interpretations of impedance spectroscopy measurements of
+other  systems,  e.g. electrochemical  systems  is  performed using  a
+replacement circuit consisting of  electrical network elements.  Being
+quite  successful  in many  cases,  this  interpretation basically  is
+limited to compartment type models.
+
+Here,  we discuss an  approach of  applying impedance  spectroscopy to
+abstract evolution equations based on small signal analysis.
+
+For a  given time  interval $\TT=[0,T]$, a  Banach space  $\CV$ called
+{\em state space},  and a finite dimensional space  $\PP$, called {\em
+parameter  space},  regard  the  abstract doubly  nonlinear  evolution
+equation
+\begin{equation}\label{eq:abstrevol}
+ \frac{d S(v(t),\lambda)}{dt} + D(v(t),\lambda)=0
+\end{equation}
+
+The state of  the system is {\em measured} by  some functional $M: \CV
+\rightarrow  \MM$,   where  $\MM$  is  the   finite  dimensional  {\em
+measurement space}. We assume  $M(v)=M^{stdy}(v)+ d_t M^{tran}(v)$.
+
+As an example, $\CV$ may  be a finite dimensional space containing the
+solution of some discretized system of partial differential equations.
+
+
+Given   a  steady   state  $(v_0,   \lambda_0)$  such   that  $D(v_0,
+\lambda_0)=0$, measured  by $M_0=M(v_0)$, we  would like to  trace its
+response  to  a small,  periodic  perturbation $\lambda(t)=  \lambda_a
+\Exp{i\omega  t}   $.   Expressing   the measurement of this  response  as   $M(t)=  M_0+
+M_a(\omega)  \Exp{i\omega  t}$,  we  yield the  impedance  $Z(\omega)=
+M_a(\omega)^{-1} \lambda_a$.
+
+
+
+In order to calculate the frequency response, we make the ansatz $v(t)=v_0+v_a\Exp{i\omega  t}$ for
+the perturbation of the state variable and calculate the first order Taylor expansions
+of the terms $S,D$:
+\begin{equation*}
+  \begin{split}
+    S(v_0+v_a\Exp{i\omega  t},\lambda_0+\lambda_a\Exp{i\omega  t})\approx&S(v_0,\lambda_0)+ 
+          S_v(v_0,\lambda_0)v_a\Exp{i\omega  t}+
+          S_\lambda(v_0,\lambda_0)\lambda_a\Exp{i\omega  t}\\
+    D(v_0+v_a\Exp{i\omega  t},\lambda_0+\lambda_a\Exp{i\omega  t})\approx&D(v_0,\lambda_0)+ 
+          D_v(v_0,\lambda_0)v_a\Exp{i\omega  t}+
+          D_\lambda(v_0,\lambda_0)\lambda_a\Exp{i\omega  t}
+  \end{split}
+\end{equation*}
+
+Putting them into equation \eqref{eq:abstrevol}  and using the steady state condition yields
+\begin{equation*}
+  \begin{split}
+    \frac{d}{dt}\left( 
+      S_v(v_0,\lambda_0)v_a\Exp{i\omega  t}+
+      S_\lambda(v_0,\lambda_0)\lambda_a\Exp{i\omega  t}\right)+ 
+    D_v(v_0,\lambda_0)v_a\Exp{i\omega  t}+
+    D_\lambda(v_0,\lambda_0)\lambda_a\Exp{i\omega  t}&=0\\
+    i\omega\left( 
+      S_v(v_0,\lambda_0)v_a\Exp{i\omega  t}+
+      S_\lambda(v_0,\lambda_0)\lambda_a\Exp{i\omega  t}\right)+ 
+    D_v(v_0,\lambda_0)v_a\Exp{i\omega  t}+
+    D_\lambda(v_0,\lambda_0)\lambda_a\Exp{i\omega  t}&=0\\
+    i\omega\left( 
+      S_v(v_0,\lambda_0)v_a+
+      S_\lambda(v_0,\lambda_0)\lambda_a\right)+ 
+    D_v(v_0,\lambda_0)v_a+
+    D_\lambda(v_0,\lambda_0)\lambda_a&=0
+  \end{split}
+\end{equation*}
+
+
+For the measurement, we have
+\begin{align*}
+      M(v_0+v_a\Exp{i\omega  t})\approx&M^{stdy}(v_0)+ 
+    M^{stdy}_v(v_0)v_a\Exp{i\omega  t} +  i\omega M^{tran}_v(v_0)v_a\Exp{i\omega  t}
+\end{align*}
+
+Assuming $S_\lambda=0$, $\dim \MM =\dim \PP=1$ we arrive at solving 
+\begin{equation}\label{eq:impedsolve0}
+    i\omega 
+      S_v(v_0)v_a+
+    D_v(v_0,\lambda_0)v_a+
+    \lambda_a D_\lambda(v_0,\lambda_0)=0
+\end{equation}
+for given $\omega$ for the  unknown $v_a$.
+The corresponding measurement yields:
+\begin{align*}
+  M_a(\omega)= M^{stdy}_v(v_0)v_a + i\omega M^{tran}_v(v_0)v_a 
+\end{align*}
+
+The impedance then can be calculated as 
+\begin{equation*}\label{eq:imped0}
+  Z(\omega)= \frac{\lambda_a}{M_a(\omega)}
+\end{equation*}
+
+Dividing \eqref{eq:impedsolve0} by  $\lambda_a$ (and thus rescaling $v_a$) gives the final expressions
+\begin{equation}\label{eq:impedsolve}
+    i\omega 
+      S_v(v_0)v_a+
+    D_v(v_0,\lambda_0)v_a+
+    D_\lambda(v_0,\lambda_0)=0
+\end{equation}
+and
+\begin{equation}\label{eq:imped}
+  Z(\omega)= \frac{1}{ M^{stdy}_v(v_0)v_a + i\omega M^{tran}_v(v_0)v_a}.
+\end{equation}
+
+\subsection{Excited Dirichlet boundary condition}
+This dicussion is based on the idea to implement Dirichlet boundary conditions using the
+penalty method and provides an easy way to handle deriviatives with respect to
+the Dirichlet boundary value. We assume that our problem corresponds to a (discretized) PDE
+in a domain $\Omega$ with boundary $\Gamma=\partial\Omega$.
+\begin{example}{Dirichlet Boundary Conditions}\\
+  Assume that $\Gamma_0,\Gamma_1\subset \Gamma$  are two disjunct parts of
+  the boundary.
+  For (discretized) differential operator $D_i$ defined
+  in $\Omega$ assume that $D_i(v)=0$ is the discretization of the
+  homogeneous Neumann boundary value problem. Adding Robin boundary value terms
+  for $\Gamma_0, \Gamma_1$ with Robin coefficient $\frac1\epsilon$ and boundary values
+  0, resp. $\lambda$ can be formally
+  written as
+  \begin{align*}
+  D(v,\lambda)= D_i(v)
+  +\frac1\epsilon\delta_{\Gamma_0}(v)
+  +\frac1\epsilon\delta_{\Gamma_1}(v-\lambda),    
+  \end{align*}
+  where $\delta$ means delta functions with support at the corresponding boundary.
+  The limit $\epsilon\to 0$  corresponds to the Dirichlet boundary condition.
+  This covers the case of an
+  applied voltage difference  and an excitation at $\Gamma_1$.
+  
+
+  Then  
+\begin{equation*}
+  \begin{split}
+    D_v(v,\lambda)= D_{i,v}(v)+ \frac1\epsilon\delta_{\Gamma_0}+ \frac1\epsilon\delta_{\Gamma_1}\\
+    D_\lambda(v,\lambda)= -\frac1\epsilon\delta_{\Gamma_1}\\
+   \end{split}
+\end{equation*}
+Therefore  for the impedance calculation we have to solve 
+\begin{equation*}
+  i\omega S_v v_a + D_{i,v} v_a +\frac1\epsilon\delta_{\Gamma_0}v_a +\frac1\epsilon\delta_{\Gamma_1}(v_a-1) =0
+\end{equation*}
+which for $\epsilon\to 0$ corresponds to the Dirichlet problem  for the linearized equation 
+with boundary condition 0 on $\Gamma_0$ and 1 on $\Gamma_1$.
+\end{example}
+
+\subsection{Flux calculation via test function}
+For a discussion, see e.g. [Gajewski, WIAS TR],  [Yoder, Gärtner], [Farrell et al, Handbook].
+
+Assume that $D_i(v,\lambda) = \nabla \cdot J(v) + R(v)$. Let $T$ be be a test function
+such that $\Delta T    +\frac1\epsilon\delta_{\Gamma_0}(T)
++\frac1\epsilon\delta_{\Gamma_1}(T-1)=0$, which for $\epsilon\to 0$  corresponds to
+a mixed boundary value problem with $T=0$ on $\Gamma_0$, $T=1$ on $\Gamma_1$ and $\partial_n T=0$ on
+$\partial\Omega \setminus  (\Gamma_0 \cup \Gamma_1)$.
+Then the boundary flux integral as measurement can be calculated as
+\begin{align*}
+  M(v)&=\int_{\Gamma_1} J(v,\lambda)\cdot n ds
+      =\int_{\Gamma_1} T J(v,\lambda)\cdot n ds
+      =\int_{\Gamma} T J(v,\lambda)\cdot n ds\\
+      &=\int_{\Omega} \nabla\cdot \left(T J(v,\lambda)\right) d\vec x
+      =\int_\Omega \left(J(v) \nabla T + T (\nabla \cdot J)\right) d\vec x\\
+      &=\int_\Omega \left(J(v) \nabla T + T (R(v,\lambda) + d_t S(v))\right) d\vec x
+\end{align*}
+
+
+Accordingly, $M^{stdy}(v)=\int_\Omega \left(J(v) \nabla T + T R(v)\right) d\vec x$ and
+  $M^{tran}(v) = \int_{\Omega} S(v) T d\vec x$
+and
+$$M_a(\omega)= \int_\Omega \left(J_v(v_0)\nabla v_a \nabla T + T (R_v(v_0)v_a + i\omega S_v(v_0)v_a)\right) d\vec x$$
+
+With a finite volume discretizatiom, this representation has a discrete counterpart.
+
+
+\subsection{Examples with analytical impedance expressions}
+These examples can be taken for benchmarking numerical methods.
+\begin{example}{Current Response}
+  We calculate the impedance of the current response at $L$ to voltage change in $0$ of the linear reaction  diffusion system in $(0,L)$  
+  \begin{equation*}
+    \begin{cases}
+      Cu_t - (Du_x)_x + Ru=&0\\
+      u(0,t)=&\lambda\\
+      u(L,t)=&0\\
+    \end{cases}
+  \end{equation*}
+    As response functions we take the currents  $I_0=Du_x(0,t)$ and $I_L=-Du_x(L,t)$.
+    The corresponding impedance equation is
+    \begin{equation*}
+      \begin{cases}
+        Ci\omega v - (Dv_x)_x +Rv =&0\\
+        v(0,t)=&1\\
+        v(L,t)=&0.\\
+      \end{cases}
+    \end{equation*}
+Setting $z=\sqrt{i\omega\frac{C}{D}+\frac{R}{D}}$, for the solution, we make the ansatz
+\begin{equation*}
+  v=ae^{zx}+be^{-zx}
+\end{equation*}
+which fulfills the differential equation.
+Setting $e^+=e^{zL},e^-=e^{-zL}$, from the boundary 
+conditions we get the system
+\begin{equation*}
+  \begin{cases}
+    a+b&=1\\
+    ae^++be^-&=0\\
+  \end{cases}
+\end{equation*}
+with the solutions $a=\frac{e^-}{e^--e^+},b=\frac{e^+}{e^+-e^-}$
+Therefore, we have
+\begin{equation*}
+  Dv_x(0)=Dz(a-b)=Dz\frac{e^-+e^+}{e^--e^+}
+\end{equation*}
+and
+\begin{equation*}
+  Dv_x(L)=Dz(ae^+-be^-)=Dz\frac{e^-e^++e^+e^-}{e^--e^+}=\frac{2Dz}{e^--e^+}
+\end{equation*}
+
+Alternatively, we might be interested in e.g. $M(v)=\int_\Omega |\nabla v|^2$
+as measurement. We have
+\begin{align*}
+  \nabla v&=a z e^{zx} - b z e^{-zx}\\
+  |\nabla v|^2&=a z e^{2zx} -ab +  b z e^{-2zx}\\
+  \int  |\nabla v|^2 \; dx &=  \frac{1}{2z}aze^{2zx}  -\frac{1}{2z}  b z e^{-2zx} - abx + C\\
+          &= \frac{a}{2}e^{2zx}  -\frac{b}{2}  b e^{-2zx} -abx +C\\
+  \int_0^L  |\nabla v|^2 \; dx &=   \frac{a}{2}e^{2zL}  -\frac{b}{2}  e^{-2zL} -abL
+            -  \frac{a}{2}  +\frac{b}{2}\\
+  \int_0^L  |\nabla v|^2 \; dx &=   \frac{a}{2}(e^{2zL}-1)  -\frac{b}{2} (e^{-2zL}-1) -abL\\
+                               &=    \frac12\frac{e^{-zL}}{e^{-zL}-e^{zL}}(e^{2zL}-1)  -\frac12\frac{e^{zL}}{e^{zL}-e^{-zL}} (e^{-2zL}-1) -abL\\
+          &=    \frac12\frac{e^{zL}-e^{-zL}}{e^{-zL}-e^{zL}}  -\frac12\frac{e^{-zL}-e^{zL}}{e^{zL}-e^{-zL}} -abL\\
+              &=-abL\\
+  &= \frac{L}{e^{2zL} + e^{-2zL}-2}
+\end{align*}
+
+But ... the measurement is different: it has to be the derivative at $v_0$ applied to the solution:
+\begin{align*}
+  2\int_\omega \nabla v_0 \nabla v_a 
+\end{align*}
+Steady state: $u(0)=1$, $u(L)=0$. Let $d=\sqrt{\frac{R}{D}}$.
+Set $u(x)=fe^{dx}+ ge^{-dx}$. 
+\begin{align*}
+  u'(x) &= fd e^{dx} -gde^{-dx}\\
+  u''(x) &= fd^2 e^{dx} +gd^2e^{-dx}=d^2 u(x)\\
+  u(0)=f+g\\
+  u(L)=fe^{dL}+ge^{dL}
+\end{align*}
+So for $d^+=e^{dL}$ and $d^-=e^{-dL}$ we get
+$f=\frac{d^-}{d^--d^+}$ and $g=\frac{d^+}{d^+-d^-}$ 
+
+So we have to calculate
+\begin{align*}
+  \nabla v_0 \nabla v_a&=  (aze^{zx}-bze^{-zx})(fde^{dx}-gde^{-dx})\\
+                       &= azfde^{(z+d)x} -azgde^{(z-d)x}  - bzfde^{(d-z)x} + bzgde^{-(z+d)x}\\
+  \int \nabla v_0 \nabla v_a &=   \frac{azfd}{z+d}e^{(z+d)x} -\frac{azgd}{z-d}e^{(z-d)x}  - \frac{bzfd}{d-z}e^{(d-z)x} - \frac{bzgd}{z+d}e^{-(z+d)x}\\
+  &=  zd\left(\frac{af}{z+d}e^{(z+d)x} -\frac{ag}{z-d}e^{(z-d)x}  - \frac{bf}{d-z}e^{(d-z)x} - \frac{bg}{z+d}e^{-(z+d)x}\right)
+\end{align*}
+
+\end{example}
+
+
+\begin{example}{Voltage response}
+Regard the system
+  \begin{equation*}
+    \begin{cases}
+      Cu_t - (Du_x)_x + Ru=&0\\
+      u(0,t)=&\lambda\\
+      (Du_x)(L,t)=&0\\
+    \end{cases}
+  \end{equation*}
+  and observe the values $u(L)$ and $Du_x(0)$.
+The same ansatz as in the previous example leads to 
+\begin{equation*}
+  \begin{cases}
+    a+b&=1\\
+    izae^+-izbe^-&=0\\
+  \end{cases}
+\end{equation*}
+with the solutions $a=\frac{e^-}{e^++e^-}$ and $b=\frac{e^+}{e^++e^-}$
+Therefore,  $Du_x(0)=iDz\frac{e^--e^+}{e^++e^-}$ and
+$u(L)=\frac2{e^++e^-}$.
+\end{example}
+
+
+\section{Algorithmic implementation}
+
+Algorithmically, we proceed as follows:
+
+\begin{description}
+\item[1] Given $\lambda$, solve steady state equation $D(v,\lambda)=0$
+\item[2] Obtain Jacobi matrix for stationary problem
+\item[3] Obtain Jacobi matrix of time derivative
+\item[4] Obtain Derivative of measurement (both steady state and transient parts)
+\item[5] Prepare system for impedance problem
+\item[6] For $\omega=\omega_0\dots\omega_1$:
+  \begin{description}
+  \item[6.1] set up complex matrix
+  \item[6.2] solve complex system, take old solution as initial value if this is done iteratively
+  \item[6.3]calculate impedance functional
+  \end{description}
+\end{description}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
