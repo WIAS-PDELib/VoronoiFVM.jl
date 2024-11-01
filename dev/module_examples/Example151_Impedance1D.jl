@@ -34,8 +34,11 @@ using Printf
 using VoronoiFVM
 using ExtendableGrids: geomspace, simplexgrid
 using GridVisualize
+using OrdinaryDiffEqSDIRK
 
-function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
+function main(; nref = 0, Plotter = nothing, verbose = false,
+              unknown_storage = :sparse, assembly = :edgewise,
+              time_embedding = :none,
               L = 1.0, R = 1.0, D = 1.0, C = 1.0,
               ω0 = 1.0e-3, ω1 = 5.0e1)
 
@@ -64,7 +67,7 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
         f[1] = data.R * u[1]
     end
 
-    excited_bc = 1
+    excited_bc= 1
     excited_bcval = 1.0
     excited_spec = 1
     meas_bc = 2
@@ -90,7 +93,21 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
     factory = TestFunctionFactory(sys)
     measurement_testfunction = testfunction(factory, [excited_bc], [meas_bc])
 
-    steadystate = solve(sys; inival = 0.0, params = [1.0])
+    tend=1.0
+    if time_embedding == :builtin
+        tsol=solve(sys; inival = 0.0, params = [1.0], times=(0.0,tend),force_first_step=true)
+        steadystate=tsol.u[end]
+    elseif time_embedding == :ordinarydiffeq
+        inival=unknowns(sys,inival=0)
+        problem = ODEProblem(sys,inival,(0,tend); params = [1.0])
+        odesol = solve(problem,ImplicitEuler())
+        tsol=reshape(odesol,sys)
+        steadystate=tsol.u[end]
+    elseif time_embedding==:none
+        steadystate = solve(sys; inival = 0.0, params = [1.0])
+    else
+        error("time_embedding must be one of :builtin, :ordinarydiffeq, :none")
+    end
 
     function meas_stdy(meas, U)
         u = reshape(U, sys)
@@ -150,10 +167,10 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
         ω = ω * 1.1
     end
 
-    p = GridVisualizer(; Plotter = Plotter)
-    scalarplot!(p, real(allIxL), imag(allIxL); label = "exact", color = :red,
+    vis = GridVisualizer(; Plotter = Plotter)
+    scalarplot!(vis, real(allIxL), imag(allIxL); label = "exact", color = :red,
                 linestyle = :dot)
-    scalarplot!(p, real(allIL), imag(allIL); label = "calc", show = true, clear = false,
+    scalarplot!(vis, real(allIL), imag(allIL); label = "calc", show = true, clear = false,
                 color = :blue, linestyle = :solid)
 
     sum(allIL)
@@ -162,10 +179,13 @@ end
 using Test
 function runtests()
     testval = 57.92710286186797 + 23.163945443946027im
-    @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    for unknown_storage in (:sparse, :dense)
+        for assembly in (:edgewise, :cellwise)
+            for time_embedding  in (:none, :builtin, :ordinarydiffeq)
+                @test main(; unknown_storage, assembly, time_embedding) ≈ testval
+            end
+        end
+    end
 end
 
 end
