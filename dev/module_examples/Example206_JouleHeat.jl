@@ -93,9 +93,8 @@ function main(; nref = 0, Plotter = nothing, verbose = "and", unknown_storage = 
                             species = [iϕ, iT], assembly = assembly)
     
     sol = solve(sys; verbose,
-                method_linear = KrylovJL_BICGSTAB(),
-                precon_linear = UMFPACKFactorization(),
-                keepcurrent_linear =false,
+                method_linear = KrylovJL_BICGSTAB(precs=LinearSolvePreconBuilder(UMFPACKFactorization())),
+                keepcurrent_linear =false
                 )
 
     vis = GridVisualizer(; Plotter, layout = (2, 1))

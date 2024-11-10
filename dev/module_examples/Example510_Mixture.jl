@@ -64,6 +64,7 @@ using AMGCLWrap
 using Random
 using StrideArraysCore: @gc_preserve, StrideArray, StaticInt, PtrArray
 using LinearSolve, ExtendableSparse
+using ExtendableSparse: ILUZeroPreconBuilder
 using StaticArrays
 using ExtendableSparse
 
@@ -193,7 +194,15 @@ function main(; n = 11, nspec = 5,
     if verbose
         @info "Strategy: $(strategy)"
     end
-    control = SolverControl(strategy, sys)
+    if !isnothing(strategy) && hasproperty(strategy,:precs)
+        if isa(strategy.precs, BlockPreconBuilder)
+            strategy.precs.partitioning=A->partitioning(sys, Equationwise())
+        end
+        if isa(strategy.precs, ILUZeroPreconBuilder) && strategy.precs.blocksize!=1
+            strategy.precs.blocksize=nspec
+        end
+    end
+    control = SolverControl(method_linear=strategy)
     control.maxiters = 500
     if verbose
         @info control.method_linear
@@ -207,15 +216,14 @@ end
 
 using Test
 function runtests()
-
-    strategies = [DirectSolver(UMFPACKFactorization()),
-        GMRESIteration(UMFPACKFactorization()),
-        GMRESIteration(UMFPACKFactorization(), EquationBlock()),
-        GMRESIteration(AMGCL_AMGPreconditioner(),EquationBlock()),
-        BICGstabIteration(AMGCL_AMGPreconditioner(),EquationBlock()),
-        GMRESIteration(ILUZeroPreconditioner()),
-        #            GMRESIteration(ILUZeroPreconditioner(), EquationBlock()),
-        #            GMRESIteration(ILUZeroPreconditioner(), PointBlock())
+    strategies = [UMFPACKFactorization(),
+                  KrylovJL_GMRES(precs=LinearSolvePreconBuilder(UMFPACKFactorization())),
+                  KrylovJL_GMRES(precs=BlockPreconBuilder(precs=LinearSolvePreconBuilder(UMFPACKFactorization()))),
+                  KrylovJL_GMRES(precs=BlockPreconBuilder(precs=AMGPreconBuilder())),
+                  KrylovJL_BICGSTAB(precs=BlockPreconBuilder(precs=AMGPreconBuilder())),
+                  KrylovJL_GMRES(precs=ILUZeroPreconBuilder()),
+                  KrylovJL_GMRES(precs=BlockPreconBuilder(precs=ILUZeroPreconBuilder())),
+                  KrylovJL_GMRES(precs=ILUZeroPreconBuilder(blocksize=5)),
     ]
 
     val1D = 4.788926530387466

@@ -6,14 +6,13 @@ module Example207_NonlinearPoisson2D
 using Printf
 using VoronoiFVM
 using ExtendableGrids
-using ExtendableSparse
+using ExtendableSparse: ILUZeroPreconBuilder
 using GridVisualize
 using LinearSolve
 using ILUZero
 
 function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse,
-              method_linear = nothing, assembly = :edgewise,
-              precon_linear = A -> VoronoiFVM.Identity())
+              method_linear = nothing, assembly = :edgewise)
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
     Y = collect(0.0:h:1.0)
@@ -46,7 +45,6 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     control.verbose = verbose
     control.reltol_linear = 1.0e-5
     control.method_linear = method_linear
-    control.precon_linear = precon_linear
     tstep = 0.01
     time = 0.0
     u15 = 0
@@ -69,15 +67,15 @@ function runtests()
     testval = 0.3554284760906605
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &&
           main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, method_linear = KrylovJL_CG(), precon_linear = ILUZeroPreconditioner,
+          main(; unknown_storage = :sparse, method_linear = KrylovJL_CG(precs=ILUZeroPreconBuilder()),
                assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :dense, method_linear = KrylovJL_CG(), precon_linear = ILUZeroPreconditioner,
+          main(; unknown_storage = :dense, method_linear =  KrylovJL_CG(precs=ILUZeroPreconBuilder()),
                assembly = :edgewise) ≈ testval &&
           main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
           main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :sparse, method_linear = KrylovJL_CG(), precon_linear = ILUZeroPreconditioner,
+          main(; unknown_storage = :sparse, method_linear =  KrylovJL_CG(precs=ILUZeroPreconBuilder()),
                assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, method_linear = KrylovJL_CG(), precon_linear = ILUZeroPreconditioner,
+          main(; unknown_storage = :dense, method_linear =  KrylovJL_CG(precs=ILUZeroPreconBuilder()),
                assembly = :cellwise) ≈ testval
 end
 end

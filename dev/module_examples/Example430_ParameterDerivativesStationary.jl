@@ -11,6 +11,7 @@ module Example430_ParameterDerivativesStationary
 using VoronoiFVM, ExtendableGrids
 using GridVisualize
 using ExtendableSparse
+using ExtendableSparse: ILUZeroPreconBuilder
 using ForwardDiff, DiffResults
 using SparseDiffTools, SparseArrays
 using ILUZero, LinearSolve
@@ -116,7 +117,7 @@ function rung(; Plotter = nothing, method_linear = SparspakFactorization(), n = 
             tfc = testfunction(tff, [1], [3])
         end
         data.p = P[1]
-        sol = solve(sys; inival = 0.5, method_linear, precon_linear = ILUZeroPreconditioner())
+        sol = solve(sys; inival = 0.5, method_linear)
         [integrate(sys, tfc, sol)[1]]
     end
 
