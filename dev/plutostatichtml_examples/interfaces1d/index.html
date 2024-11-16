@@ -197,8 +197,12 @@ end</code></pre>
 <pre class="code-output documenter-example-output" id="var-mal_reaction">mal_reaction (generic function with 1 method)</pre>
 
 <pre class='language-julia'><code class='language-julia'>system2 = make_system(mal_reaction)</code></pre>
-<pre class="code-output documenter-example-output" id="var-system2">VoronoiFVM.System{Float64, Float64, Int32, Int64, SparseArrays.SparseMatrixCSC{Int32, Int32}}(num_species=2)
-</pre>
+<pre class="code-output documenter-example-output" id="var-system2">VoronoiFVM.System{Float64, Float64, Int32, Int64, SparseArrays.SparseMatrixCSC{Int32,
+  Int32}}(  
+  grid = ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=1, nnodes=75, ncells=74,
+  nbfaces=3),  
+  physics = Physics(flux=flux!, storage=default_storage, breaction=mal_reaction, ),  
+  num_species = 2)</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     const k1 = 0.1
@@ -334,8 +338,11 @@ end</code></pre>
 <div class="markdown"><p>To work with quantities, we first introduce a new constructor call without the "physics" parameter:</p></div>
 
 <pre class='language-julia'><code class='language-julia'>system6 = VoronoiFVM.System(grid2)</code></pre>
-<pre class="code-output documenter-example-output" id="var-system6">VoronoiFVM.System{Float64, Float64, Int32, Int64, Matrix{Int32}}(num_species=0)
-</pre>
+<pre class="code-output documenter-example-output" id="var-system6">VoronoiFVM.System{Float64, Float64, Int32, Int64, Matrix{Int32}}(
+  grid = ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=1, nnodes=61, ncells=60,
+  nbfaces=7),  
+  physics = Physics(storage=default_storage, ),  
+  num_species = 0)</pre>
 
 
 <div class="markdown"><p>First, we introduce a continuous quantity which we name "cspec". Note that the "species number" can be assigned automatically if not given explicitly.</p></div>
@@ -392,24 +399,12 @@ end;</code></pre>
 
 <pre class='language-julia'><code class='language-julia'>allsubgrids = subgrids(dspec, system6)</code></pre>
 <pre class="code-output documenter-example-output" id="var-allsubgrids">6-element Vector{ExtendableGrid{Float64, Int32}}:
- ExtendableGrids.ExtendableGrid{Float64, Int32};
-dim: 1 nodes: 11 cells: 10 bfaces: 2
-
- ExtendableGrids.ExtendableGrid{Float64, Int32};
-dim: 1 nodes: 11 cells: 10 bfaces: 2
-
- ExtendableGrids.ExtendableGrid{Float64, Int32};
-dim: 1 nodes: 11 cells: 10 bfaces: 2
-
- ExtendableGrids.ExtendableGrid{Float64, Int32};
-dim: 1 nodes: 11 cells: 10 bfaces: 2
-
- ExtendableGrids.ExtendableGrid{Float64, Int32};
-dim: 1 nodes: 11 cells: 10 bfaces: 2
-
- ExtendableGrids.ExtendableGrid{Float64, Int32};
-dim: 1 nodes: 11 cells: 10 bfaces: 2
-</pre>
+ ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=1, nnodes=11, ncells=10, nbfaces=2)
+ ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=1, nnodes=11, ncells=10, nbfaces=2)
+ ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=1, nnodes=11, ncells=10, nbfaces=2)
+ ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=1, nnodes=11, ncells=10, nbfaces=2)
+ ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=1, nnodes=11, ncells=10, nbfaces=2)
+ ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=1, nnodes=11, ncells=10, nbfaces=2)</pre>
 
 <pre class='language-julia'><code class='language-julia'>if physics_ok
     sol6 = solve(system6; inival = 0.5)
@@ -480,4 +475,4 @@ Test 1.11.0<br>
 VoronoiFVM 1.25.1
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../flux-reconstruction/">« Obtaining vector fields</a><a class="docs-footer-nextpage" href="../problemcase/">A case for caution »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Thursday 14 November 2024 22:25">Thursday 14 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../flux-reconstruction/">« Obtaining vector fields</a><a class="docs-footer-nextpage" href="../problemcase/">A case for caution »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Saturday 16 November 2024 16:32">Saturday 16 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
