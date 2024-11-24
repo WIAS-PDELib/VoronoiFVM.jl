@@ -34,7 +34,7 @@ function main(; Plotter = nothing, n = 5, is_linear = true, assembly = :edgewise
     nf = nodeflux(sys, solution)
     vis = GridVisualizer(; Plotter = Plotter)
     scalarplot!(vis, grid, solution[1, :]; clear = true, colormap = :summer)
-    vectorplot!(vis, grid, nf[:, 1, :]; clear = false, spacing = 0.1, vscale = 0.5)
+    vectorplot!(vis, grid, nf[:, 1, :]; clear = false, vscale = 0.5, rasterpoints=10)
     reveal(vis)
     return norm(solution) + norm(nf)
 end

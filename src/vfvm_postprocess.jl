@@ -14,10 +14,12 @@ Integrate node function (same signature as reaction or storage)
  `F` of  solution vector region-wise over domain or boundary.
 The result is an `nspec x nregion` matrix.
 """
-function integrate(system::AbstractSystem{Tv, Tc, Ti, Tm}, F::Function, U::AbstractMatrix{Tu};
-                   boundary = false, data = system.physics.data) where {Tu, Tv, Tc, Ti, Tm}
+function integrate(
+        system::AbstractSystem{Tv, Tc, Ti, Tm}, F::Tf, U::AbstractMatrix{Tu};
+        boundary = false, data = system.physics.data
+    ) where {Tu, Tv, Tc, Ti, Tm, Tf}
     _complete!(system)
-    grid = system.grid   
+    grid = system.grid
     nspecies = num_species(system)
     res = zeros(Tu, nspecies)
 
@@ -66,11 +68,11 @@ end
 Integrate solution vector region-wise over domain or boundary.
 The result is an `nspec x nregion` matrix.
 """
-function integrate(system::AbstractSystem,U::AbstractMatrix; kwargs...)
-    function f(f,u,node,data=nothing)
-        f.=u
+function integrate(system::AbstractSystem, U::AbstractMatrix; kwargs...)
+    function f(f, u, node, data = nothing)
+        return f .= u
     end
-    integrate(system,f,U; kwargs...)
+    return integrate(system, f, U; kwargs...)
 end
 
 
@@ -81,8 +83,10 @@ Integrate edge function (same signature as flux function)
  `F` of  solution vector region-wise over domain or boundary.
 The result is an `nspec x nregion` matrix.
 """
-function edgeintegrate(system::AbstractSystem{Tv, Tc, Ti, Tm}, F::Function, U::AbstractMatrix{Tu};
-                       boundary = false, data = system.physics.data) where {Tu, Tv, Tc, Ti, Tm}
+function edgeintegrate(
+        system::AbstractSystem{Tv, Tc, Ti, Tm}, F::Tf, U::AbstractMatrix{Tu};
+        boundary = false, data = system.physics.data
+    ) where {Tu, Tv, Tc, Ti, Tm, Tf}
     _complete!(system)
     grid = system.grid
     dim = dim_space(grid)
@@ -109,7 +113,7 @@ function edgeintegrate(system::AbstractSystem{Tv, Tc, Ti, Tm}, F::Function, U::A
                 function asm_res(idofK, idofL, ispec)
                     h = meas(edge)
                     # This corresponds to the multiplication with the diamond volume.
-                    integral[ispec, edge.region] += h^2 * edge.fac * res[ispec] / dim
+                    return integral[ispec, edge.region] += h^2 * edge.fac * res[ispec] / dim
                 end
                 assemble_res(edge, system, asm_res)
             end
@@ -122,7 +126,7 @@ end
 """
 $(SIGNATURES)
 
-Reconstruction of  edge flux as  vector function  on the nodes  of the
+Reconstruction of an edge function as  vector function  on the nodes  of the
 triangulation.  The result  can be seen as a  piecewiesw linear vector
 function in the FEM space spanned by the discretization nodes exhibiting
 the flux density.
@@ -147,7 +151,10 @@ CAVEAT: there is a possible unsolved problem with the values at domain
 corners in the code. Please see any potential boundary artifacts as a manifestation
 of this issue and report them.
 """
-function nodeflux(system::AbstractSystem{Tv, Tc, Ti, Tm}, U::AbstractArray{Tu, 2}; data=system.physics.data) where {Tu, Tv, Tc, Ti, Tm}
+function nodeflux(
+        system::AbstractSystem{Tv, Tc, Ti, Tm}, F::Tf, U::AbstractArray{Tu, 2};
+        data = system.physics.data
+    ) where {Tu, Tv, Tc, Ti, Tm, Tf}
     _complete!(system)
     grid = system.grid
     dim = dim_space(grid)
@@ -162,10 +169,10 @@ function nodeflux(system::AbstractSystem{Tv, Tc, Ti, Tm}, U::AbstractArray{Tu, 2
     physics = system.physics
     edge = Edge(system)
     node = Node(system)
+    res = zeros(Tu, nspecies)
 
     # !!! TODO Parameter handling here
     UKL = Array{Tu, 1}(undef, 2 * nspecies)
-    flux_eval = ResEvaluator(system.physics, data, :flux, UKL, edge, nspecies)
 
     for item in edgebatch(system.assembly_data)
         for iedge in edgerange(system.assembly_data, item)
@@ -174,11 +181,12 @@ function nodeflux(system::AbstractSystem{Tv, Tc, Ti, Tm}, U::AbstractArray{Tu, 2
             L = edge.node[2]
             @views UKL[1:nspecies] .= U[:, edge.node[1]]
             @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, edge.node[2]]
-            evaluate!(flux_eval, UKL)
-            edgeflux = res(flux_eval)
+            res .= zero(Tv)
+            @views F(rhs(edge, res), unknowns(edge, UKL), edge, data)
+
             function asm_res(idofK, idfoL, ispec)
-                @views nodeflux[:, ispec, K] .+= edge.fac * edgeflux[ispec] * (xsigma[:, edge.index] - coord[:, K])
-                @views nodeflux[:, ispec, L] .-= edge.fac * edgeflux[ispec] * (xsigma[:, edge.index] - coord[:, L])
+                @views nodeflux[:, ispec, K] .+= edge.fac * res[ispec] * (xsigma[:, edge.index] - coord[:, K])
+                return @views nodeflux[:, ispec, L] .-= edge.fac * res[ispec] * (xsigma[:, edge.index] - coord[:, L])
             end
             assemble_res(edge, system, asm_res)
         end
@@ -191,10 +199,23 @@ function nodeflux(system::AbstractSystem{Tv, Tc, Ti, Tm}, U::AbstractArray{Tu, 2
         end
     end
 
-    for inode = 1:nnodes
+    for inode in 1:nnodes
         @views nodeflux[:, :, inode] /= nodevol[inode]
     end
-    nodeflux
+    return nodeflux
+end
+
+"""
+$(SIGNATURES)
+
+Reconstruction of the edge flux as vector function  on the nodes  of the
+triangulation. See [`nodeflux(system,F,U;data)`](@ref).
+"""
+function nodeflux(
+        system::AbstractSystem{Tv, Tc, Ti, Tm}, U::AbstractArray{Tu, 2};
+        data = system.physics.data
+    ) where {Tu, Tv, Tc, Ti, Tm}
+    return nodeflux(system, system.physics.flux, U)
 end
 
 #####################################################################################
@@ -208,7 +229,7 @@ function LinearAlgebra.norm(system::AbstractSystem, u, p::Number = 2) end
 function LinearAlgebra.norm(system::DenseSystem, u, p::Number = 2)
     _initialize_inactive_dof!(u, system)
     _complete!(system)
-    norm(u, p)
+    return norm(u, p)
 end
 
 LinearAlgebra.norm(system::SparseSystem, u::SparseSolutionArray, p::Number = 2) = LinearAlgebra.norm(u.u.nzval, p)
@@ -222,7 +243,7 @@ function lpnorm(sys, u, p, species_weights = ones(num_species(sys)))
     _complete!(sys)
     nspec = num_species(sys)
     II = integrate(sys, (y, u, node, data = nothing) -> y .= u .^ p, u)
-    (sum([sum(II[i, :]) for i = 1:nspec] .* species_weights))^(1 / p)
+    return (sum([sum(II[i, :]) for i in 1:nspec] .* species_weights))^(1 / p)
 end
 
 """
@@ -232,7 +253,7 @@ Calculate weighted discrete ``L^2(\\Omega)`` norm of a solution vector.
 """
 function l2norm(sys, u, species_weights = ones(num_species(sys)))
     _complete!(sys)
-    lpnorm(sys, u, 2, species_weights)
+    return lpnorm(sys, u, 2, species_weights)
 end
 
 """
@@ -246,12 +267,13 @@ function w1pseminorm(sys, u, p, species_weights = ones(num_species(sys)))
     dim = dim_space(sys.grid)
     function f(y, u, edge, data = nothing)
         h = meas(edge)
-        for ispec = 1:nspec
+        for ispec in 1:nspec
             y[ispec] = dim * ((u[ispec, 1] - u[ispec, 2]) / h)^p
         end
+        return
     end
     II = edgeintegrate(sys, f, u)
-    (sum([sum(II[i, :]) for i = 1:nspec] .* species_weights))^(1 / p)
+    return (sum([sum(II[i, :]) for i in 1:nspec] .* species_weights))^(1 / p)
 end
 
 """
@@ -261,7 +283,7 @@ Calculate weighted discrete ``H^1(\\Omega)`` seminorm of a solution vector.
 """
 function h1seminorm(sys, u, species_weights = ones(num_species(sys)))
     _complete!(sys)
-    w1pseminorm(sys, u, 2, species_weights)
+    return w1pseminorm(sys, u, 2, species_weights)
 end
 
 """
@@ -271,7 +293,7 @@ Calculate weighted discrete ``W^{1,p}(\\Omega)`` norm of a solution vector.
 """
 function w1pnorm(sys, u, p, species_weights = ones(num_species(sys)))
     _complete!(sys)
-    lpnorm(sys, u, p, species_weights) + w1pseminorm(sys, u, p, species_weights)
+    return lpnorm(sys, u, p, species_weights) + w1pseminorm(sys, u, p, species_weights)
 end
 
 """
@@ -281,18 +303,18 @@ Calculate weighted discrete ``H^1(\\Omega)`` norm of a solution vector.
 """
 function h1norm(sys, u, species_weights = ones(num_species(sys)))
     _complete!(sys)
-    w1pnorm(sys, u, 2, species_weights)
+    return w1pnorm(sys, u, 2, species_weights)
 end
 
 function _bochnernorm(sys, u::TransientSolution, p, species_weights, spatialnorm::F) where {F}
     _complete!(sys)
     n = length(u.t)
     nrm = spatialnorm(sys, u.u[1], p, species_weights)^p * (u.t[2] - u.t[1]) / 2
-    for i = 2:(n - 1)
+    for i in 2:(n - 1)
         nrm += spatialnorm(sys, u.u[i], p, species_weights)^p * (u.t[i + 1] - u.t[i - 1]) / 2
     end
     nrm += spatialnorm(sys, u.u[n], p, species_weights)^p * (u.t[end] - u.t[end - 1]) / 2
-    nrm^(1 / p)
+    return nrm^(1 / p)
 end
 
 """
@@ -301,7 +323,7 @@ end
 Calculate weighted discrete ``L^p([0,T];W^{1,p}(\\Omega))`` norm of a transient solution.
 """
 function lpw1pnorm(sys, u::TransientSolution, p, species_weights = ones(num_species(sys)))
-    _bochnernorm(sys, u, p, species_weights, w1pnorm)
+    return _bochnernorm(sys, u, p, species_weights, w1pnorm)
 end
 
 """
@@ -310,7 +332,7 @@ end
 Calculate weighted discrete ``L^p([0,T];W^{1,p}(\\Omega))`` seminorm of a transient solution.
 """
 function lpw1pseminorm(sys, u::TransientSolution, p, species_weights = ones(num_species(sys)))
-    _bochnernorm(sys, u, p, species_weights, w1pseminorm)
+    return _bochnernorm(sys, u, p, species_weights, w1pseminorm)
 end
 
 """
@@ -319,7 +341,7 @@ end
 Calculate weighted discrete ``L^2([0,T];H^1(\\Omega))`` seminorm of a transient solution.
 """
 function l2h1seminorm(sys, u::TransientSolution, species_weights = ones(num_species(sys)))
-    lpw1pseminorm(sys, u, 2, species_weights)
+    return lpw1pseminorm(sys, u, 2, species_weights)
 end
 
 """
@@ -328,7 +350,7 @@ end
 Calculate weighted discrete ``L^2([0,T];H^1(\\Omega))`` norm of a transient solution.
 """
 function l2h1norm(sys, u::TransientSolution, species_weights = ones(num_species(sys)))
-    lpw1pnorm(sys, u, 2, species_weights)
+    return lpw1pnorm(sys, u, 2, species_weights)
 end
 
 """
@@ -349,7 +371,7 @@ function nodevolumes(system)
             nodevol[node.index] += node.fac
         end
     end
-    nodevol
+    return nodevol
 end
 
 """
@@ -370,17 +392,17 @@ function nondelaunay(grid; tol = 1.0e-16, verbose = false)
     ndelaunay = Tuple{Int, Int, Int, Float64}[]
     enodes = grid[EdgeNodes]
     coord = grid[Coordinates]
-    for i = 1:(length(colptr) - 1)
+    for i in 1:(length(colptr) - 1)
         delaunay = true
-        for k = colptr[i]:(colptr[i + 1] - 1)
+        for k in colptr[i]:(colptr[i + 1] - 1)
             if nzval[k] < -atol
                 if verbose
-                    @warn "Non-Delaunay edge: $(coord[:,enodes[1,i]]), $(coord[:,enodes[2,i]]), region=$(rowval[k])"
+                    @warn "Non-Delaunay edge: $(coord[:, enodes[1, i]]), $(coord[:, enodes[2, i]]), region=$(rowval[k])"
                 end
                 push!(ndelaunay, (enodes[1, i], enodes[2, i], rowval[k], nzval[k]))
             end
         end
     end
     @info "nondelaunay:  $(length(ndelaunay)) non-Delaunay edges detected"
-    ndelaunay
+    return ndelaunay
 end
