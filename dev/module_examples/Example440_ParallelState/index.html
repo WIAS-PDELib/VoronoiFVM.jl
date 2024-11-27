@@ -6,46 +6,49 @@ using VoronoiFVM, ExtendableGrids
 using GridVisualize
 using ChunkSplitters
 
-function flux(y,u,node,data)
-    y[1]=u[1,1]^2-u[1,2]^2
+function flux(y, u, node, data)
+    y[1] = u[1, 1]^2 - u[1, 2]^2
+    return nothing
 end
 
-function bcondition(y,u,node,data)
-    boundary_dirichlet!(y,u,node, species=1, region=1, value=0.1)
-    boundary_neumann!(y,u,node,species=1,region=2,value=data.influx)
+function bcondition(y, u, node, data)
+    boundary_dirichlet!(y, u, node, species = 1, region = 1, value = 0.1)
+    boundary_neumann!(y, u, node, species = 1, region = 2, value = data.influx)
+    return nothing
 end
 
-function main(;nref=5, Plotter=nothing)
-    grid=simplexgrid(range(0,1,length=10*2^nref+1))
-    sys=VoronoiFVM.System(grid;flux,bcondition, species=[1], data=(influx=0.0,))
+function main(; nref = 5, Plotter = nothing)
+    grid = simplexgrid(range(0, 1, length = 10 * 2^nref + 1))
+    sys = VoronoiFVM.System(grid; flux, bcondition, species = [1], data = (influx = 0.0,))
 
     # Initial state. First solution creates the matrix
-    state0=VoronoiFVM.SystemState(sys)
-    sol=solve!(state0;inival=0.1)
+    state0 = VoronoiFVM.SystemState(sys)
+    sol = solve!(state0; inival = 0.1)
 
     # Prepare parameter and result data
-    influxes=range(0.0,10.0, length=100)
-    masses=similar(influxes)
+    influxes = range(0.0, 10.0, length = 100)
+    masses = similar(influxes)
 
     # Split the index range in as many chunks as threads
-    Threads.@threads for indexes in chunks(1:length(influxes);n=Threads.nthreads())
+    Threads.@threads for indexes in chunks(1:length(influxes); n = Threads.nthreads())
         # Create a new state sharing the system - one for each chunk
-        state=similar(state0)
+        state = similar(state0)
         # Solve for all data values in chunk
         for iflux in indexes
-            data=(influx=influxes[iflux],)
-            sol=solve!(state;data, inival=0.1, verbose=&quot;&quot;)
-            masses[iflux]=integrate(sys,sol)[1,1]
+            data = (influx = influxes[iflux],)
+            sol = solve!(state; data, inival = 0.1, verbose = &quot;&quot;)
+            masses[iflux] = integrate(sys, sol)[1, 1]
         end
     end
-    scalarplot(influxes, masses;Plotter, xlabel=&quot;influx&quot;, ylabel=&quot;mass&quot;)
-    sum(masses)
+    scalarplot(influxes, masses; Plotter, xlabel = &quot;influx&quot;, ylabel = &quot;mass&quot;)
+    return sum(masses)
 end
 
 using Test
 function runtests()
-    testval=140.79872772042577
+    testval = 140.79872772042577
     @test main() ≈ testval
+    return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example430_ParameterDerivativesStationary/">« 430: Parameter Derivatives (stationary)</a><a class="docs-footer-nextpage" href="../Example510_Mixture/">510: Mixture »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example430_ParameterDerivativesStationary/">« 430: Parameter Derivatives (stationary)</a><a class="docs-footer-nextpage" href="../Example510_Mixture/">510: Mixture »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

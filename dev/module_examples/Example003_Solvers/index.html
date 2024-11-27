@@ -31,116 +31,143 @@ function main(; n = 10, Plotter = nothing, assembly = :edgwwise, kwargs...)
 
     function reaction(f, u, node, data)
         f[1] = u[1]^2
+        return nothing
     end
 
     function flux(f, u, edge, data)
         f[1] = eps * (u[1, 1]^2 - u[1, 2]^2)
+        return nothing
     end
 
     function source(f, node, data)
         x1 = node[1] - 0.5
         x2 = node[2] - 0.5
         f[1] = exp(-20.0 * (x1^2 + x2^2))
+        return nothing
     end
 
     function storage(f, u, node, data)
         f[1] = u[1]
+        return nothing
     end
 
     function bcondition(f, u, node, data)
-        boundary_dirichlet!(f,
-                            u,
-                            node;
-                            species = 1,
-                            region = 2,
-                            value = ramp(node.time; dt = (0, 0.1), du = (0, 1)))
-        boundary_dirichlet!(f,
-                            u,
-                            node;
-                            species = 1,
-                            region = 4,
-                            value = ramp(node.time; dt = (0, 0.1), du = (0, 1)))
+        boundary_dirichlet!(
+            f,
+            u,
+            node;
+            species = 1,
+            region = 2,
+            value = ramp(node.time; dt = (0, 0.1), du = (0, 1))
+        )
+        boundary_dirichlet!(
+            f,
+            u,
+            node;
+            species = 1,
+            region = 4,
+            value = ramp(node.time; dt = (0, 0.1), du = (0, 1))
+        )
+        return nothing
     end
 
-    sys = VoronoiFVM.System(grid; reaction, flux, source, storage, bcondition, assembly,
-                            species = [1])
+    sys = VoronoiFVM.System(
+        grid; reaction, flux, source, storage, bcondition, assembly,
+        species = [1]
+    )
     @info &quot;UMFPACK:&quot;
     umf_sol = solve(sys; inival = 0.5, method_linear = LinearSolve.UMFPACKFactorization(), kwargs...)
 
     @info &quot;KLU:&quot;
     sol = solve(sys; inival = 0.5, method_linear = LinearSolve.KLUFactorization(), kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
 
     @info &quot;Sparspak:&quot;
     sol = solve(sys; inival = 0.5, method_linear = LinearSolve.SparspakFactorization(), kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
 
     @info &quot;Krylov-ilu0:&quot;
-    sol = solve(sys;
-                inival = 0.5,
-                method_linear = KrylovJL_BICGSTAB(precs=ILUZeroPreconBuilder()),
-                kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    sol = solve(
+        sys;
+        inival = 0.5,
+        method_linear = KrylovJL_BICGSTAB(precs = ILUZeroPreconBuilder()),
+        kwargs...
+    )
+    @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
 
     @info &quot;Krylov-block1&quot;
-    precs=BlockPreconBuilder(;precs=ILUZeroPreconBuilder(), partitioning= A-&gt;  [1:(size(A,1) ÷ 2), (size(A,1) ÷ 2 + 1):size(A,1)])
-    sol = solve(sys;
-                inival = 0.5,
-                method_linear = KrylovJL_BICGSTAB(;precs),
-                kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    precs = BlockPreconBuilder(; precs = ILUZeroPreconBuilder(), partitioning = A -&gt; [1:(size(A, 1) ÷ 2), (size(A, 1) ÷ 2 + 1):size(A, 1)])
+    sol = solve(
+        sys;
+        inival = 0.5,
+        method_linear = KrylovJL_BICGSTAB(; precs),
+        kwargs...
+    )
+    @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
 
     @info &quot;Krylov-block2&quot;
-    precs=BlockPreconBuilder(;precs=ILUZeroPreconBuilder(), partitioning= A-&gt;   [1:2:size(A,1), 2:2:size(A,1)])
-    sol = solve(sys;
-                inival = 0.5,
-                method_linear = KrylovJL_BICGSTAB(;precs),
-                log=true,
-                kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    precs = BlockPreconBuilder(; precs = ILUZeroPreconBuilder(), partitioning = A -&gt; [1:2:size(A, 1), 2:2:size(A, 1)])
+    sol = solve(
+        sys;
+        inival = 0.5,
+        method_linear = KrylovJL_BICGSTAB(; precs),
+        log = true,
+        kwargs...
+    )
+    @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
 
     @info &quot;Krylov - delayed factorization:&quot;
-    sol = solve(sys;
-                inival = 0.5,
-                method_linear = KrylovJL_BICGSTAB(;precs=LinearSolvePreconBuilder(SparspakFactorization())),
-                keepcurrent_linear =false,
-                log=true,
-                kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    sol = solve(
+        sys;
+        inival = 0.5,
+        method_linear = KrylovJL_BICGSTAB(; precs = LinearSolvePreconBuilder(SparspakFactorization())),
+        keepcurrent_linear = false,
+        log = true,
+        kwargs...
+    )
+    @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
     @test summary(history(sol)).factorizations == 1
 
     @info &quot;Krylov - jacobi:&quot;
-    sol = solve(sys;
-                inival = 0.5,
-                method_linear = KrylovJL_BICGSTAB(;precs=JacobiPreconBuilder()),
-                keepcurrent_linear = true, log=true,
-                kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    sol = solve(
+        sys;
+        inival = 0.5,
+        method_linear = KrylovJL_BICGSTAB(; precs = JacobiPreconBuilder()),
+        keepcurrent_linear = true, log = true,
+        kwargs...
+    )
+    @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
     @test summary(history(sol)).factorizations &gt; 1
 
     @info &quot;Krylov - SA_AMG:&quot;
-    sol = solve(sys;
-                inival = 0.5,
-                method_linear = KrylovJL_BICGSTAB(;precs=SmoothedAggregationPreconBuilder()),
-                keepcurrent_linear = true,
-                kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    sol = solve(
+        sys;
+        inival = 0.5,
+        method_linear = KrylovJL_BICGSTAB(; precs = SmoothedAggregationPreconBuilder()),
+        keepcurrent_linear = true,
+        kwargs...
+    )
+    @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
 
     @info &quot;Krylov - AMGCL_AMG:&quot;
-    sol = solve(sys;
-                inival = 0.5,
-                method_linear = KrylovJL_BICGSTAB(;precs=AMGPreconBuilder()),
-                keepcurrent_linear = true,
-                kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    sol = solve(
+        sys;
+        inival = 0.5,
+        method_linear = KrylovJL_BICGSTAB(; precs = AMGPreconBuilder()),
+        keepcurrent_linear = true,
+        kwargs...
+    )
+    @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
 
     @info &quot;Krylov - AMGnCL_RLX:&quot;
-    sol = solve(sys;
-                inival = 0.5,
-                method_linear = KrylovJL_BICGSTAB(;precs=RLXPreconBuilder()),
-                keepcurrent_linear = true,
-                kwargs...)
-    @test norm(sol - umf_sol, Inf)&lt;1.0e-7
+    sol = solve(
+        sys;
+        inival = 0.5,
+        method_linear = KrylovJL_BICGSTAB(; precs = RLXPreconBuilder()),
+        keepcurrent_linear = true,
+        kwargs...
+    )
+    return @test norm(sol - umf_sol, Inf) &lt; 1.0e-7
 end
 
 function runtests()
@@ -150,5 +177,6 @@ function runtests()
     @testset &quot;cellwise&quot; begin
         main(; assembly = :cellwise)
     end
+    return nothing
 end
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example002_EdgeReaction/">« 002: check edge reaction</a><a class="docs-footer-nextpage" href="../Example101_Laplace1D/">101: 1D Laplace equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example002_EdgeReaction/">« 002: check edge reaction</a><a class="docs-footer-nextpage" href="../Example101_Laplace1D/">101: 1D Laplace equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

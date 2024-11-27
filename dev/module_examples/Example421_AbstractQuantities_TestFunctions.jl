@@ -27,14 +27,14 @@ end
 function main(; N = 3, Plotter = nothing, unknown_storage = :sparse, assembly = :edgewise)
     XX = collect(0:0.1:1)
     xcoord = XX
-    for i = 1:(N - 1)
+    for i in 1:(N - 1)
         xcoord = glue(xcoord, XX .+ i)
     end
     grid = simplexgrid(xcoord)
-    for i = 1:N
+    for i in 1:N
         cellmask!(grid, [i - 1], [i], i)
     end
-    for i = 1:(N - 1)
+    for i in 1:(N - 1)
         bfacemask!(grid, [i], [i], i + 2)
     end
 
@@ -49,6 +49,7 @@ function main(; N = 3, Plotter = nothing, unknown_storage = :sparse, assembly = 
     function fluxQ(f, u, edge, data) # For both quantities, we define simple diffusion fluxes
         f[dspec] = u[dspec, 1] - u[dspec, 2]
         f[cspec] = u[cspec, 1] - u[cspec, 2]
+        return nothing
     end
 
     function breactionQ(f, u, bnode, data)
@@ -58,22 +59,30 @@ function main(; N = 3, Plotter = nothing, unknown_storage = :sparse, assembly = 
             f[dspec, 1] = react
             f[dspec, 2] = -react
         end
+        return nothing
     end
 
-    physics!(sysQ, VoronoiFVM.Physics(; data = data,
-                                      flux = fluxQ,
-                                      breaction = breactionQ))
+    physics!(
+        sysQ, VoronoiFVM.Physics(;
+            data = data,
+            flux = fluxQ,
+            breaction = breactionQ
+        )
+    )
 
     ##########################################################
     icc = 1 # for system without AbstractQuantities
 
     function flux!(f, u, edge, data) # analogous as for other system
         f[icc] = u[icc, 1] - u[icc, 2]
+        return nothing
     end
 
     # other system to which we compare current calculation
-    sys = VoronoiFVM.System(grid; flux = flux!, species = icc,
-                            unknown_storage = unknown_storage)
+    sys = VoronoiFVM.System(
+        grid; flux = flux!, species = icc,
+        unknown_storage = unknown_storage
+    )
 
     ## Set left boundary conditions
     boundary_dirichlet!(sysQ, dspec, 1, 0.0)
@@ -135,22 +144,34 @@ function main(; N = 3, Plotter = nothing, unknown_storage = :sparse, assembly = 
         vis = GridVisualizer(; layout = (2, 1), resolution = (600, 300), Plotter = Plotter)
 
         for i in eachindex(dvws)
-            scalarplot!(vis[1, 1], subgrids[i], dvws[i]; flimits = (-0.5, 1.5),
-                        title = @sprintf("Solution with rate=%.2f", data.rate),
-                        label = "discont quantity", clear = false, color = :red)
-            scalarplot!(vis[1, 1], subgrids[i], cvws[i]; label = "cont quantity",
-                        clear = false, color = :green)
+            scalarplot!(
+                vis[1, 1], subgrids[i], dvws[i]; flimits = (-0.5, 1.5),
+                title = @sprintf("Solution with rate=%.2f", data.rate),
+                label = "discont quantity", clear = false, color = :red
+            )
+            scalarplot!(
+                vis[1, 1], subgrids[i], cvws[i]; label = "cont quantity",
+                clear = false, color = :green
+            )
         end
-        scalarplot!(vis[1, 1], grid, U[icc, :]; label = "without quantity", clear = false,
-                    linestyle = :dot, color = :blue)
+        scalarplot!(
+            vis[1, 1], grid, U[icc, :]; label = "without quantity", clear = false,
+            linestyle = :dot, color = :blue
+        )
 
-        scalarplot!(vis[2, 1], biasval, Idspec; clear = false,
-                    title = @sprintf("IV with rate=%.2f", data.rate),
-                    label = "discont quantity", color = :red)
-        scalarplot!(vis[2, 1], biasval, Icspec; clear = false, title = "Current",
-                    label = "cont quantity", color = :green)
-        scalarplot!(vis[2, 1], biasval, Iicc; clear = false, label = "discont quantity",
-                    linestyle = :dot, color = :blue, show = true)
+        scalarplot!(
+            vis[2, 1], biasval, Idspec; clear = false,
+            title = @sprintf("IV with rate=%.2f", data.rate),
+            label = "discont quantity", color = :red
+        )
+        scalarplot!(
+            vis[2, 1], biasval, Icspec; clear = false, title = "Current",
+            label = "cont quantity", color = :green
+        )
+        scalarplot!(
+            vis[2, 1], biasval, Iicc; clear = false, label = "discont quantity",
+            linestyle = :dot, color = :blue, show = true
+        )
 
         reveal(vis)
         sleep(0.2)
@@ -165,9 +186,10 @@ using Test
 function runtests()
     testval = 6.085802139465579e-7
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    return nothing
 end
 
 end

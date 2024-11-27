@@ -30,25 +30,30 @@ function f(P; n = 10)
 
     function flux!(f, u, edge, data)
         f[1] = (1 + p) * (u[1, 1]^2 - u[1, 2]^2)
+        return nothing
     end
 
     function r!(f, u, edge, data)
         f[1] = p * u[1]^5
+        return nothing
     end
 
     function bc!(f, u, node, data)
         boundary_dirichlet!(f, u, node, ispec, 1, 0.0)
         boundary_dirichlet!(f, u, node, ispec, 3, p)
+        return nothing
     end
 
     X = collect(0:(1.0 / n):1)
     grid = simplexgrid(X, X)
-    sys = VoronoiFVM.System(grid; valuetype, species = [1], flux = flux!, reaction = r!,
-                            bcondition = bc!)
+    sys = VoronoiFVM.System(
+        grid; valuetype, species = [1], flux = flux!, reaction = r!,
+        bcondition = bc!
+    )
     tff = VoronoiFVM.TestFunctionFactory(sys)
     tfc = testfunction(tff, [1], [3])
     sol = solve(sys; inival = 0.5)
-    [integrate(sys, tfc, sol)[1]]
+    return [integrate(sys, tfc, sol)[1]]
 end
 
 """
@@ -63,7 +68,7 @@ function runf(; Plotter = nothing, n = 10)
     F = zeros(0)
     DF = zeros(0)
     ff(p) = f(p; n)
-    @time for p ∈ P
+    @time for p in P
         ForwardDiff.jacobian!(dresult, ff, [p])
         push!(F, DiffResults.value(dresult)[1])
         push!(DF, DiffResults.jacobian(dresult)[1])
@@ -71,20 +76,23 @@ function runf(; Plotter = nothing, n = 10)
     vis = GridVisualizer(; Plotter, legend = :lt)
     scalarplot!(vis, P, F; color = :red, label = "f")
     scalarplot!(vis, P, DF; color = :blue, label = "df", clear = false, show = true)
-    sum(DF)
+    return sum(DF)
 end
 
 function fluxg!(f, u, edge, data)
     f[1] = (1 + data.p) * (u[1, 1]^2 - u[1, 2]^2)
+    return nothing
 end
 
 function rg!(f, u, edge, data)
     f[1] = data.p * u[1]^5
+    return nothing
 end
 
 function bcg!(f, u, node, data)
     boundary_dirichlet!(f, u, node, 1, 1, 0.0)
     boundary_dirichlet!(f, u, node, 1, 3, data.p)
+    return nothing
 end
 
 Base.@kwdef mutable struct MyData{Tv}
@@ -110,15 +118,17 @@ function rung(; Plotter = nothing, method_linear = SparspakFactorization(), n = 
         Tv = eltype(P)
         if isnothing(sys)
             data = MyData(one(Tv))
-            sys = VoronoiFVM.System(grid; valuetype = Tv, species = [1], flux = fluxg!,
-                                    reaction = rg!, bcondition = bcg!, data,
-                                    unknown_storage = :dense)
+            sys = VoronoiFVM.System(
+                grid; valuetype = Tv, species = [1], flux = fluxg!,
+                reaction = rg!, bcondition = bcg!, data,
+                unknown_storage = :dense
+            )
             tff = VoronoiFVM.TestFunctionFactory(sys)
             tfc = testfunction(tff, [1], [3])
         end
         data.p = P[1]
         sol = solve(sys; inival = 0.5, method_linear)
-        [integrate(sys, tfc, sol)[1]]
+        return [integrate(sys, tfc, sol)[1]]
     end
 
     dresult = DiffResults.JacobianResult(ones(1))
@@ -126,7 +136,7 @@ function rung(; Plotter = nothing, method_linear = SparspakFactorization(), n = 
     P = 0.1:0.05:2
     G = zeros(0)
     DG = zeros(0)
-    @time for p ∈ P
+    @time for p in P
         ForwardDiff.jacobian!(dresult, g, [p])
         push!(G, DiffResults.value(dresult)[1])
         push!(DG, DiffResults.jacobian(dresult)[1])
@@ -135,7 +145,7 @@ function rung(; Plotter = nothing, method_linear = SparspakFactorization(), n = 
     vis = GridVisualizer(; Plotter, legend = :lt)
     scalarplot!(vis, P, G; color = :red, label = "g")
     scalarplot!(vis, P, DG; color = :blue, label = "dg", clear = false, show = true)
-    sum(DG)
+    return sum(DG)
 end
 
 #########################################################################
@@ -143,17 +153,20 @@ end
 function fluxh!(f, u, edge, data)
     p = parameters(u)[1]
     f[1] = (1 + p) * (u[1, 1]^2 - u[1, 2]^2)
+    return nothing
 end
 
 function rh!(f, u, edge, data)
     p = parameters(u)[1]
     f[1] = p * u[1]^5
+    return nothing
 end
 
 function bch!(f, u, node, data)
     p = parameters(u)[1]
     boundary_dirichlet!(f, u, node, 1, 1, 0.0)
     boundary_dirichlet!(f, u, node, 1, 3, p)
+    return nothing
 end
 
 """
@@ -169,15 +182,17 @@ function runh(; Plotter = nothing, n = 10)
     X = collect(0:(1.0 / n):1)
     grid = simplexgrid(X, X)
 
-    sys = VoronoiFVM.System(grid; species = [1], flux = fluxh!, reaction = rh!,
-                            bcondition = bch!, unknown_storage = :dense, nparams = 1)
+    sys = VoronoiFVM.System(
+        grid; species = [1], flux = fluxh!, reaction = rh!,
+        bcondition = bch!, unknown_storage = :dense, nparams = 1
+    )
     tff = VoronoiFVM.TestFunctionFactory(sys)
     tfc = testfunction(tff, [1], [3])
 
     function measp(params, u)
         Tp = eltype(params)
         up = Tp.(u)
-        integrate(sys, tfc, up; params = params)[1]
+        return integrate(sys, tfc, up; params = params)[1]
     end
 
     params = [0.0]
@@ -185,18 +200,18 @@ function runh(; Plotter = nothing, n = 10)
     function mymeas!(meas, U)
         u = reshape(U, sys)
         meas[1] = integrate(sys, tfc, u; params)[1]
-        nothing
+        return nothing
     end
 
     dp = 0.05
     P = 0.1:dp:2
-    state=VoronoiFVM.SystemState(sys)
+    state = VoronoiFVM.SystemState(sys)
     U0 = solve!(state; inival = 0.5, params = [P[1]])
 
     ndof = num_dof(sys)
-    colptr = [i for i = 1:(ndof + 1)]
-    rowval = [1 for i = 1:ndof]
-    nzval = [1.0 for in = 1:ndof]
+    colptr = [i for i in 1:(ndof + 1)]
+    rowval = [1 for i in 1:ndof]
+    nzval = [1.0 for in in 1:ndof]
     ∂m∂u = zeros(1, ndof)
     colors = matrix_colors(∂m∂u)
 
@@ -205,7 +220,7 @@ function runh(; Plotter = nothing, n = 10)
     DHx = zeros(0)
     m = zeros(1)
 
-    @time for p ∈ P
+    @time for p in P
         params[1] = p
         sol = solve!(state; inival = 0.5, params)
 
@@ -226,15 +241,16 @@ function runh(; Plotter = nothing, n = 10)
     vis = GridVisualizer(; Plotter, legend = :lt)
     scalarplot!(vis, P, H; color = :red, label = "h")
     scalarplot!(vis, P, DH; color = :blue, label = "dh", clear = false, show = true)
-    sum(DH)
+    return sum(DH)
 end
 
 using Test
 function runtests()
     testval = 489.3432830184927
-    @test runf()  ≈ testval
-    @test rung()  ≈ testval
-    @test runh()  ≈ testval
+    @test runf() ≈ testval
+    @test rung() ≈ testval
+    @test runh() ≈ testval
+    return nothing
 end
 
 end

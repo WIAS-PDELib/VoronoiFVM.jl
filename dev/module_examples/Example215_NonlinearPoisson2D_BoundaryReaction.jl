@@ -9,8 +9,10 @@ using ExtendableGrids
 using GridVisualize
 using ExtendableSparse
 
-function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
-              tend = 100)
+function main(;
+        n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
+        tend = 100
+    )
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
     Y = collect(0.0:h:1.0)
@@ -18,21 +20,26 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     grid = simplexgrid(X, Y)
 
     eps = 1.0e-2
-    physics = VoronoiFVM.Physics(; breaction = function (f, u, node, data)
-                                     if node.region == 2
-                                         f[1] = 1 * (u[1] - u[2])
-                                         f[2] = 1 * (u[2] - u[1])
-                                     else
-                                         f[1] = 0
-                                         f[2] = 0
-                                     end
-                                 end, flux = function (f, u, edge, data)
-                                     f[1] = eps * (u[1, 1] - u[1, 2])
-                                     f[2] = eps * (u[2, 1] - u[2, 2])
-                                 end, storage = function (f, u, node, data)
-                                     f[1] = u[1]
-                                     f[2] = u[2]
-                                 end)
+    physics = VoronoiFVM.Physics(;
+        breaction = function (f, u, node, data)
+            if node.region == 2
+                f[1] = 1 * (u[1] - u[2])
+                f[2] = 1 * (u[2] - u[1])
+            else
+                f[1] = 0
+                f[2] = 0
+            end
+            return nothing
+        end, flux = function (f, u, edge, data)
+            f[1] = eps * (u[1, 1] - u[1, 2])
+            f[2] = eps * (u[2, 1] - u[2, 2])
+            return nothing
+        end, storage = function (f, u, node, data)
+            f[1] = u[1]
+            f[2] = u[2]
+            return nothing
+        end
+    )
 
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage, assembly = assembly)
     enable_species!(sys, 1, [1])
@@ -64,11 +71,15 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
         tstep *= 1.2
         istep = istep + 1
         u25 = U[25]
-        scalarplot!(p[1, 1], grid, U[1, :];
-                    title = @sprintf("U1: %.3g U1+U2:%8.3g", I[1, 1], Uall),
-                    flimits = (0, 1))
-        scalarplot!(p[2, 1], grid, U[2, :]; title = @sprintf("U2: %.3g", I[2, 1]),
-                    flimits = (0, 1))
+        scalarplot!(
+            p[1, 1], grid, U[1, :];
+            title = @sprintf("U1: %.3g U1+U2:%8.3g", I[1, 1], Uall),
+            flimits = (0, 1)
+        )
+        scalarplot!(
+            p[2, 1], grid, U[2, :]; title = @sprintf("U2: %.3g", I[2, 1]),
+            flimits = (0, 1)
+        )
         reveal(p)
     end
     return u25
@@ -78,7 +89,8 @@ using Test
 function runtests()
     testval = 0.2760603343272377
     @test main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    return nothing
 end
 end

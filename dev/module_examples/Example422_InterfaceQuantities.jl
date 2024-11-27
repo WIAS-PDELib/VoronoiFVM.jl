@@ -14,8 +14,10 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
-function main(; n = 5, Plotter = nothing, tend = 20.0, unknown_storage = :sparse,
-              reactionN = 5.0e0, reactionP = 5.0e0, assembly = :edgewise)
+function main(;
+        n = 5, Plotter = nothing, tend = 20.0, unknown_storage = :sparse,
+        reactionN = 5.0e0, reactionP = 5.0e0, assembly = :edgewise
+    )
 
     ################################################################################
     #### grid
@@ -76,6 +78,7 @@ function main(; n = 5, Plotter = nothing, tend = 20.0, unknown_storage = :sparse
         f[iphip] = exp(etap)
 
         f[ipsi] = 0.0
+        return nothing
     end
 
     function reaction!(f, u, node, data)
@@ -89,6 +92,7 @@ function main(; n = 5, Plotter = nothing, tend = 20.0, unknown_storage = :sparse
 
         f[iphin] = -recomb
         f[iphip] = recomb
+        return nothing
     end
 
     function flux!(f, u, node, data)
@@ -105,6 +109,7 @@ function main(; n = 5, Plotter = nothing, tend = 20.0, unknown_storage = :sparse
 
         f[iphin] = (bm * exp(etan2) - bp * exp(etan1))
         f[iphip] = -(bp * exp(etap2) - bm * exp(etap1))
+        return nothing
     end
 
     function breaction!(f, u, bnode, data)
@@ -134,6 +139,7 @@ function main(; n = 5, Plotter = nothing, tend = 20.0, unknown_storage = :sparse
             f[iphinb] = -(f[iphin, 1] + f[iphin, 2])
             f[iphipb] = -(f[iphip, 1] + f[iphip, 2])
         end
+        return nothing
     end
 
     function bstorage!(f, u, bnode, data)
@@ -146,14 +152,19 @@ function main(; n = 5, Plotter = nothing, tend = 20.0, unknown_storage = :sparse
             f[iphinb] = -exp(etan)
             f[iphipb] = exp(etap)
         end
+        return nothing
     end
 
-    physics!(sys,
-             VoronoiFVM.Physics(; flux = flux!,
-                                storage = storage!,
-                                reaction = reaction!,
-                                breaction = breaction!,
-                                bstorage = bstorage!))
+    physics!(
+        sys,
+        VoronoiFVM.Physics(;
+            flux = flux!,
+            storage = storage!,
+            reaction = reaction!,
+            breaction = breaction!,
+            bstorage = bstorage!
+        )
+    )
 
     boundary_dirichlet!(sys, iphin, bregion1, 4.0)
     boundary_dirichlet!(sys, iphip, bregion1, 4.0)
@@ -173,7 +184,7 @@ function main(; n = 5, Plotter = nothing, tend = 20.0, unknown_storage = :sparse
     ntsteps = 10
     tvalues = range(t0; stop = tend, length = ntsteps)
 
-    for istep = 2:ntsteps
+    for istep in 2:ntsteps
         t = tvalues[istep]       # Actual time
         Δt = t - tvalues[istep - 1] # Time step size
 
@@ -203,7 +214,7 @@ function main(; n = 5, Plotter = nothing, tend = 20.0, unknown_storage = :sparse
         I = integrate(sys, tf, sol)
 
         val = 0.0
-        for ii = 1:(length(I) - 1)
+        for ii in 1:(length(I) - 1)
             val = val + I[ii]
         end
 
@@ -239,9 +250,10 @@ using Test
 function runtests()
     testval = 0.35545473758267826
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    return nothing
 end
 
 end # module

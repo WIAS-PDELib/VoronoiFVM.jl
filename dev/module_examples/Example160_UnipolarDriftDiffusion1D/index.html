@@ -23,6 +23,7 @@ function classflux!(f, u, edge, data)
     f[iphi] = data.eps * (u[iphi, 1] - u[iphi, 2])
     bp, bm = fbernoulli_pm(u[iphi, 1] - u[iphi, 2])
     f[ic] = bm * u[ic, 1] - bp * u[ic, 2]
+    return nothing
 end
 
 function storage!(f, u, node, data)
@@ -30,6 +31,7 @@ function storage!(f, u, node, data)
     iphi = data.iphi
     f[iphi] = 0
     f[ic] = u[ic]
+    return nothing
 end
 
 function reaction!(f, u, node, data)
@@ -37,16 +39,18 @@ function reaction!(f, u, node, data)
     iphi = data.iphi
     f[iphi] = data.z * (1 - 2 * u[ic])
     f[ic] = 0
+    return nothing
 end
-const eps_reg=1.0e-10
+const eps_reg = 1.0e-10
 function sedanflux!(f, u, edge, data)
     ic = data.ic
     iphi = data.iphi
     f[iphi] = data.eps * (u[iphi, 1] - u[iphi, 2])
-    mu1 = -log1p(max(-1+eps_reg, -u[ic, 1]))
-    mu2 = -log1p(max(-1+eps_reg, -u[ic, 2]))
+    mu1 = -log1p(max(-1 + eps_reg, -u[ic, 1]))
+    mu2 = -log1p(max(-1 + eps_reg, -u[ic, 2]))
     bp, bm = fbernoulli_pm(data.z * 2 * (u[iphi, 1] - u[iphi, 2]) + (mu1 - mu2))
     f[ic] = bm * u[ic, 1] - bp * u[ic, 2]
+    return nothing
 end
 
 function bcondition!(f, u, bnode, data)
@@ -54,17 +58,19 @@ function bcondition!(f, u, bnode, data)
     boundary_dirichlet!(f, u, bnode; species = data.iphi, region = 1, value = V)
     boundary_dirichlet!(f, u, bnode; species = data.iphi, region = 2, value = 0)
     boundary_dirichlet!(f, u, bnode; species = data.ic, region = 2, value = 0.5)
+    return nothing
 end
 
 function main(;
-              n = 20,
-              Plotter = nothing,
-              dlcap = false,
-              verbose = false,
-              phimax = 1,
-              dphi = 1.0e-1,
-              unknown_storage = :sparse,
-              assembly = :edgewise,)
+        n = 20,
+        Plotter = nothing,
+        dlcap = false,
+        verbose = false,
+        phimax = 1,
+        dphi = 1.0e-1,
+        unknown_storage = :sparse,
+        assembly = :edgewise,
+    )
     h = 1.0 / convert(Float64, n)
     grid = simplexgrid(collect(0:h:1))
 
@@ -78,17 +84,20 @@ function main(;
     iphi = data.iphi
 
     physics = VoronoiFVM.Physics(;
-                                 data = data,
-                                 flux = sedanflux!,
-                                 reaction = reaction!,
-                                 breaction = bcondition!,
-                                 storage = storage!,)
+        data = data,
+        flux = sedanflux!,
+        reaction = reaction!,
+        breaction = bcondition!,
+        storage = storage!,
+    )
 
-    sys = VoronoiFVM.System(grid,
-                            physics;
-                            unknown_storage = unknown_storage,
-                            species = [1, 2],
-                            assembly = assembly,)
+    sys = VoronoiFVM.System(
+        grid,
+        physics;
+        unknown_storage = unknown_storage,
+        species = [1, 2],
+        assembly = assembly,
+    )
 
     inival = unknowns(sys)
     @views inival[iphi, :] .= 0
@@ -106,30 +115,36 @@ function main(;
         control.Δu_opt = 0.1
         control.damp_initial = 0.5
 
-        tsol = solve(sys;
-                     method_linear = UMFPACKFactorization(),
-                     inival,
-                     times = [0.0, 10],
-                     control = control,)
+        tsol = solve(
+            sys;
+            method_linear = UMFPACKFactorization(),
+            inival,
+            times = [0.0, 10],
+            control = control,
+        )
 
         vis = GridVisualizer(; Plotter = Plotter, layout = (1, 1), fast = true)
-        for log10t = -4:0.025:0
+        for log10t in -4:0.025:0
             time = 10^(log10t)
             sol = tsol(time)
-            scalarplot!(vis[1, 1],
-                        grid,
-                        sol[iphi, :];
-                        label = &quot;ϕ&quot;,
-                        title = @sprintf(&quot;time=%.3g&quot;, time),
-                        flimits = (0, 5),
-                        color = :green,)
-            scalarplot!(vis[1, 1],
-                        grid,
-                        sol[ic, :];
-                        label = &quot;c&quot;,
-                        flimits = (0, 5),
-                        clear = false,
-                        color = :red,)
+            scalarplot!(
+                vis[1, 1],
+                grid,
+                sol[iphi, :];
+                label = &quot;ϕ&quot;,
+                title = @sprintf(&quot;time=%.3g&quot;, time),
+                flimits = (0, 5),
+                color = :green,
+            )
+            scalarplot!(
+                vis[1, 1],
+                grid,
+                sol[ic, :];
+                label = &quot;c&quot;,
+                flimits = (0, 5),
+                clear = false,
+                color = :red,
+            )
             reveal(vis)
         end
         return sum(tsol.u[end])
@@ -152,7 +167,7 @@ function main(;
         vis = GridVisualizer(; Plotter = Plotter, layout = (2, 1), fast = true)
         for dir in [1, -1]
             phi = 0.0
-            U.=inival
+            U .= inival
             while phi &lt; phimax
                 data.V = dir * phi
                 U = solve(sys; inival = U, control, time = 1.0)
@@ -163,21 +178,25 @@ function main(;
                 cdl = (Qdelta[iphi] - Q[iphi]) / delta
 
                 if Plotter != nothing
-                    scalarplot!(vis[1, 1],
-                                grid,
-                                U[iphi, :];
-                                label = &quot;ϕ&quot;,
-                                title = @sprintf(&quot;Δϕ=%.3g&quot;, phi),
-                                flimits = (-5, 5),
-                                clear = true,
-                                color = :green,)
-                    scalarplot!(vis[1, 1],
-                                grid,
-                                U[ic, :];
-                                label = &quot;c&quot;,
-                                flimits = (0, 5),
-                                clear = false,
-                                color = :red,)
+                    scalarplot!(
+                        vis[1, 1],
+                        grid,
+                        U[iphi, :];
+                        label = &quot;ϕ&quot;,
+                        title = @sprintf(&quot;Δϕ=%.3g&quot;, phi),
+                        flimits = (-5, 5),
+                        clear = true,
+                        color = :green,
+                    )
+                    scalarplot!(
+                        vis[1, 1],
+                        grid,
+                        U[ic, :];
+                        label = &quot;c&quot;,
+                        flimits = (0, 5),
+                        clear = false,
+                        color = :red,
+                    )
                 end
                 if dir == 1
                     push!(vplus, dir * phi)
@@ -193,12 +212,14 @@ function main(;
                 v = vcat(reverse(vminus), vplus)
                 c = vcat(reverse(cdlminus), cdlplus)
                 if length(v) &gt;= 2
-                    scalarplot!(vis[2, 1],
-                                v,
-                                c;
-                                color = :green,
-                                clear = false,
-                                title = &quot;C_dl&quot;,)
+                    scalarplot!(
+                        vis[2, 1],
+                        v,
+                        c;
+                        color = :green,
+                        clear = false,
+                        title = &quot;C_dl&quot;,
+                    )
                 end
 
                 phi += dphi
@@ -217,29 +238,46 @@ function runtests()
     evolval = 18.721369939565655
     dlcapval = 0.025657355479449806
     rtol = 1.0e-5
-    @test isapprox(main(; unknown_storage = :sparse, dlcap = false, assembly = :edgewise),
-                   evolval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :sparse, dlcap = true, assembly = :edgewise),
-                   dlcapval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :dense, dlcap = false, assembly = :edgewise),
-                   evolval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :dense, dlcap = true, assembly = :edgewise),
-                   dlcapval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :sparse, dlcap = false, assembly = :cellwise),
-                   evolval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :sparse, dlcap = true, assembly = :cellwise),
-                   dlcapval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :dense, dlcap = false, assembly = :cellwise),
-                   evolval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :dense, dlcap = true, assembly = :cellwise),
-                   dlcapval;
-                   rtol = rtol,)
+    @test isapprox(
+        main(; unknown_storage = :sparse, dlcap = false, assembly = :edgewise),
+        evolval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :sparse, dlcap = true, assembly = :edgewise),
+        dlcapval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :dense, dlcap = false, assembly = :edgewise),
+        evolval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :dense, dlcap = true, assembly = :edgewise),
+        dlcapval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :sparse, dlcap = false, assembly = :cellwise),
+        evolval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :sparse, dlcap = true, assembly = :cellwise),
+        dlcapval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :dense, dlcap = false, assembly = :cellwise),
+        evolval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :dense, dlcap = true, assembly = :cellwise),
+        dlcapval;
+        rtol = rtol,
+    )
+    return nothing
 end
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example151_Impedance1D/">« 151: Impedance calculation</a><a class="docs-footer-nextpage" href="../Example201_Laplace2D/">201: 2D Laplace equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example151_Impedance1D/">« 151: Impedance calculation</a><a class="docs-footer-nextpage" href="../Example201_Laplace2D/">201: 2D Laplace equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

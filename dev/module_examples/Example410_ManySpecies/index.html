@@ -11,28 +11,30 @@ function main(; n = 11, nspec = 50, Plotter = nothing, unknown_storage = :dense,
     grid = simplexgrid(range(0, 1; length = n))
 
     function flux(f, u, edge, data)
-        for ispec = 1:nspec
+        for ispec in 1:nspec
             f[ispec] = u[ispec, 1] - u[ispec, 2]
         end
+        return nothing
     end
     physics = VoronoiFVM.Physics(; flux = flux)
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage, assembly = assembly)
-    for ispec = 1:nspec
+    for ispec in 1:nspec
         enable_species!(sys, ispec, [1])
         boundary_dirichlet!(sys, ispec, 1, 0)
         boundary_dirichlet!(sys, ispec, 2, 1)
     end
     sol = solve(sys)
-    norm(sol)
+    return norm(sol)
 end
 
 using Test
 function runtests()
     testval = 13.874436925511608
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &amp;&amp;
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &amp;&amp;
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &amp;&amp;
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &amp;&amp;
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &amp;&amp;
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example406_WeirdReaction/">« 406: 1D Weird Surface Reaction</a><a class="docs-footer-nextpage" href="../Example420_DiscontinuousQuantities/">420: Discontinuous Quantities »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example406_WeirdReaction/">« 406: 1D Weird Surface Reaction</a><a class="docs-footer-nextpage" href="../Example420_DiscontinuousQuantities/">420: Discontinuous Quantities »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

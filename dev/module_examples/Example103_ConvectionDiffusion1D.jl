@@ -31,12 +31,14 @@ function exponential_flux!(f, u, edge, data)
     Bplus = data.D * bernoulli(vh / data.D)
     Bminus = data.D * bernoulli(-vh / data.D)
     f[1] = Bminus * u[1, 1] - Bplus * u[1, 2]
+    return nothing
 end
 
 function outflow!(f, u, node, data)
     if node.region == 2
         f[1] = data.v[1] * u[1]
     end
+    return nothing
 end
 
 function main(; n = 10, Plotter = nothing, D = 0.01, v = 1.0, tend = 100)
@@ -47,9 +49,13 @@ function main(; n = 10, Plotter = nothing, D = 0.01, v = 1.0, tend = 100)
 
     data = (v = [v], D = D)
 
-    sys = VoronoiFVM.System(grid,
-                            VoronoiFVM.Physics(; flux = exponential_flux!, data = data,
-                                               breaction = outflow!))
+    sys = VoronoiFVM.System(
+        grid,
+        VoronoiFVM.Physics(;
+            flux = exponential_flux!, data = data,
+            breaction = outflow!
+        )
+    )
 
     ## Add species 1 to region 1
     enable_species!(sys, 1, [1])
@@ -69,18 +75,21 @@ function main(; n = 10, Plotter = nothing, D = 0.01, v = 1.0, tend = 100)
     tsol = solve(sys; inival, times = [0, tend], control)
 
     vis = GridVisualizer(; Plotter = Plotter)
-    for i = 1:length(tsol.t)
-        scalarplot!(vis[1, 1], grid, tsol[1, :, i]; flimits = (0, 1),
-                    title = "t=$(tsol.t[i])", show = true)
+    for i in 1:length(tsol.t)
+        scalarplot!(
+            vis[1, 1], grid, tsol[1, :, i]; flimits = (0, 1),
+            title = "t=$(tsol.t[i])", show = true
+        )
         sleep(0.01)
     end
-    tsol
+    return tsol
 end
 
 using Test
 function runtests()
     tsol = main()
     @test maximum(tsol) <= 1.0 && maximum(tsol.u[end]) < 1.0e-20
+    return nothing
 end
 
 end

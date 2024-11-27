@@ -25,7 +25,7 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "9e21fb8c2e288c3d1cd20e13ef8125c337fc3c96a2e51785d2f90258a4846978"
+    input_sha = "c84f3c8a19e61d709220bb0dd25d19bd3efe22e3cef7d4a6dd4e3a890c493c16"
     julia_version = "1.11.1"
 -->
 <pre class='language-julia'><code class='language-julia'>begin
@@ -46,7 +46,7 @@ end</code></pre>
 
 <pre class='language-julia'><code class='language-julia'>function B_Big(x)
     bx = BigFloat(x)
-    Float64(bx / expm1(bx))
+    return Float64(bx / expm1(bx))
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-B_Big">B_Big (generic function with 1 method)</pre>
 
@@ -55,14 +55,14 @@ end</code></pre>
     bone = one(BigFloat)
     bex = exp(bx)
     b = -(x * bex - bex + bone) / ((bex - bone) * (bex - bone))
-    Float64(b)
+    return Float64(b)
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-DB_Big">DB_Big (generic function with 1 method)</pre>
 
 
 <div class="markdown"><h2>Implementation using <code>expm1</code></h2></div>
 
-<pre class='language-julia'><code class='language-julia'>B(x)=x/expm1(x)</code></pre>
+<pre class='language-julia'><code class='language-julia'>B(x) = x / expm1(x)</code></pre>
 <pre class="code-output documenter-example-output" id="var-B">B (generic function with 1 method)</pre>
 
 <h2 id="Approximation-for-small-x"><a class="docs-heading-anchor" href="#Approximation-for-small-x">Approximation for small x</a><a id="Approximation-for-small-x-1"></a><a class="docs-heading-anchor-permalink" href="#Approximation-for-small-x" title="Permalink"></a></h2><div class="markdown">
@@ -80,14 +80,14 @@ end</code></pre>
 <pre class='language-julia'><code class='language-julia'>fbernoulli(nextfloat(0.0))</code></pre>
 <pre class="code-output documenter-example-output" id="var-hash783962">1.0</pre>
 
-<pre class='language-julia'><code class='language-julia'>derivative(B,0.0)</code></pre>
-<pre class="code-output documenter-example-output" id="var-hash498357">NaN</pre>
+<pre class='language-julia'><code class='language-julia'>derivative(B, 0.0)</code></pre>
+<pre class="code-output documenter-example-output" id="var-hash933607">NaN</pre>
 
 <pre class='language-julia'><code class='language-julia'>derivative(fbernoulli, 0.0)</code></pre>
 <pre class="code-output documenter-example-output" id="var-hash649910">-0.5</pre>
 
-<pre class='language-julia'><code class='language-julia'>derivative(B,nextfloat(0.0))</code></pre>
-<pre class="code-output documenter-example-output" id="var-hash573412">NaN</pre>
+<pre class='language-julia'><code class='language-julia'>derivative(B, nextfloat(0.0))</code></pre>
+<pre class="code-output documenter-example-output" id="var-hash760340">NaN</pre>
 
 <pre class='language-julia'><code class='language-julia'>derivative(fbernoulli, nextfloat(0.0))</code></pre>
 <pre class="code-output documenter-example-output" id="var-hash606014">-0.5</pre>
@@ -130,4 +130,4 @@ Revise 3.5.18<br>
 VoronoiFVM 1.25.1
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../nonlinear-solvers/">« Nonlinear solver control</a><a class="docs-footer-nextpage" href="../api-update/">API Updates »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../nonlinear-solvers/">« Nonlinear solver control</a><a class="docs-footer-nextpage" href="../api-update/">API Updates »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

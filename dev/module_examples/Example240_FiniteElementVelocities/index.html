@@ -17,11 +17,13 @@ end
 function inflow_cylindrical(u, qpinfo)
     x = qpinfo.x
     u .= stagnation_flow_cylindrical(x[1], x[2])
+    return nothing
 end
 
 function inflow_cartesian(u, qpinfo)
     x = qpinfo.x
     u .= stagnation_flow_cartesian(x[1], x[2])
+    return nothing
 end
 
 function flux!(f, u, edge, data)
@@ -29,6 +31,7 @@ function flux!(f, u, edge, data)
     bp = fbernoulli(vd)
     bm = fbernoulli(-vd)
     f[1] = data.D * (bp * u[1] - bm * u[2])
+    return nothing
 end
 
 function bconditions!(f, u, node, data)
@@ -46,6 +49,7 @@ function bconditions!(f, u, node, data)
     if node.region == 3
         boundary_dirichlet!(f, u, node, 1, node.region, data.cin)
     end
+    return nothing
 end
 
 mutable struct Data
@@ -57,8 +61,9 @@ mutable struct Data
     Data() = new()
 end</code></pre><p>Calculate the analytical or FEM solution to the stagnation point flow field <span>$\mathbf{v}$</span> and use this as input to solve for the species concentration <span>$u$</span> of the corresponding convection-diffusion system.</p><p>The passed flags regulate the following behavior:</p><ul><li><code>cylindrical_grid</code>:     if true, calculates both the velocity field <span>$\mathbf{v}(r,z)$</span> and the species concentration <span>$u(r,z)$</span> in cylindrical coordinates, assuming rotationally symmetric solutions for both.</li><li><code>usefem</code>:               if true, calculates the velocity field <span>$\mathbf{v}$</span> using the finite element method provided by <a href="https://github.com/chmerdon/ExtendableFEM.jl"><code>ExtendableFEM</code></a>.</li><li><code>reconst</code>:              if true, interpolates the FEM-calculated velocity field onto a &quot;reconstruction&quot; finite element space that provides an exactly divergence-free solution. In a cylindrical grid, this returns not <span>$\mathbf{v}(r,z)$</span>, but <span>$r \, \mathbf{v}(r,z)$</span> as the velocity.</li><li><code>use_different_grids</code>:  if true, calculates the FEM solution of the velocity field on a uniform <code>flowgrid</code> and the species concentration on an adaptively refined <code>chemgrid</code> while still interpolating the calculated velocity correctly onto the <code>chemgrid</code>.</li></ul><pre><code class="language-julia hljs">function main(;
         cylindrical_grid = false, usefem = true, reconst = cylindrical_grid, use_different_grids = false, nref = 1,
-        Plotter = nothing, μ = 1.0e-02, D = 0.01, cin = 1.0, assembly = :edgewise,
-        interpolation_eps = 1.0e-09)
+        Plotter = nothing, μ = 1.0e-2, D = 0.01, cin = 1.0, assembly = :edgewise,
+        interpolation_eps = 1.0e-9
+    )
     H = 1.0
     L = 5.0
 
@@ -68,15 +73,19 @@ end</code></pre><p>Calculate the analytical or FEM solution to the stagnation po
         coord_system = Cartesian2D
     end
 
-    flowgrid = simplexgrid(range(0, L; length = 20 * 2^nref),
-        range(0, H; length = 5 * 2^nref))
+    flowgrid = simplexgrid(
+        range(0, L; length = 20 * 2^nref),
+        range(0, H; length = 5 * 2^nref)
+    )
 
     if use_different_grids
-        h_fine = 1.0e-01
-        X_bottom = geomspace(0.0, L / 2, 5.0e-01, h_fine)
+        h_fine = 1.0e-1
+        X_bottom = geomspace(0.0, L / 2, 5.0e-1, h_fine)
         X_cat = range(L / 2, L; step = h_fine)
-        chemgrid = simplexgrid([X_bottom; X_cat[2:end]],
-            geomspace(0.0, H, 1.0e-03, 1.0e-01))
+        chemgrid = simplexgrid(
+            [X_bottom; X_cat[2:end]],
+            geomspace(0.0, H, 1.0e-3, 1.0e-1)
+        )
         bfacemask!(chemgrid, [L / 2, 0.0], [3 * L / 4, 0.0], 5)
     else
         chemgrid = deepcopy(flowgrid)
@@ -85,7 +94,8 @@ end</code></pre><p>Calculate the analytical or FEM solution to the stagnation po
 
     if usefem
         velocity = compute_velocity(
-            flowgrid, cylindrical_grid, reconst, μ; interpolation_eps)
+            flowgrid, cylindrical_grid, reconst, μ; interpolation_eps
+        )
         DivIntegrator = L2NormIntegrator([div(1)]; quadorder = 2 * 2, resultdim = 1)
         div_v = sqrt(sum(evaluate(DivIntegrator, [velocity])))
         @info &quot;||div(R(v))||_2 = $(div_v)&quot;
@@ -134,8 +144,10 @@ end</code></pre><p>Calculate the analytical or FEM solution to the stagnation po
 
     vis = GridVisualizer(; Plotter = Plotter)
 
-    scalarplot!(vis[1, 1], chemgrid, sol[1, :]; flimits = (0, cin + 1.0e-5),
-        show = true)
+    scalarplot!(
+        vis[1, 1], chemgrid, sol[1, :]; flimits = (0, cin + 1.0e-5),
+        show = true
+    )
 
     minmax = extrema(sol)
     @info &quot;Minimal/maximal values of concentration: $(minmax)&quot;
@@ -148,19 +160,23 @@ function runtests()
     cin = 1.0
     for cylindrical_grid in [false, true]
         sol_analytical, evelo_analytical, bfvelo_analytical, minmax_analytical = main(;
-            cylindrical_grid, cin, usefem = false)
+            cylindrical_grid, cin, usefem = false
+        )
         sol_fem, evelo_fem, bfvelo_fem, minmax_fem = main(;
-            cylindrical_grid, cin, usefem = true)
+            cylindrical_grid, cin, usefem = true
+        )
         @test norm(evelo_analytical .- evelo_fem, Inf) ≤ 1.0e-11
-        @test norm(bfvelo_analytical .- bfvelo_fem, Inf) ≤ 1.0e-09
+        @test norm(bfvelo_analytical .- bfvelo_fem, Inf) ≤ 1.0e-9
         @test norm(sol_analytical .- sol_fem, Inf) ≤ 1.0e-10
-        @test norm(minmax_analytical .- [0.,cin], Inf) ≤ 1.0e-15
-        @test norm(minmax_fem .- [0.,cin], Inf) ≤ 1.0e-11
+        @test norm(minmax_analytical .- [0.0, cin], Inf) ≤ 1.0e-15
+        @test norm(minmax_fem .- [0.0, cin], Inf) ≤ 1.0e-11
     end
+    return nothing
 end
 
 function compute_velocity(
-        flowgrid, cylindrical_grid, reconst, μ = 1.0e-02; interpolation_eps = 1.0e-10)
+        flowgrid, cylindrical_grid, reconst, μ = 1.0e-2; interpolation_eps = 1.0e-10
+    )
     # define finite element spaces
     FE_v, FE_p = H1P2B{2, 2}, L2P1{1}
     reconst_FEType = HDIVBDM2{2}
@@ -174,20 +190,25 @@ function compute_velocity(
     assign_unknown!(Problem, p)
 
     # assign stokes operator
-    assign_operator!(Problem,
+    assign_operator!(
+        Problem,
         BilinearOperator(
             kernel_stokes!, cylindrical_grid ? [id(v), grad(v), id(p)] : [grad(v), id(p)];
             bonus_quadorder = 2, store = false,
-            params = [μ, cylindrical_grid]))
+            params = [μ, cylindrical_grid]
+        )
+    )
 
     # assign Dirichlet boundary conditions on all boundary regions to
     # enforce match with analytical solution
     if cylindrical_grid
         assign_operator!(
-            Problem, InterpolateBoundaryData(v, inflow_cylindrical; regions = [1, 2, 3, 4]))
+            Problem, InterpolateBoundaryData(v, inflow_cylindrical; regions = [1, 2, 3, 4])
+        )
     else
         assign_operator!(
-            Problem, InterpolateBoundaryData(v, inflow_cartesian; regions = [1, 2, 3, 4]))
+            Problem, InterpolateBoundaryData(v, inflow_cartesian; regions = [1, 2, 3, 4])
+        )
     end
 
     velocity_solution = solve(Problem, FES)
@@ -197,12 +218,15 @@ function compute_velocity(
     R = FEVector(FES_reconst)
     if reconst
         if cylindrical_grid
-            lazy_interpolate!(R[1], velocity_solution, [id(v)]; postprocess = multiply_r,
-                bonus_quadorder = 2, eps = interpolation_eps)
+            lazy_interpolate!(
+                R[1], velocity_solution, [id(v)]; postprocess = multiply_r,
+                bonus_quadorder = 2, eps = interpolation_eps
+            )
         else
             lazy_interpolate!(
                 R[1], velocity_solution, [id(v)];
-                bonus_quadorder = 2, eps = interpolation_eps)
+                bonus_quadorder = 2, eps = interpolation_eps
+            )
         end
     else
         return velocity_solution[1]
@@ -241,4 +265,4 @@ function multiply_r(result, input, qpinfo)
     return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example230_BoundaryFlux/">« 103: Boundary flux</a><a class="docs-footer-nextpage" href="../Example301_Laplace3D/">301: 3D Laplace equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example230_BoundaryFlux/">« 103: Boundary flux</a><a class="docs-footer-nextpage" href="../Example301_Laplace3D/">301: 3D Laplace equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

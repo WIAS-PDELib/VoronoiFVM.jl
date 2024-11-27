@@ -83,14 +83,14 @@ function flux_strided(f, u, edge, data)
     du = StrideArray{T}(undef, StaticInt(nspec(data)))
     ipiv = StrideArray{Int}(undef, StaticInt(nspec(data)))
 
-    for ispec = 1:nspec(data)
+    for ispec in 1:nspec(data)
         M[ispec, ispec] = 1.0 / data.DKnudsen[ispec]
         du[ispec] = u[ispec, 1] - u[ispec, 2]
         au[ispec] = 0.5 * (u[ispec, 1] + u[ispec, 2])
     end
 
-    for ispec = 1:nspec(data)
-        for jspec = 1:nspec(data)
+    for ispec in 1:nspec(data)
+        for jspec in 1:nspec(data)
             if ispec != jspec
                 M[ispec, ispec] += au[jspec] / data.DBinary[ispec, jspec]
                 M[ispec, jspec] = -au[ispec] / data.DBinary[ispec, jspec]
@@ -106,9 +106,10 @@ function flux_strided(f, u, edge, data)
         @gc_preserve inplace_linsolve!(M, du)
     end
 
-    for ispec = 1:nspec(data)
+    for ispec in 1:nspec(data)
         f[ispec] = du[ispec]
     end
+    return
 end
 
 function flux_marray(f, u, edge, data)
@@ -120,14 +121,14 @@ function flux_marray(f, u, edge, data)
     du = MVector{nspec(data), T}(undef)
     ipiv = MVector{nspec(data), Int}(undef)
 
-    for ispec = 1:nspec(data)
+    for ispec in 1:nspec(data)
         M[ispec, ispec] = 1.0 / data.DKnudsen[ispec]
         du[ispec] = u[ispec, 1] - u[ispec, 2]
         au[ispec] = 0.5 * (u[ispec, 1] + u[ispec, 2])
     end
 
-    for ispec = 1:nspec(data)
-        for jspec = 1:nspec(data)
+    for ispec in 1:nspec(data)
+        for jspec in 1:nspec(data)
             if ispec != jspec
                 M[ispec, ispec] += au[jspec] / data.DBinary[ispec, jspec]
                 M[ispec, jspec] = -au[ispec] / data.DBinary[ispec, jspec]
@@ -140,32 +141,40 @@ function flux_marray(f, u, edge, data)
     ## Starting with Julia 1.8 one also can use callsite @inline.
     inplace_linsolve!(M, du)
 
-    for ispec = 1:nspec(data)
+    for ispec in 1:nspec(data)
         f[ispec] = du[ispec]
     end
+    return nothing
 end
 
 function bcondition(f, u, node, data)
-    for species = 1:nspec(data)
-        boundary_dirichlet!(f, u, node; species, region = data.diribc[1],
-                            value = species % 2)
-        boundary_dirichlet!(f, u, node; species, region = data.diribc[2],
-                            value = 1 - species % 2)
+    for species in 1:nspec(data)
+        boundary_dirichlet!(
+            f, u, node; species, region = data.diribc[1],
+            value = species % 2
+        )
+        boundary_dirichlet!(
+            f, u, node; species, region = data.diribc[2],
+            value = 1 - species % 2
+        )
     end
+    return nothing
 end
 
-function main(; n = 11, nspec = 5,
-              dim = 2,
-              Plotter = nothing,
-              verbose = false,
-              unknown_storage = :dense,
-              flux = :flux_strided,
-              strategy = nothing,
-              assembly = :cellwise)
+function main(;
+        n = 11, nspec = 5,
+        dim = 2,
+        Plotter = nothing,
+        verbose = false,
+        unknown_storage = :dense,
+        flux = :flux_strided,
+        strategy = nothing,
+        assembly = :cellwise
+    )
     h = 1.0 / convert(Float64, n - 1)
     X = collect(0.0:h:1.0)
     DBinary = Symmetric(fill(0.1, nspec, nspec))
-    for ispec = 1:nspec
+    for ispec in 1:nspec
         DBinary[ispec, ispec] = 0
     end
 
@@ -184,25 +193,26 @@ function main(; n = 11, nspec = 5,
 
     function storage(f, u, node, data)
         f .= u
+        return nothing
     end
 
     _flux = flux == :flux_strided ? flux_strided : flux_marray
 
     data = MyData{nspec}(DBinary, DKnudsen, diribc)
-    sys = VoronoiFVM.System(grid; flux = _flux, storage, bcondition, species = 1:nspec, data, assembly,unknown_storage)
+    sys = VoronoiFVM.System(grid; flux = _flux, storage, bcondition, species = 1:nspec, data, assembly, unknown_storage)
 
     if verbose
         @info "Strategy: $(strategy)"
     end
-    if !isnothing(strategy) && hasproperty(strategy,:precs)
+    if !isnothing(strategy) && hasproperty(strategy, :precs)
         if isa(strategy.precs, BlockPreconBuilder)
-            strategy.precs.partitioning=A->partitioning(sys, Equationwise())
+            strategy.precs.partitioning = A -> partitioning(sys, Equationwise())
         end
-        if isa(strategy.precs, ILUZeroPreconBuilder) && strategy.precs.blocksize!=1
-            strategy.precs.blocksize=nspec
+        if isa(strategy.precs, ILUZeroPreconBuilder) && strategy.precs.blocksize != 1
+            strategy.precs.blocksize = nspec
         end
     end
-    control = SolverControl(method_linear=strategy)
+    control = SolverControl(method_linear = strategy)
     control.maxiters = 500
     if verbose
         @info control.method_linear
@@ -211,19 +221,20 @@ function main(; n = 11, nspec = 5,
     if verbose
         @show norm(u)
     end
-    norm(u)
+    return norm(u)
 end
 
 using Test
 function runtests()
-    strategies = [UMFPACKFactorization(),
-                  KrylovJL_GMRES(precs=LinearSolvePreconBuilder(UMFPACKFactorization())),
-                  KrylovJL_GMRES(precs=BlockPreconBuilder(precs=LinearSolvePreconBuilder(UMFPACKFactorization()))),
-                  KrylovJL_GMRES(precs=BlockPreconBuilder(precs=AMGPreconBuilder())),
-                  KrylovJL_BICGSTAB(precs=BlockPreconBuilder(precs=AMGPreconBuilder())),
-                  KrylovJL_GMRES(precs=ILUZeroPreconBuilder()),
-                  KrylovJL_GMRES(precs=BlockPreconBuilder(precs=ILUZeroPreconBuilder())),
-                  KrylovJL_GMRES(precs=ILUZeroPreconBuilder(blocksize=5)),
+    strategies = [
+        UMFPACKFactorization(),
+        KrylovJL_GMRES(precs = LinearSolvePreconBuilder(UMFPACKFactorization())),
+        KrylovJL_GMRES(precs = BlockPreconBuilder(precs = LinearSolvePreconBuilder(UMFPACKFactorization()))),
+        KrylovJL_GMRES(precs = BlockPreconBuilder(precs = AMGPreconBuilder())),
+        KrylovJL_BICGSTAB(precs = BlockPreconBuilder(precs = AMGPreconBuilder())),
+        KrylovJL_GMRES(precs = ILUZeroPreconBuilder()),
+        KrylovJL_GMRES(precs = BlockPreconBuilder(precs = ILUZeroPreconBuilder())),
+        KrylovJL_GMRES(precs = ILUZeroPreconBuilder(blocksize = 5)),
     ]
 
     val1D = 4.788926530387466
@@ -238,5 +249,7 @@ function runtests()
     @test main(; dim = 2, flux = :flux_marray, assembly = :cellwise) ≈ val2D
     @test main(; dim = 3, flux = :flux_marray, assembly = :cellwise) ≈ val3D
     @test all(map(strategy -> main(; dim = 2, flux = :flux_marray, strategy) ≈ val2D, strategies))
+    return nothing
 end
+
 end

@@ -40,6 +40,7 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     ## between neighboring control volumes
     function flux!(f, u, edge, data)
         f[1] = ϵ * (u[1, 1] - u[1, 2])
+        return nothing
     end
 
     ## Source term
@@ -49,17 +50,21 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
         else
             f[1] = -1
         end
+        return nothing
     end
 
     ## Reaction term
     function reaction!(f, u, node, data)
         f[1] = exp(u[1]) - exp(-u[1])
+        return nothing
     end
 
     ## Create a physics structure
-    physics = VoronoiFVM.Physics(; flux = flux!,
-                                 source = source!,
-                                 reaction = reaction!)
+    physics = VoronoiFVM.Physics(;
+        flux = flux!,
+        source = source!,
+        reaction = reaction!
+    )
 
     ## Create a finite volume system - either
     ## in the dense or  the sparse version.
@@ -90,9 +95,10 @@ using Test
 function runtests()
     testval = 1.5247901344230088
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    return nothing
 end
 
 end

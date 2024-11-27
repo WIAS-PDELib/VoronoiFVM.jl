@@ -16,6 +16,7 @@ import Metis
 ## between neighboring control volumes
 function g!(f, u, edge, data)
     f[1] = u[1, 1] - u[1, 2]
+    return nothing
 end
 
 function main(; Plotter = nothing, n = 5, is_linear = true, assembly = :edgewise)
@@ -23,7 +24,7 @@ function main(; Plotter = nothing, n = 5, is_linear = true, assembly = :edgewise
     ispec = 1
     X = collect(0:(1.0 / n):1)
     grid = simplexgrid(X, X)
-    grid=partition(grid, PlainMetisPartitioning(npart=20))
+    grid = partition(grid, PlainMetisPartitioning(npart = 20))
     @show grid
     physics = VoronoiFVM.Physics(; flux = g!)
     sys = VoronoiFVM.System(grid, physics; is_linear = is_linear, assembly = assembly)
@@ -34,7 +35,7 @@ function main(; Plotter = nothing, n = 5, is_linear = true, assembly = :edgewise
     nf = nodeflux(sys, solution)
     vis = GridVisualizer(; Plotter = Plotter)
     scalarplot!(vis, grid, solution[1, :]; clear = true, colormap = :summer)
-    vectorplot!(vis, grid, nf[:, 1, :]; clear = false, vscale = 0.5, rasterpoints=10)
+    vectorplot!(vis, grid, nf[:, 1, :]; clear = false, vscale = 0.5, rasterpoints = 10)
     reveal(vis)
     return norm(solution) + norm(nf)
 end
@@ -46,7 +47,8 @@ function runtests()
     testval = 9.63318042491699
 
     @test main(; assembly = :edgewise) ≈ testval &&
-          main(; assembly = :cellwise) ≈ testval
+        main(; assembly = :cellwise) ≈ testval
+    return nothing
 end
 
 end

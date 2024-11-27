@@ -2,18 +2,18 @@
 # ([source code](@__SOURCE_URL__))
 #
 # Solve the nonlinear coupled reaction diffusion problem
-# 
+#
 # ```math
 # -\nabla (0.01+2u_2)\nabla u_1 + u_1u_2= 0.0001(0.01+x)
 # ```
-# 
+#
 # ```math
 # -\nabla (0.01+2u_1)\nabla u_2 - u_1u_2 = 0.0001(1.01-x)
 # ```
-# 
-# 
+#
+#
 # in $\Omega=(0,1)$ with boundary condition $u_1(0)=1$, $u_2(0)=0$ and $u_1(1)=1$, $u_2(1)=1$.
-# 
+#
 
 module Example110_ReactionDiffusion1D_TwoSpecies
 
@@ -29,23 +29,30 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
     eps::Vector{Float64} = [1.0, 1.0]
 
     physics = VoronoiFVM.Physics(
-                                 ; reaction = function (f, u, node, data)
-                                     f[1] = u[1] * u[2]
-                                     f[2] = -u[1] * u[2]
-                                 end,
-                                 flux = function (f, u, edge, data)
-                                     nspecies = 2
-                                     f[1] = eps[1] * (u[1, 1] - u[1, 2]) *
-                                            (0.01 + u[2, 1] + u[2, 2])
-                                     f[2] = eps[2] * (u[2, 1] - u[2, 2]) *
-                                            (0.01 + u[1, 1] + u[1, 2])
-                                 end, source = function (f, node, data)
-                                     f[1] = 1.0e-4 * (0.01 + node[1])
-                                     f[2] = 1.0e-4 * (0.01 + 1.0 - node[1])
-                                 end, storage = function (f, u, node, data)
-                                     f[1] = u[1]
-                                     f[2] = u[2]
-                                 end)
+        ; reaction = function (f, u, node, data)
+            f[1] = u[1] * u[2]
+            f[2] = -u[1] * u[2]
+            return nothing
+        end,
+        flux = function (f, u, edge, data)
+            nspecies = 2
+            f[1] = eps[1] * (u[1, 1] - u[1, 2]) *
+                (0.01 + u[2, 1] + u[2, 2])
+            f[2] = eps[2] * (u[2, 1] - u[2, 2]) *
+                (0.01 + u[1, 1] + u[1, 2])
+            return nothing
+        end,
+        source = function (f, node, data)
+            f[1] = 1.0e-4 * (0.01 + node[1])
+            f[2] = 1.0e-4 * (0.01 + 1.0 - node[1])
+            return nothing
+        end,
+        storage = function (f, u, node, data)
+            f[1] = u[1]
+            f[2] = u[2]
+            return nothing
+        end
+    )
 
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage)
 
@@ -70,8 +77,10 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
         eps = [xeps, xeps]
         U = solve(sys; inival = U, control)
         scalarplot!(p[1, 1], grid, U[1, :]; clear = true, title = "U1, eps=$(xeps)")
-        scalarplot!(p[2, 1], grid, U[2, :]; clear = true, title = "U2, eps=$(xeps)",
-                    reveal = true)
+        scalarplot!(
+            p[2, 1], grid, U[2, :]; clear = true, title = "U2, eps=$(xeps)",
+            reveal = true
+        )
         sleep(0.2)
         u5 = U[5]
     end
@@ -83,8 +92,10 @@ function runtests()
     testval = 0.7117546972922056
 
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+
+    return nothing
 end
 end

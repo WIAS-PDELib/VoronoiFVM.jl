@@ -6,30 +6,37 @@ using VoronoiFVM
 using ExtendableGrids: geomspace, simplexgrid
 using GridVisualize
 
-function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
-              L = 1.0, R = 1.0, D = 1.0, C = 1.0,
-              ω0 = 1.0e-3, ω1 = 5.0e1)</code></pre><p>Create array which is refined close to 0</p><pre><code class="language-julia hljs">    h0 = 0.005 / 2.0^nref
+function main(;
+        nref = 0, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
+        L = 1.0, R = 1.0, D = 1.0, C = 1.0,
+        ω0 = 1.0e-3, ω1 = 5.0e1
+    )</code></pre><p>Create array which is refined close to 0</p><pre><code class="language-julia hljs">    h0 = 0.005 / 2.0^nref
     h1 = 0.1 / 2.0^nref
 
     X = geomspace(0, L, h0, h1)</code></pre><p>Create discretitzation grid</p><pre><code class="language-julia hljs">    grid = simplexgrid(X)</code></pre><p>Create and fill data</p><pre><code class="language-julia hljs">    data = (R = R, D = D, C = C)</code></pre><p>Declare constitutive functions</p><pre><code class="language-julia hljs">    flux = function (f, u, edge, data)
         f[1] = data.D * (u[1, 1] - u[1, 2])
+        return nothing
     end
 
     storage = function (f, u, node, data)
         f[1] = data.C * u[1]
+        return nothing
     end
 
     reaction = function (f, u, node, data)
         f[1] = data.R * u[1]
+        return nothing
     end
 
     excited_bc = 1
     excited_bcval = 1.0
     excited_spec = 1
-    meas_bc = 2</code></pre><p>Create physics struct</p><pre><code class="language-julia hljs">    physics = VoronoiFVM.Physics(; data = data,
-                                 flux = flux,
-                                 storage = storage,
-                                 reaction = reaction)</code></pre><p>Create discrete system and enable species</p><pre><code class="language-julia hljs">    sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage, assembly = assembly)
+    meas_bc = 2</code></pre><p>Create physics struct</p><pre><code class="language-julia hljs">    physics = VoronoiFVM.Physics(;
+        data = data,
+        flux = flux,
+        storage = storage,
+        reaction = reaction
+    )</code></pre><p>Create discrete system and enable species</p><pre><code class="language-julia hljs">    sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage, assembly = assembly)
 
     enable_species!(sys, excited_spec, [1])</code></pre><p>Create test functions for current measurement</p><pre><code class="language-julia hljs">    factory = TestFunctionFactory(sys)
     measurement_testfunction = testfunction(factory, [excited_bc], [meas_bc])
@@ -42,13 +49,13 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
     function meas_stdy(meas, U)
         u = reshape(U, sys)
         meas[1] = -VoronoiFVM.integrate_stdy(sys, measurement_testfunction, u)[excited_spec]
-        nothing
+        return nothing
     end
 
     function meas_tran(meas, U)
         u = reshape(U, sys)
         meas[1] = -VoronoiFVM.integrate_tran(sys, measurement_testfunction, u)[excited_spec]
-        nothing
+        return nothing
     end
 
     dmeas_stdy = measurement_derivative(sys, meas_stdy, steadystate)
@@ -70,21 +77,26 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
     end
 
     p = GridVisualizer(; Plotter = Plotter)
-    scalarplot!(p, real(allIxL), imag(allIxL); label = &quot;exact&quot;, color = :red,
-                linestyle = :dot)
-    scalarplot!(p, real(allIL), imag(allIL); label = &quot;calc&quot;, show = true, clear = false,
-                color = :blue, linestyle = :solid)
+    scalarplot!(
+        p, real(allIxL), imag(allIxL); label = &quot;exact&quot;, color = :red,
+        linestyle = :dot
+    )
+    scalarplot!(
+        p, real(allIL), imag(allIL); label = &quot;calc&quot;, show = true, clear = false,
+        color = :blue, linestyle = :solid
+    )
 
-    sum(allIL)
+    return sum(allIL)
 end
 
 using Test
 function runtests()
     testval = 57.92710286186797 + 23.163945443946027im
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &amp;&amp;
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &amp;&amp;
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &amp;&amp;
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &amp;&amp;
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &amp;&amp;
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example125_TestFunctions1D/">« 125: Terminal flux calculation via test functions</a><a class="docs-footer-nextpage" href="../Example151_Impedance1D/">151: Impedance calculation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example125_TestFunctions1D/">« 125: Terminal flux calculation via test functions</a><a class="docs-footer-nextpage" href="../Example151_Impedance1D/">151: Impedance calculation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

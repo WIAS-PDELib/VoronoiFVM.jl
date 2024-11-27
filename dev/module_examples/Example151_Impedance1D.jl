@@ -36,11 +36,13 @@ using ExtendableGrids: geomspace, simplexgrid
 using GridVisualize
 using OrdinaryDiffEqSDIRK
 
-function main(; nref = 0, Plotter = nothing, verbose = false,
-              unknown_storage = :sparse, assembly = :edgewise,
-              time_embedding = :none,
-              L = 1.0, R = 1.0, D = 1.0, C = 1.0,
-              ω0 = 1.0e-3, ω1 = 5.0e1)
+function main(;
+        nref = 0, Plotter = nothing, verbose = false,
+        unknown_storage = :sparse, assembly = :edgewise,
+        time_embedding = :none,
+        L = 1.0, R = 1.0, D = 1.0, C = 1.0,
+        ω0 = 1.0e-3, ω1 = 5.0e1
+    )
 
     # Create array which is refined close to 0
     h0 = 0.005 / 2.0^nref
@@ -57,17 +59,20 @@ function main(; nref = 0, Plotter = nothing, verbose = false,
     # Declare constitutive functions
     flux = function (f, u, edge, data)
         f[1] = data.D * (u[1, 1] - u[1, 2])
+        return nothing
     end
 
     storage = function (f, u, node, data)
         f[1] = data.C * u[1]
+        return nothing
     end
 
     reaction = function (f, u, node, data)
         f[1] = data.R * u[1]
+        return nothing
     end
 
-    excited_bc= 1
+    excited_bc = 1
     excited_bcval = 1.0
     excited_spec = 1
     meas_bc = 2
@@ -76,34 +81,37 @@ function main(; nref = 0, Plotter = nothing, verbose = false,
         p = parameters(u)
         boundary_dirichlet!(f, u, node; region = excited_bc, value = p[1])
         boundary_dirichlet!(f, u, node; region = meas_bc, value = 0.0)
+        return nothing
     end
 
     # Create discrete system and enable species
-    sys = VoronoiFVM.System(grid; unknown_storage = unknown_storage,
-                            data = data,
-                            flux = flux,
-                            storage = storage,
-                            reaction = reaction,
-                            bcondition = bc,
-                            nparams = 1,
-                            species = 1, assembly = assembly)
+    sys = VoronoiFVM.System(
+        grid; unknown_storage = unknown_storage,
+        data = data,
+        flux = flux,
+        storage = storage,
+        reaction = reaction,
+        bcondition = bc,
+        nparams = 1,
+        species = 1, assembly = assembly
+    )
 
     # Create test functions for current measurement
 
     factory = TestFunctionFactory(sys)
     measurement_testfunction = testfunction(factory, [excited_bc], [meas_bc])
 
-    tend=1.0
+    tend = 1.0
     if time_embedding == :builtin
-        tsol=solve(sys; inival = 0.0, params = [1.0], times=(0.0,tend),force_first_step=true)
-        steadystate=tsol.u[end]
+        tsol = solve(sys; inival = 0.0, params = [1.0], times = (0.0, tend), force_first_step = true)
+        steadystate = tsol.u[end]
     elseif time_embedding == :ordinarydiffeq
-        inival=unknowns(sys,inival=0)
-        problem = ODEProblem(sys,inival,(0,tend); params = [1.0])
-        odesol = solve(problem,ImplicitEuler())
-        tsol=reshape(odesol,sys)
-        steadystate=tsol.u[end]
-    elseif time_embedding==:none
+        inival = unknowns(sys, inival = 0)
+        problem = ODEProblem(sys, inival, (0, tend); params = [1.0])
+        odesol = solve(problem, ImplicitEuler())
+        tsol = reshape(odesol, sys)
+        steadystate = tsol.u[end]
+    elseif time_embedding == :none
         steadystate = solve(sys; inival = 0.0, params = [1.0])
     else
         error("time_embedding must be one of :builtin, :ordinarydiffeq, :none")
@@ -112,13 +120,13 @@ function main(; nref = 0, Plotter = nothing, verbose = false,
     function meas_stdy(meas, U)
         u = reshape(U, sys)
         meas[1] = -VoronoiFVM.integrate_stdy(sys, measurement_testfunction, u)[excited_spec]
-        nothing
+        return nothing
     end
 
     function meas_tran(meas, U)
         u = reshape(U, sys)
         meas[1] = -VoronoiFVM.integrate_tran(sys, measurement_testfunction, u)[excited_spec]
-        nothing
+        return nothing
     end
 
     dmeas_stdy = measurement_derivative(sys, meas_stdy, steadystate)
@@ -168,12 +176,16 @@ function main(; nref = 0, Plotter = nothing, verbose = false,
     end
 
     vis = GridVisualizer(; Plotter = Plotter)
-    scalarplot!(vis, real(allIxL), imag(allIxL); label = "exact", color = :red,
-                linestyle = :dot)
-    scalarplot!(vis, real(allIL), imag(allIL); label = "calc", show = true, clear = false,
-                color = :blue, linestyle = :solid)
+    scalarplot!(
+        vis, real(allIxL), imag(allIxL); label = "exact", color = :red,
+        linestyle = :dot
+    )
+    scalarplot!(
+        vis, real(allIL), imag(allIL); label = "calc", show = true, clear = false,
+        color = :blue, linestyle = :solid
+    )
 
-    sum(allIL)
+    return sum(allIL)
 end
 
 using Test
@@ -181,11 +193,12 @@ function runtests()
     testval = 57.92710286186797 + 23.163945443946027im
     for unknown_storage in (:sparse, :dense)
         for assembly in (:edgewise, :cellwise)
-            for time_embedding  in (:none, :builtin, :ordinarydiffeq)
+            for time_embedding in (:none, :builtin, :ordinarydiffeq)
                 @test main(; unknown_storage, assembly, time_embedding) ≈ testval
             end
         end
     end
+    return nothing
 end
 
 end

@@ -39,8 +39,10 @@ function main(; nref = 0, gridname = nothing, Plotter = nothing, D = 0.01, v = 1
     if !isnothing(gridname)
         grid = simplexgrid(gridname)
     else
-        grid = simplexgrid(range(0, L; length = 10 * 2^nref),
-                           range(0, H; length = 10 * 2^nref))
+        grid = simplexgrid(
+            range(0, L; length = 10 * 2^nref),
+            range(0, H; length = 10 * 2^nref)
+        )
         bfacemask!(grid, [0, H], [0.25L, H], 5)
     end
     circular_symmetric!(grid)
@@ -55,12 +57,14 @@ function main(; nref = 0, gridname = nothing, Plotter = nothing, D = 0.01, v = 1
         bp = fbernoulli(vd)
         bm = fbernoulli(-vd)
         f[1] = D * (bp * u[1] - bm * u[2])
+        return nothing
     end
 
     function outflow!(f, u, node, data)
         if node.region == Γ_out
             f[1] = bfvelo[node.ibnode, node.ibface] * u[1]
         end
+        return nothing
     end
 
     ispec = 1
@@ -92,7 +96,7 @@ function main(; nref = 0, gridname = nothing, Plotter = nothing, D = 0.01, v = 1
     div = VoronoiFVM.calc_divergences(sys, evelo, bfvelo)
     test4 = all(x -> abs(x) < 1.0e-12, div)
 
-    test1 && test2 && test3 && test4
+    return test1 && test2 && test3 && test4
 end
 
 using Test
@@ -104,6 +108,7 @@ function runtests()
         test0 = test0 && main(; assembly = :edgewise, gridname) && main(; assembly = :cellwise, gridname)
     end
     @test test0 && main(; assembly = :edgewise) && main(; assembly = :cellwise)
+    return nothing
 end
 
 end

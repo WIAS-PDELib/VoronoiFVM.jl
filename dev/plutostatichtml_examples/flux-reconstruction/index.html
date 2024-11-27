@@ -25,7 +25,7 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "4524b6eeea895963049c79adc8d9eefff49e514ed789573f292d7f5c310de14c"
+    input_sha = "90268e3ce3b287eda63084a3ce03631af448e4612bb2830652fd66b9b6210d6f"
     julia_version = "1.11.1"
 -->
 
@@ -58,13 +58,15 @@ end;</code></pre>
 
 <pre class='language-julia'><code class='language-julia'>function swiss_cheese_2d()
     function circlehole!(builder, center, radius; n = 20)
-        points = [point!(builder, center[1] + radius * sin(t), center[2] + radius * cos(t))
-                  for t in range(0, 2π; length = n)]
-        for i = 1:(n - 1)
+        points = [
+            point!(builder, center[1] + radius * sin(t), center[2] + radius * cos(t))
+                for t in range(0, 2π; length = n)
+        ]
+        for i in 1:(n - 1)
             facet!(builder, points[i], points[i + 1])
         end
         facet!(builder, points[end], points[1])
-        holepoint!(builder, center)
+        return holepoint!(builder, center)
     end
 
     builder = SimplexGridBuilder(; Generator = Triangulate)
@@ -83,24 +85,26 @@ end;</code></pre>
     facet!(builder, p3, p4)
     facet!(builder, p4, p1)
 
-    holes = [1.0 2.0
-             8.0 9.0
-             2.0 8.0
-             8.0 4.0
-             9.0 1.0
-             3.0 4.0
-             4.0 6.0
-             7.0 9.0
-             4.0 7.0
-             7.0 5.0
-             2.0 1.0
-             4.0 1.0
-             4.0 8.0
-             3.0 6.0
-             4.0 9.0
-             6.0 9.0
-             3.0 5.0
-             1.0 4.0]'
+    holes = [
+        1.0 2.0
+        8.0 9.0
+        2.0 8.0
+        8.0 4.0
+        9.0 1.0
+        3.0 4.0
+        4.0 6.0
+        7.0 9.0
+        4.0 7.0
+        7.0 5.0
+        2.0 1.0
+        4.0 1.0
+        4.0 8.0
+        3.0 6.0
+        4.0 9.0
+        6.0 9.0
+        3.0 5.0
+        1.0 4.0
+    ]'
 
     radii = [
         0.15,
@@ -123,12 +127,12 @@ end;</code></pre>
         0.25,
     ]
 
-    for i = 1:length(radii)
+    for i in 1:length(radii)
         facetregion!(builder, i + 1)
         circlehole!(builder, holes[:, i], radii[i])
     end
 
-    simplexgrid(builder)
+    return simplexgrid(builder)
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-swiss_cheese_2d">swiss_cheese_2d (generic function with 1 method)</pre>
 
@@ -166,6 +170,7 @@ end</code></pre>
     boundary_dirichlet!(y, u, bnode; region = 2, value = 10.0)
     boundary_dirichlet!(y, u, bnode; region = 3, value = 0.0)
     boundary_dirichlet!(y, u, bnode; region = 11, value = data.val11)
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-bc">bc (generic function with 1 method)</pre>
 
@@ -233,7 +238,7 @@ end;</code></pre>
 <code>GridVisualizer(Plotter=CairoMakie)</code>
 
 
-<div class="markdown"><p><span class="tex">\(v_{11}:\)</span><bond def="val11" unique_id="tWopj4KMZL4o"><input max="101" min="1" type="range" value="51"/><script>
+<div class="markdown"><p><span class="tex">\(v_{11}:\)</span><bond def="val11" unique_id="rPg20tLBKJ29"><input max="101" min="1" type="range" value="51"/><script>
 					const input_el = currentScript.previousElementSibling
 					const output_el = currentScript.nextElementSibling
 					const displays = ["0.0", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "3.0", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "4.0", "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "5.0", "5.1", "5.2", "5.3", "5.4", "5.5", "5.6", "5.7", "5.8", "5.9", "6.0", "6.1", "6.2", "6.3", "6.4", "6.5", "6.6", "6.7", "6.8", "6.9", "7.0", "7.1", "7.2", "7.3", "7.4", "7.5", "7.6", "7.7", "7.8", "7.9", "8.0", "8.1", "8.2", "8.3", "8.4", "8.5", "8.6", "8.7", "8.8", "8.9", "9.0", "9.1", "9.2", "9.3", "9.4", "9.5", "9.6", "9.7", "9.8", "9.9", "10.0"]
@@ -281,6 +286,7 @@ end</code></pre>
 <pre class='language-julia'><code class='language-julia'>function bc1d(y, u, bnode, data)
     boundary_dirichlet!(y, u, bnode; region = 1, value = 0.01)
     boundary_dirichlet!(y, u, bnode; region = 2, value = 0.01)
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-bc1d">bc1d (generic function with 1 method)</pre>
 
@@ -291,11 +297,13 @@ end</code></pre>
    ncells =     200
   nbfaces =       2</pre>
 
-<pre class='language-julia'><code class='language-julia'>sys1d = VoronoiFVM.System(grid1d;
-                          flux = flux1d,
-                          bcondition = bc1d,
-                          source = source1d,
-                          species = [1],)</code></pre>
+<pre class='language-julia'><code class='language-julia'>sys1d = VoronoiFVM.System(
+    grid1d;
+    flux = flux1d,
+    bcondition = bc1d,
+    source = source1d,
+    species = [1],
+)</code></pre>
 <pre class="code-output documenter-example-output" id="var-sys1d">VoronoiFVM.System{Float64, Float64, Int32, Int64, Matrix{Int32}}(
   grid = ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=1, nnodes=201, ncells=200,
   nbfaces=2),  
@@ -363,4 +371,4 @@ Triangulate 2.3.4<br>
 VoronoiFVM 1.25.1
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../outflow/">« Outflow boundary conditions</a><a class="docs-footer-nextpage" href="../interfaces1d/">Internal interfaces (1D) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../outflow/">« Outflow boundary conditions</a><a class="docs-footer-nextpage" href="../interfaces1d/">Internal interfaces (1D) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

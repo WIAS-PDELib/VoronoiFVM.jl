@@ -42,6 +42,7 @@ function central_flux!(f, u, edge, data)
     f_diff = data.D * (u[1, 1] - u[1, 2])
     vh = project(edge, data.v)
     f[1] = f_diff + vh * (u[1, 1] + u[1, 2]) / 2
+    return nothing
 end
 
 ## The simple upwind flux corrects the monotonicity properties essentially
@@ -56,6 +57,7 @@ function upwind_flux!(f, u, edge, data)
     else
         f[1] = fdiff + vh * u[1, 2]
     end
+    return nothing
 end
 
 ## The exponential fitting flux has the proper monotonicity properties and
@@ -76,6 +78,7 @@ function exponential_flux!(f, u, edge, data)
     Bplus = data.D * bernoulli(vh / data.D)
     Bminus = data.D * bernoulli(-vh / data.D)
     f[1] = Bminus * u[1, 1] - Bplus * u[1, 2]
+    return nothing
 end
 
 function calculate(grid, data, flux, verbose)
@@ -128,6 +131,7 @@ using Test
 function runtests()
     testval = 2.523569744561089
     @test main() ≈ testval
+    return nothing
 end
 
 end

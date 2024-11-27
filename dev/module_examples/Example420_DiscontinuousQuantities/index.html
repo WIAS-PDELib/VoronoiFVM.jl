@@ -10,19 +10,19 @@ using LinearAlgebra
 function main(; N = 5, Plotter = nothing, unknown_storage = :sparse, assembly = :edgewise)
     XX = collect(0:0.1:1)
     xcoord = XX
-    for i = 1:(N - 1)
+    for i in 1:(N - 1)
         xcoord = glue(xcoord, XX .+ i)
     end
     grid2 = simplexgrid(xcoord)
-    for i = 1:N
+    for i in 1:N
         cellmask!(grid2, [i - 1], [i], i)
     end
-    for i = 1:(N - 1)
+    for i in 1:(N - 1)
         bfacemask!(grid2, [i], [i], i + 2)
     end
 
     params = zeros(2, num_cellregions(grid2))
-    for i = 1:num_cellregions(grid2)
+    for i in 1:num_cellregions(grid2)
         params[1, i] = i
         params[2, i] = 10 * i
     end
@@ -33,28 +33,28 @@ function main(; N = 5, Plotter = nothing, unknown_storage = :sparse, assembly = 
     cspec = ContinuousQuantity(system, 1:N; ispec = 1, id = 1)
 
     # A discontinuous quantity can be introduced as well. by default, each reagion gets a new species number. This can be overwritten by the user.
-    dspec = DiscontinuousQuantity(system, 1:N; regionspec = [2 + i % 2 for i = 1:N], id = 2)</code></pre><p>check 1D array access with quantities</p><pre><code class="language-julia hljs">    carrierList = [cspec dspec]
+    dspec = DiscontinuousQuantity(system, 1:N; regionspec = [2 + i % 2 for i in 1:N], id = 2)</code></pre><p>check 1D array access with quantities</p><pre><code class="language-julia hljs">    carrierList = [cspec dspec]
     numberCarriers = length(carrierList)
 
     params2 = zeros(1, numberCarriers)
 
-    for icc ∈ carrierList
+    for icc in carrierList
         params2[icc] = 2
     end
 
-    for i = 1:numberCarriers
+    for i in 1:numberCarriers
         @assert params2[i] == 2
-    end</code></pre><p>check 2D array access with quantities</p><pre><code class="language-julia hljs">    for i = 1:num_cellregions(grid2)
+    end</code></pre><p>check 2D array access with quantities</p><pre><code class="language-julia hljs">    for i in 1:num_cellregions(grid2)
         @assert params[cspec, i] == i
         @assert params[dspec, i] == 10 * i
     end
 
-    for i = 1:num_cellregions(grid2)
+    for i in 1:num_cellregions(grid2)
         params[cspec, i] = -i
         params[dspec, i] = -10 * i
     end
 
-    for i = 1:num_cellregions(grid2)
+    for i in 1:num_cellregions(grid2)
         @assert params[1, i] == -i
         @assert params[2, i] == -10 * i
     end
@@ -64,6 +64,7 @@ function main(; N = 5, Plotter = nothing, unknown_storage = :sparse, assembly = 
     function flux(f, u, edge, data)
         f[dspec] = u[dspec, 1] - u[dspec, 2]
         f[cspec] = u[cspec, 1] - u[cspec, 2]
+        return nothing
     end
 
     d1 = 1
@@ -80,10 +81,15 @@ function main(; N = 5, Plotter = nothing, unknown_storage = :sparse, assembly = 
             f[dspec, 2] = -react
             f[cspec] = -q1 * u[cspec]
         end
+        return nothing
     end
 
-    physics!(system, VoronoiFVM.Physics(; flux = flux,
-                                        breaction = breaction))
+    physics!(
+        system, VoronoiFVM.Physics(;
+            flux = flux,
+            breaction = breaction
+        )
+    )
 
     # Set boundary conditions
     boundary_dirichlet!(system, dspec, 2, 0.1)
@@ -97,23 +103,28 @@ function main(; N = 5, Plotter = nothing, unknown_storage = :sparse, assembly = 
     cvws = views(U, cspec, subgrids, system)
     vis = GridVisualizer(; resolution = (600, 300), Plotter = Plotter)
     for i in eachindex(dvws)
-        scalarplot!(vis, subgrids[i], dvws[i]; flimits = (-0.5, 1.5), clear = false,
-                    color = :red)
-        scalarplot!(vis, subgrids[i], cvws[i]; flimits = (-0.5, 1.5), clear = false,
-                    color = :green)
+        scalarplot!(
+            vis, subgrids[i], dvws[i]; flimits = (-0.5, 1.5), clear = false,
+            color = :red
+        )
+        scalarplot!(
+            vis, subgrids[i], cvws[i]; flimits = (-0.5, 1.5), clear = false,
+            color = :green
+        )
     end
     reveal(vis)
     I = integrate(system, system.physics.storage, U)
-    sum(I[dspec, :]) + sum(I[cspec, :])
+    return sum(I[dspec, :]) + sum(I[cspec, :])
 end
 
 using Test
 function runtests()
     testval = 4.2
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &amp;&amp;
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &amp;&amp;
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &amp;&amp;
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &amp;&amp;
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &amp;&amp;
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example410_ManySpecies/">« 410: Many Species</a><a class="docs-footer-nextpage" href="../Example421_AbstractQuantities_TestFunctions/">421: Current Calculation for AbstractQuantities »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example410_ManySpecies/">« 410: Many Species</a><a class="docs-footer-nextpage" href="../Example421_AbstractQuantities_TestFunctions/">421: Current Calculation for AbstractQuantities »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

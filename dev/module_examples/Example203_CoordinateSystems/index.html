@@ -9,11 +9,12 @@ using GridVisualize
 function plot(grid, numerical, exact, Plotter)
     vis = GridVisualizer(; Plotter = Plotter, layout = (2, 1))
     scalarplot!(vis[1, 1], grid, numerical[1, :]; title = &quot;numerical&quot;)
-    scalarplot!(vis[2, 1], grid, exact; title = &quot;exact&quot;, show = true)
+    return scalarplot!(vis[2, 1], grid, exact; title = &quot;exact&quot;, show = true)
 end
 
 function flux(f, u, edge, data)
     f[1] = u[1, 1] - u[1, 2]
+    return nothing
 end
 
 &quot;&quot;&quot;
@@ -42,7 +43,7 @@ function maindisk(; nref = 0, r2 = 5.0, Plotter = nothing, assembly = :edgewise)
     sol = solve(sys)
     exact = symlapdisk.(coordinates(grid)[1, :], r2)
     plot(grid, sol, exact, Plotter)
-    norm(sol[1, :] - exact, Inf) &lt; 1.0e-14
+    return norm(sol[1, :] - exact, Inf) &lt; 1.0e-14
 end
 
 &quot;&quot;&quot;
@@ -54,12 +55,13 @@ on disk of radius r2, exact solution is `(r_2^2-r^2)/4`.
 In this case, the discretization appears to be exact.
 &quot;&quot;&quot;
 function maincylinder(;
-                      nref = 0,
-                      r2 = 5.0,
-                      z1 = 0.0,
-                      z2 = 1.0,
-                      Plotter = nothing,
-                      assembly = :edgewise,)
+        nref = 0,
+        r2 = 5.0,
+        z1 = 0.0,
+        z2 = 1.0,
+        Plotter = nothing,
+        assembly = :edgewise,
+    )
     h = 0.1 * 2.0^(-nref)
     R = collect(0:h:r2)
     Z = collect(z1:h:z2)
@@ -71,7 +73,7 @@ function maincylinder(;
     sol = solve(sys)
     exact = symlapdisk.(coordinates(grid)[1, :], r2)
     plot(grid, sol, exact, Plotter)
-    norm(sol[1, :] - exact, Inf) &lt; 1.0e-14
+    return norm(sol[1, :] - exact, Inf) &lt; 1.0e-14
 end
 
 &quot;&quot;&quot;
@@ -83,8 +85,9 @@ on disk of radius r2, exact solution is `(r_2^2-r^2)/4`.
 In this case, the discretization appears to be exact.
 &quot;&quot;&quot;
 function maincylinder_unstruct(;
-                               Plotter = nothing,
-                               assembly = :edgewise)
+        Plotter = nothing,
+        assembly = :edgewise
+    )
     if VERSION &lt; v&quot;1.7&quot;</code></pre><p>no pkdir</p><pre><code class="language-julia hljs">        return true
     end
     nref = 0
@@ -100,7 +103,7 @@ function maincylinder_unstruct(;
     sol = solve(sys)
     exact = symlapdisk.(coordinates(grid)[1, :], r2)
     plot(grid, sol, exact, Plotter)
-    norm(sol[1, :] - exact, Inf) &lt; 0.0012
+    return norm(sol[1, :] - exact, Inf) &lt; 0.0012
 end
 
 &quot;&quot;&quot;
@@ -129,7 +132,7 @@ function mainring(; nref = 0, r1 = 1.0, r2 = 5.0, Plotter = nothing, assembly = 
     sol = solve(sys)
     exact = symlapring.(coordinates(grid)[1, :], r1, r2)
     plot(grid, sol, exact, Plotter)
-    norm(sol[1, :] - exact, Inf) / h^2 &lt; 0.01
+    return norm(sol[1, :] - exact, Inf) / h^2 &lt; 0.01
 end
 
 &quot;&quot;&quot;
@@ -139,13 +142,14 @@ of Dirichlet problem `-Δu=0` on cylindershell between radii r1 and r2,
 with boundary value 1 at r1 and 0 at r2. Test of quadratic convergence.
 &quot;&quot;&quot;
 function maincylindershell(;
-                           nref = 0,
-                           r1 = 1.0,
-                           r2 = 5.0,
-                           z1 = 0.0,
-                           z2 = 1.0,
-                           Plotter = nothing,
-                           assembly = :edgewise,)
+        nref = 0,
+        r1 = 1.0,
+        r2 = 5.0,
+        z1 = 0.0,
+        z2 = 1.0,
+        Plotter = nothing,
+        assembly = :edgewise,
+    )
     h = 0.1 * 2.0^(-nref)
     R = collect(r1:h:r2)
     Z = collect(z1:h:z2)
@@ -158,7 +162,7 @@ function maincylindershell(;
     sol = solve(sys)
     exact = symlapring.(coordinates(grid)[1, :], r1, r2)
     plot(grid, sol, exact, Plotter)
-    norm(sol[1, :] - exact, Inf) / h^2 &lt; 0.01
+    return norm(sol[1, :] - exact, Inf) / h^2 &lt; 0.01
 end
 
 &quot;&quot;&quot;
@@ -187,7 +191,7 @@ function mainsphere(; nref = 0, r2 = 5.0, Plotter = nothing, assembly = :edgewis
     sol = solve(sys)
     exact = symlapsphere.(coordinates(grid)[1, :], r2)
     plot(grid, sol, exact, Plotter)
-    norm(sol[1, :] - exact, Inf) &lt; 1.0e-14
+    return norm(sol[1, :] - exact, Inf) &lt; 1.0e-14
 end
 
 &quot;&quot;&quot;
@@ -205,11 +209,12 @@ of Dirichlet problem `-Δu=0` on sphereshell between radii r1 and r2,
 with boundary value 1 at r1 and 0 at r2. Test of quadratic convergence.
 &quot;&quot;&quot;
 function mainsphereshell(;
-                         nref = 0,
-                         r1 = 1.0,
-                         r2 = 5.0,
-                         Plotter = nothing,
-                         assembly = :edgewise,)
+        nref = 0,
+        r1 = 1.0,
+        r2 = 5.0,
+        Plotter = nothing,
+        assembly = :edgewise,
+    )
     h = 0.1 * 2.0^(-nref)
     R = collect(r1:h:r2)
     grid = simplexgrid(R)
@@ -221,23 +226,24 @@ function mainsphereshell(;
     sol = solve(sys)
     exact = symlapsphereshell.(coordinates(grid)[1, :], r1, r2)
     plot(grid, sol, exact, Plotter)
-    norm(sol[1, :] - exact, Inf) / h^2 &lt; 0.04
-end</code></pre><p>Called by unit test</p><pre><code class="language-julia hljs">using Test#
+    return norm(sol[1, :] - exact, Inf) / h^2 &lt; 0.04
+end</code></pre><p>Called by unit test</p><pre><code class="language-julia hljs">using Test #
 function runtests()
     @test maindisk(; assembly = :edgewise) &amp;&amp;
-          mainring(; assembly = :edgewise) &amp;&amp;
-          maincylinder(; assembly = :edgewise) &amp;&amp;
-          maincylinder_unstruct(; assembly = :edgewise) &amp;&amp;
-          maincylindershell(; assembly = :edgewise) &amp;&amp;
-          mainsphere(; assembly = :edgewise) &amp;&amp;
-          mainsphereshell(; assembly = :edgewise) &amp;&amp;
-          maindisk(; assembly = :cellwise) &amp;&amp;
-          mainring(; assembly = :cellwise) &amp;&amp;
-          maincylinder(; assembly = :cellwise) &amp;&amp;
-          maincylinder_unstruct(; assembly = :cellwise) &amp;&amp;
-          maincylindershell(; assembly = :cellwise) &amp;&amp;
-          mainsphere(; assembly = :cellwise) &amp;&amp;
-          mainsphereshell(; assembly = :cellwise)
+        mainring(; assembly = :edgewise) &amp;&amp;
+        maincylinder(; assembly = :edgewise) &amp;&amp;
+        maincylinder_unstruct(; assembly = :edgewise) &amp;&amp;
+        maincylindershell(; assembly = :edgewise) &amp;&amp;
+        mainsphere(; assembly = :edgewise) &amp;&amp;
+        mainsphereshell(; assembly = :edgewise) &amp;&amp;
+        maindisk(; assembly = :cellwise) &amp;&amp;
+        mainring(; assembly = :cellwise) &amp;&amp;
+        maincylinder(; assembly = :cellwise) &amp;&amp;
+        maincylinder_unstruct(; assembly = :cellwise) &amp;&amp;
+        maincylindershell(; assembly = :cellwise) &amp;&amp;
+        mainsphere(; assembly = :cellwise) &amp;&amp;
+        mainsphereshell(; assembly = :cellwise)
+    return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example201_Laplace2D/">« 201: 2D Laplace equation</a><a class="docs-footer-nextpage" href="../Example204_HagenPoiseuille/">204: 2D Convection in Hagen-Poiseuille flow »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example201_Laplace2D/">« 201: 2D Laplace equation</a><a class="docs-footer-nextpage" href="../Example204_HagenPoiseuille/">204: 2D Convection in Hagen-Poiseuille flow »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

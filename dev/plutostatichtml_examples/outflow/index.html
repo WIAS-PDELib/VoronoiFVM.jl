@@ -25,7 +25,7 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "863567cf662faf77965329dd96e0a296730ca708def5af1e137123a6a6afba00"
+    input_sha = "7cc6962627f99929bcfa94b3de37ca99cbcccd8bd074f3b8e76b9cdcca4d6410"
     julia_version = "1.11.1"
 -->
 <pre class='language-julia'><code class='language-julia'>begin
@@ -89,6 +89,7 @@ end</code></pre>
 
     bp, bm = fbernoulli_pm(vh / data.D)
     y[data.ic] = data.D * (bm * u[data.ic, 1] - bp * u[data.ic, 2])
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-flux">flux (generic function with 1 method)</pre>
 
@@ -96,6 +97,7 @@ end</code></pre>
     boundary_neumann!(y, u, bnode; species = data.ip, region = data.Γ_in, value = data.v_in)
     boundary_dirichlet!(y, u, bnode; species = data.ip, region = data.Γ_out, value = 0)
     boundary_dirichlet!(y, u, bnode; species = data.ic, region = data.Γ_in, value = data.c_in)
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-bcondition">bcondition (generic function with 1 method)</pre>
 
@@ -104,18 +106,21 @@ end</code></pre>
 
 <pre class='language-julia'><code class='language-julia'>function boutflow(y, u, edge, data)
     y[data.ic] = -darcyvelo(u, data) * u[data.ic, outflownode(edge)]
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-boutflow">boutflow (generic function with 1 method)</pre>
 
 <pre class='language-julia'><code class='language-julia'>function flowtransportsystem(grid; kwargs...)
     data = FlowTransportData(; kwargs...)
-    VoronoiFVM.System(grid;
-                      flux,
-                      bcondition,
-                      boutflow,
-                      data,
-                      outflowboundaries = [data.Γ_out],
-                      species = [1, 2],)
+    return VoronoiFVM.System(
+        grid;
+        flux,
+        bcondition,
+        boutflow,
+        data,
+        outflowboundaries = [data.Γ_out],
+        species = [1, 2],
+    )
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-flowtransportsystem">flowtransportsystem (generic function with 1 method)</pre>
 
@@ -124,7 +129,7 @@ end</code></pre>
     tfact = TestFunctionFactory(sys)
     tf_in = testfunction(tfact, [data.Γ_out], [data.Γ_in])
     tf_out = testfunction(tfact, [data.Γ_in], [data.Γ_out])
-    (; in = integrate(sys, tf_in, sol), out = integrate(sys, tf_out, sol))
+    return (; in = integrate(sys, tf_in, sol), out = integrate(sys, tf_out, sol))
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-checkinout">checkinout (generic function with 1 method)</pre>
 
@@ -280,4 +285,4 @@ UUIDs 1.11.0<br>
 VoronoiFVM 1.25.1
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../heterogeneous-catalysis/">« Coupling with Catalyst.jl</a><a class="docs-footer-nextpage" href="../flux-reconstruction/">Obtaining vector fields »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../heterogeneous-catalysis/">« Coupling with Catalyst.jl</a><a class="docs-footer-nextpage" href="../flux-reconstruction/">Obtaining vector fields »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

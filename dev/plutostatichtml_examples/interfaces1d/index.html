@@ -25,7 +25,7 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "415568485a27a2c5b33d8a4b31e644f4310b86d10b52798f8acf5938b7220a59"
+    input_sha = "628070e1cac58acd19dc38936047946c33676fa42c5b4a36692bd96911166406"
     julia_version = "1.11.1"
 -->
 <pre class='language-julia'><code class='language-julia'>begin
@@ -99,6 +99,7 @@ end;</code></pre>
     if edge.region == 2
         f[2] = u[2, 1] - u[2, 2]
     end
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-flux!">flux! (generic function with 1 method)</pre>
 
@@ -125,11 +126,11 @@ end</code></pre>
     enable_species!(sys, 2, [2])
 
     ## Set boundary conditions
-    for ispec = 1:2
+    for ispec in 1:2
         boundary_dirichlet!(sys, ispec, 1, g_1)
         boundary_dirichlet!(sys, ispec, 2, g_2)
     end
-    sys
+    return sys
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-make_system">make_system (generic function with 1 method)</pre>
 
@@ -140,7 +141,7 @@ end</code></pre>
     U = solve(sys)
     U1 = view(U[1, :], subgrid1)
     U2 = view(U[2, :], subgrid2)
-    U1, U2
+    return U1, U2
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-mysolve">mysolve (generic function with 1 method)</pre>
 
@@ -149,30 +150,36 @@ end</code></pre>
 
 <pre class='language-julia'><code class='language-julia'>function plot(U1, U2; title = "")
     vis = GridVisualizer(; resolution = (600, 300))
-    scalarplot!(vis,
-                subgrid1,
-                U1;
-                clear = false,
-                show = false,
-                color = :green,
-                label = "u1")
-    scalarplot!(vis,
-                subgrid2,
-                U2;
-                clear = false,
-                show = true,
-                color = :blue,
-                label = "u2",
-                legend = :rt,
-                title = title,
-                flimits = (-0.5, 1.5))
+    scalarplot!(
+        vis,
+        subgrid1,
+        U1;
+        clear = false,
+        show = false,
+        color = :green,
+        label = "u1"
+    )
+    return scalarplot!(
+        vis,
+        subgrid2,
+        U2;
+        clear = false,
+        show = true,
+        color = :blue,
+        label = "u2",
+        legend = :rt,
+        title = title,
+        flimits = (-0.5, 1.5)
+    )
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-plot">plot (generic function with 1 method)</pre>
 
 
 <div class="markdown"><h3>No interface reaction</h3><p>This means we set <span class="tex">\(f_1(u_1,u_2)=0\)</span> and <span class="tex">\(f_2(u_1,u_2)=0\)</span>. </p></div>
 
-<pre class='language-julia'><code class='language-julia'>function noreaction(f, u, node, data) end</code></pre>
+<pre class='language-julia'><code class='language-julia'>function noreaction(f, u, node, data)
+    return nothing
+end</code></pre>
 <pre class="code-output documenter-example-output" id="var-noreaction">noreaction (generic function with 1 method)</pre>
 
 <pre class='language-julia'><code class='language-julia'>system1 = make_system(noreaction);</code></pre>
@@ -193,6 +200,7 @@ end</code></pre>
         f[1] = react
         f[2] = -react
     end
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-mal_reaction">mal_reaction (generic function with 1 method)</pre>
 
@@ -225,6 +233,7 @@ end</code></pre>
         f[1] = react
         f[2] = -react
     end
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-penalty_reaction">penalty_reaction (generic function with 1 method)</pre>
 
@@ -246,6 +255,7 @@ end</code></pre>
         f[1] = react
         f[2] = -react
     end
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-penalty_jump_reaction">penalty_jump_reaction (generic function with 1 method)</pre>
 
@@ -264,6 +274,7 @@ end</code></pre>
         f[1] = react
         f[2] = react
     end
+    return nothing
 end;</code></pre>
 
 
@@ -291,6 +302,7 @@ end;</code></pre>
         f[1] = react
         f[2] = -react
     end
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-thinlayer">thinlayer (generic function with 1 method)</pre>
 
@@ -318,14 +330,14 @@ end</code></pre>
 <pre class='language-julia'><code class='language-julia'>begin
     XX = collect(0:0.1:1)
     local xcoord = XX
-    for i = 1:(N - 1)
+    for i in 1:(N - 1)
         xcoord = glue(xcoord, XX .+ i)
     end
     grid2 = simplexgrid(xcoord)
-    for i = 1:N
+    for i in 1:N
         cellmask!(grid2, [i - 1], [i], i)
     end
-    for i = 1:(N - 1)
+    for i in 1:(N - 1)
         bfacemask!(grid2, [i], [i], i + 2)
     end
 end</code></pre>
@@ -353,7 +365,7 @@ end</code></pre>
 
 <div class="markdown"><p>A discontinuous quantity can be introduced as well. by default, each reagion gets a new species number. This can be overwritten by the user. It is important that the speces numbers of neighboring regions differ.</p></div>
 
-<pre class='language-julia'><code class='language-julia'>const dspec = DiscontinuousQuantity(system6, 1:N; regionspec = [2 + i % 2 for i = 1:N])</code></pre>
+<pre class='language-julia'><code class='language-julia'>const dspec = DiscontinuousQuantity(system6, 1:N; regionspec = [2 + i % 2 for i in 1:N])</code></pre>
 <pre class="code-output documenter-example-output" id="var-const dspec">DiscontinuousQuantity{Int32}(Int32[3, 2, 3, 2, 3, 2], 2)</pre>
 
 
@@ -361,7 +373,7 @@ end</code></pre>
 
 <pre class='language-julia'><code class='language-julia'>function flux2(f, u, edge, data)
     f[dspec] = u[dspec, 1] - u[dspec, 2]
-    f[cspec] = u[cspec, 1] - u[cspec, 2]
+    return f[cspec] = u[cspec, 1] - u[cspec, 2]
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-flux2">flux2 (generic function with 1 method)</pre>
 
@@ -376,6 +388,7 @@ end</code></pre>
 
         f[cspec] = -q1
     end
+    return nothing
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-breaction2">breaction2 (generic function with 1 method)</pre>
 
@@ -421,23 +434,27 @@ end;</code></pre>
     dvws = VoronoiFVM.views(U, dspec, allsubgrids, system6)
     cvws = VoronoiFVM.views(U, cspec, allsubgrids, system6)
     vis = GridVisualizer(; resolution = (600, 300), legend = :rt)
-    scalarplot!(vis,
-                allsubgrids,
-                grid2,
-                dvws;
-                flimits = (-0.5, 1.5),
-                clear = false,
-                color = :red,
-                label = "discontinuous species")
-    scalarplot!(vis,
-                allsubgrids,
-                grid2,
-                cvws;
-                flimits = (-0.5, 1.5),
-                clear = false,
-                color = :green,
-                label = "continuous species")
-    reveal(vis)
+    scalarplot!(
+        vis,
+        allsubgrids,
+        grid2,
+        dvws;
+        flimits = (-0.5, 1.5),
+        clear = false,
+        color = :red,
+        label = "discontinuous species"
+    )
+    scalarplot!(
+        vis,
+        allsubgrids,
+        grid2,
+        cvws;
+        flimits = (-0.5, 1.5),
+        clear = false,
+        color = :green,
+        label = "continuous species"
+    )
+    return reveal(vis)
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-plot2">plot2 (generic function with 1 method)</pre>
 
@@ -475,4 +492,4 @@ Test 1.11.0<br>
 VoronoiFVM 1.25.1
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../flux-reconstruction/">« Obtaining vector fields</a><a class="docs-footer-nextpage" href="../problemcase/">A case for caution »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../flux-reconstruction/">« Obtaining vector fields</a><a class="docs-footer-nextpage" href="../problemcase/">A case for caution »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

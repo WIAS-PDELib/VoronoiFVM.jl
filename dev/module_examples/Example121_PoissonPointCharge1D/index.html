@@ -7,8 +7,10 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
-function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = :sparse,
-              brea = false, assembly = :edgewise)
+function main(;
+        nref = 0, Plotter = nothing, verbose = false, unknown_storage = :sparse,
+        brea = false, assembly = :edgewise
+    )
 
     # Create grid in (-1,1) refined around 0
     hmax = 0.2 / 2.0^nref
@@ -30,9 +32,11 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
 
     function flux!(f, u, edge, data)
         f[1] = u[1, 1] - u[1, 2]
+        return nothing
     end
     function storage!(f, u, node, data)
         f[1] = u[1]
+        return nothing
     end
 
     # Define boundary reaction defining charge
@@ -41,12 +45,15 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
         if node.region == 3
             f[1] = -Q
         end
+        return nothing
     end
 
     # Create physics
-    physics = VoronoiFVM.Physics(; flux = flux!,
-                                 storage = storage!,
-                                 breaction = breaction!)
+    physics = VoronoiFVM.Physics(;
+        flux = flux!,
+        storage = storage!,
+        breaction = breaction!
+    )
 
     # Create system
     sys = VoronoiFVM.System(grid, physics; unknown_storage = :dense, assembly = assembly)
@@ -81,8 +88,10 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
 
         # Plot data
 
-        scalarplot!(vis, grid, U[1, :]; title = @sprintf(&quot;Q=%.2f&quot;, q), clear = true,
-                    show = true)
+        scalarplot!(
+            vis, grid, U[1, :]; title = @sprintf(&quot;Q=%.2f&quot;, q), clear = true,
+            show = true
+        )
     end
     return sum(U)
 end
@@ -91,6 +100,7 @@ using Test
 function runtests()
     testval = 20.254591679579015
     @test main(; assembly = :edgewise) ≈ testval &amp;&amp;
-          main(; assembly = :cellwise) ≈ testval
+        main(; assembly = :cellwise) ≈ testval
+    return nothing
 end
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example120_ThreeRegions1D/">« 120: Differing species sets in regions, 1D</a><a class="docs-footer-nextpage" href="../Example125_TestFunctions1D/">125: Terminal flux calculation via test functions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example120_ThreeRegions1D/">« 120: Differing species sets in regions, 1D</a><a class="docs-footer-nextpage" href="../Example125_TestFunctions1D/">125: Terminal flux calculation via test functions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

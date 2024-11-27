@@ -31,9 +31,11 @@ using VoronoiFVM
 using ExtendableGrids: geomspace, simplexgrid
 using GridVisualize
 
-function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
-              L = 1.0, R = 1.0, D = 1.0, C = 1.0,
-              ω0 = 1.0e-3, ω1 = 5.0e1)
+function main(;
+        nref = 0, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
+        L = 1.0, R = 1.0, D = 1.0, C = 1.0,
+        ω0 = 1.0e-3, ω1 = 5.0e1
+    )
 
     # Create array which is refined close to 0
     h0 = 0.005 / 2.0^nref
@@ -50,14 +52,17 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
     # Declare constitutive functions
     flux = function (f, u, edge, data)
         f[1] = data.D * (u[1, 1] - u[1, 2])
+        return nothing
     end
 
     storage = function (f, u, node, data)
         f[1] = data.C * u[1]
+        return nothing
     end
 
     reaction = function (f, u, node, data)
         f[1] = data.R * u[1]
+        return nothing
     end
 
     excited_bc = 1
@@ -66,10 +71,12 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
     meas_bc = 2
 
     # Create physics struct
-    physics = VoronoiFVM.Physics(; data = data,
-                                 flux = flux,
-                                 storage = storage,
-                                 reaction = reaction)
+    physics = VoronoiFVM.Physics(;
+        data = data,
+        flux = flux,
+        storage = storage,
+        reaction = reaction
+    )
     # Create discrete system and enable species
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage, assembly = assembly)
 
@@ -88,13 +95,13 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
     function meas_stdy(meas, U)
         u = reshape(U, sys)
         meas[1] = -VoronoiFVM.integrate_stdy(sys, measurement_testfunction, u)[excited_spec]
-        nothing
+        return nothing
     end
 
     function meas_tran(meas, U)
         u = reshape(U, sys)
         meas[1] = -VoronoiFVM.integrate_tran(sys, measurement_testfunction, u)[excited_spec]
-        nothing
+        return nothing
     end
 
     dmeas_stdy = measurement_derivative(sys, meas_stdy, steadystate)
@@ -144,21 +151,26 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
     end
 
     p = GridVisualizer(; Plotter = Plotter)
-    scalarplot!(p, real(allIxL), imag(allIxL); label = "exact", color = :red,
-                linestyle = :dot)
-    scalarplot!(p, real(allIL), imag(allIL); label = "calc", show = true, clear = false,
-                color = :blue, linestyle = :solid)
+    scalarplot!(
+        p, real(allIxL), imag(allIxL); label = "exact", color = :red,
+        linestyle = :dot
+    )
+    scalarplot!(
+        p, real(allIL), imag(allIL); label = "calc", show = true, clear = false,
+        color = :blue, linestyle = :solid
+    )
 
-    sum(allIL)
+    return sum(allIL)
 end
 
 using Test
 function runtests()
     testval = 57.92710286186797 + 23.163945443946027im
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    return nothing
 end
 
 end

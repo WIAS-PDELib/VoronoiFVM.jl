@@ -17,8 +17,10 @@ function barenblatt(x, t, m)
     return tx * xx^(1.0 / (m - 1.0))
 end
 
-function main(; n = 20, m = 2, Plotter = nothing, verbose = false,
-              unknown_storage = :sparse, tend = 0.01, assembly = :edgewise, solver=Rosenbrock23())
+function main(;
+        n = 20, m = 2, Plotter = nothing, verbose = false,
+        unknown_storage = :sparse, tend = 0.01, assembly = :edgewise, solver = Rosenbrock23()
+    )
 
     # Create a one-dimensional discretization
     h = 1.0 / convert(Float64, n / 2)
@@ -29,16 +31,20 @@ function main(; n = 20, m = 2, Plotter = nothing, verbose = false,
     # between neighboring control volumes
     function flux!(f, u, edg, data)
         f[1] = u[1, 1]^m - u[1, 2]^m
+        return nothing
     end
 
     # Storage term
     function storage!(f, u, node, data)
         f[1] = u[1]
+        return nothing
     end
 
     # Create a physics structure
-    physics = VoronoiFVM.Physics(; flux = flux!,
-                                 storage = storage!)
+    physics = VoronoiFVM.Physics(;
+        flux = flux!,
+        storage = storage!
+    )
 
     # Create a finite volume system - either
     # in the dense or  the sparse version.
@@ -56,20 +62,24 @@ function main(; n = 20, m = 2, Plotter = nothing, verbose = false,
     # Broadcast the initial value
     inival[1, :] .= map(x -&gt; barenblatt(x, t0, m), X)
 
-    problem = ODEProblem(sys,inival,(t0,tend))
-    odesol = solve(problem,solver)
-    tsol=reshape(odesol,sys)
+    problem = ODEProblem(sys, inival, (t0, tend))
+    odesol = solve(problem, solver)
+    tsol = reshape(odesol, sys)
 
 
     p = GridVisualizer(; Plotter = Plotter, layout = (1, 1), fast = true)
-    for i = 1:length(tsol)
+    for i in 1:length(tsol)
         time = tsol.t[i]
-        scalarplot!(p[1, 1], grid, tsol[1, :, i]; title = @sprintf(&quot;t=%.3g&quot;, time),
-                    color = :red, label = &quot;numerical&quot;,
-                    markershape = :circle, markevery = 1)
-        scalarplot!(p[1, 1], grid, map(x -&gt; barenblatt(x, time, m), grid); clear = false,
-                    color = :green,
-                    label = &quot;exact&quot;, markershape = :none)
+        scalarplot!(
+            p[1, 1], grid, tsol[1, :, i]; title = @sprintf(&quot;t=%.3g&quot;, time),
+            color = :red, label = &quot;numerical&quot;,
+            markershape = :circle, markevery = 1
+        )
+        scalarplot!(
+            p[1, 1], grid, map(x -&gt; barenblatt(x, time, m), grid); clear = false,
+            color = :green,
+            label = &quot;exact&quot;, markershape = :none
+        )
         reveal(p)
         sleep(1.0e-2)
     end
@@ -83,6 +93,7 @@ function runtests()
     @test main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval
     @test main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval
     @test main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval
+    return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example107_NonlinearStorage1D/">« 107: 1D Nonlinear Storage</a><a class="docs-footer-nextpage" href="../Example110_ReactionDiffusion1D_TwoSpecies/">110: 1D Reaction Diffusion equation with two species »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example107_NonlinearStorage1D/">« 107: 1D Nonlinear Storage</a><a class="docs-footer-nextpage" href="../Example110_ReactionDiffusion1D_TwoSpecies/">110: 1D Reaction Diffusion equation with two species »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

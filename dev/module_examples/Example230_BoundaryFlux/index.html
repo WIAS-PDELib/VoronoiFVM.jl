@@ -5,11 +5,13 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
-function main(; n = 2 * 10, # n musst be an even number
-              d1 = 5.0, db = 5.0, # prefactors (before diffusive part)
-              kmax = 2.0, cmax = 3.0,
-              Plotter = nothing,
-              unknown_storage = :sparse, assembly = :edgewise)
+function main(;
+        n = 2 * 10, # n musst be an even number
+        d1 = 5.0, db = 5.0, # prefactors (before diffusive part)
+        kmax = 2.0, cmax = 3.0,
+        Plotter = nothing,
+        unknown_storage = :sparse, assembly = :edgewise
+    )
 
     ###########################################################################
     ######################          1D problem           ######################
@@ -36,28 +38,39 @@ function main(; n = 2 * 10, # n musst be an even number
 
     function flux!(f, u, edge, data)
         f[1] = d1 * (u[1, 1] - u[1, 2])
+        return nothing
     end
 
     function reaction!(f, u, node, data)
         f[1] = k1[node.index] * u[1]
+        return nothing
     end
 
     function source!(f, node::VoronoiFVM.Node, data)
         f[1] = c1[node.index]
+        return nothing
     end
 
-    sys_1D = VoronoiFVM.System(grid_1D,
-                               VoronoiFVM.Physics(; flux = flux!, reaction = reaction!,
-                                                  source = source!))</code></pre><p>enable species in only region</p><pre><code class="language-julia hljs">    enable_species!(sys_1D, ispec_1D, [bulk_1D])
+    sys_1D = VoronoiFVM.System(
+        grid_1D,
+        VoronoiFVM.Physics(;
+            flux = flux!, reaction = reaction!,
+            source = source!
+        )
+    )</code></pre><p>enable species in only region</p><pre><code class="language-julia hljs">    enable_species!(sys_1D, ispec_1D, [bulk_1D])
 
     # Stationary solution of both problems
     sol_1D = solve(sys_1D; inival = 0)
 
-    p = GridVisualizer(; Plotter = Plotter, layout = (2, 1), clear = true,
-                       resolution = (800, 500))
+    p = GridVisualizer(;
+        Plotter = Plotter, layout = (2, 1), clear = true,
+        resolution = (800, 500)
+    )
 
-    scalarplot!(p[1, 1], grid_1D, sol_1D[1, :]; show = true,
-                title = &quot;1D calculation (d1 = $d1, kmax = $kmax, cmax = $cmax)&quot;)
+    scalarplot!(
+        p[1, 1], grid_1D, sol_1D[1, :]; show = true,
+        title = &quot;1D calculation (d1 = $d1, kmax = $kmax, cmax = $cmax)&quot;
+    )
 
     ###########################################################################
     ######################          2D problem           ######################
@@ -75,14 +88,17 @@ function main(; n = 2 * 10, # n musst be an even number
     #### discretization functions for bulk species ####
     function flux2D!(f, u, edge, data)
         f[ispec_2D] = d2 * (u[ispec_2D, 1] - u[ispec_2D, 2])
+        return nothing
     end
 
     function reaction2D!(f, u, node, data)
         f[ispec_2D] = k2 * u[ispec_2D]
+        return nothing
     end
 
     function source2D!(f, node, data)
         f[ispec_2D] = c2
+        return nothing
     end
 
     #### discretization functions for boundary species at active boundary ####
@@ -90,6 +106,7 @@ function main(; n = 2 * 10, # n musst be an even number
         if bedge.region == active_boundary
             f[ispec_boundary] = db * (u[ispec_boundary, 1] - u[ispec_boundary, 2])
         end
+        return nothing
     end
 
     function breaction!(f, u, bnode, data)
@@ -102,6 +119,7 @@ function main(; n = 2 * 10, # n musst be an even number
 
             f[ispec_boundary] = kb * u[ispec_boundary]
         end
+        return nothing
     end
 
     function bsource!(f, bnode, data)
@@ -114,23 +132,31 @@ function main(; n = 2 * 10, # n musst be an even number
 
             f[ispec_boundary] = cb
         end
+        return nothing
     end
 
-    sys_2D = VoronoiFVM.System(grid_2D,
-                               VoronoiFVM.Physics(; flux = flux2D!, reaction = reaction2D!,
-                                                  source = source2D!,
-                                                  bflux = bflux!, breaction = breaction!,
-                                                  bsource = bsource!);
-                               unknown_storage = unknown_storage, assembly = assembly)</code></pre><p>enable species in only region</p><pre><code class="language-julia hljs">    enable_species!(sys_2D, ispec_2D, [bulk_2D])
+    sys_2D = VoronoiFVM.System(
+        grid_2D,
+        VoronoiFVM.Physics(;
+            flux = flux2D!, reaction = reaction2D!,
+            source = source2D!,
+            bflux = bflux!, breaction = breaction!,
+            bsource = bsource!
+        );
+        unknown_storage = unknown_storage, assembly = assembly
+    )</code></pre><p>enable species in only region</p><pre><code class="language-julia hljs">    enable_species!(sys_2D, ispec_2D, [bulk_2D])
     enable_boundary_species!(sys_2D, ispec_boundary, [active_boundary])
 
     sol_2D = solve(sys_2D; inival = 0)</code></pre><p>this is for variable transformation, since we consider right outer boundary and want to transform to x-axis.</p><pre><code class="language-julia hljs">    function tran32!(a, b)
         a[1] = b[2]
+        return nothing
     end</code></pre><p>note that if adjusting active_boundary to 3 or 4, then transform needs to be deleted.</p><pre><code class="language-julia hljs">    bgrid_2D = subgrid(grid_2D, [active_boundary]; boundary = true, transform = tran32!)
     sol_bound = view(sol_2D[ispec_boundary, :], bgrid_2D)
 
-    scalarplot!(p[2, 1], bgrid_2D, sol_bound; show = true, cellwise = true,
-                title = &quot;Active boundary in 2D (db = $db, kb = $kmax, cb = $cmax)&quot;)
+    scalarplot!(
+        p[2, 1], bgrid_2D, sol_bound; show = true, cellwise = true,
+        title = &quot;Active boundary in 2D (db = $db, kb = $kmax, cb = $cmax)&quot;
+    )
 
     errorsol = VoronoiFVM.norm(sys_1D, sol_bound - sol_1D&#39;, 2)
 
@@ -140,9 +166,10 @@ end # main
 using Test
 function runtests()
     @test main(; unknown_storage = :dense, assembly = :edgewise) &lt; 1.0e-14 &amp;&amp;
-          main(; unknown_storage = :sparse, assembly = :edgewise) &lt; 1.0e-14 &amp;&amp;
-          main(; unknown_storage = :dense, assembly = :cellwise) &lt; 1.0e-14 &amp;&amp;
-          main(; unknown_storage = :sparse, assembly = :cellwise) &lt; 1.0e-14
+        main(; unknown_storage = :sparse, assembly = :edgewise) &lt; 1.0e-14 &amp;&amp;
+        main(; unknown_storage = :dense, assembly = :cellwise) &lt; 1.0e-14 &amp;&amp;
+        main(; unknown_storage = :sparse, assembly = :cellwise) &lt; 1.0e-14
+    return nothing
 end
 
-end # module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example226_BoundaryIntegral/">« 226: Terminal flux calculation via test functions, nD, boundary reaction</a><a class="docs-footer-nextpage" href="../Example240_FiniteElementVelocities/">240: 2D Convection in quadratic stagnation flow velocity field »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 26 November 2024 12:55">Tuesday 26 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end # module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example226_BoundaryIntegral/">« 226: Terminal flux calculation via test functions, nD, boundary reaction</a><a class="docs-footer-nextpage" href="../Example240_FiniteElementVelocities/">240: 2D Convection in quadratic stagnation flow velocity field »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 27 November 2024 19:36">Wednesday 27 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

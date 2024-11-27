@@ -46,6 +46,7 @@ function classflux!(f, u, edge, data)
     f[iphi] = data.eps * (u[iphi, 1] - u[iphi, 2])
     bp, bm = fbernoulli_pm(u[iphi, 1] - u[iphi, 2])
     f[ic] = bm * u[ic, 1] - bp * u[ic, 2]
+    return nothing
 end
 
 function storage!(f, u, node, data)
@@ -53,6 +54,7 @@ function storage!(f, u, node, data)
     iphi = data.iphi
     f[iphi] = 0
     f[ic] = u[ic]
+    return nothing
 end
 
 function reaction!(f, u, node, data)
@@ -60,16 +62,18 @@ function reaction!(f, u, node, data)
     iphi = data.iphi
     f[iphi] = data.z * (1 - 2 * u[ic])
     f[ic] = 0
+    return nothing
 end
-const eps_reg=1.0e-10
+const eps_reg = 1.0e-10
 function sedanflux!(f, u, edge, data)
     ic = data.ic
     iphi = data.iphi
     f[iphi] = data.eps * (u[iphi, 1] - u[iphi, 2])
-    mu1 = -log1p(max(-1+eps_reg, -u[ic, 1]))
-    mu2 = -log1p(max(-1+eps_reg, -u[ic, 2]))
+    mu1 = -log1p(max(-1 + eps_reg, -u[ic, 1]))
+    mu2 = -log1p(max(-1 + eps_reg, -u[ic, 2]))
     bp, bm = fbernoulli_pm(data.z * 2 * (u[iphi, 1] - u[iphi, 2]) + (mu1 - mu2))
     f[ic] = bm * u[ic, 1] - bp * u[ic, 2]
+    return nothing
 end
 
 function bcondition!(f, u, bnode, data)
@@ -77,17 +81,19 @@ function bcondition!(f, u, bnode, data)
     boundary_dirichlet!(f, u, bnode; species = data.iphi, region = 1, value = V)
     boundary_dirichlet!(f, u, bnode; species = data.iphi, region = 2, value = 0)
     boundary_dirichlet!(f, u, bnode; species = data.ic, region = 2, value = 0.5)
+    return nothing
 end
 
 function main(;
-              n = 20,
-              Plotter = nothing,
-              dlcap = false,
-              verbose = false,
-              phimax = 1,
-              dphi = 1.0e-1,
-              unknown_storage = :sparse,
-              assembly = :edgewise,)
+        n = 20,
+        Plotter = nothing,
+        dlcap = false,
+        verbose = false,
+        phimax = 1,
+        dphi = 1.0e-1,
+        unknown_storage = :sparse,
+        assembly = :edgewise,
+    )
     h = 1.0 / convert(Float64, n)
     grid = simplexgrid(collect(0:h:1))
 
@@ -101,17 +107,20 @@ function main(;
     iphi = data.iphi
 
     physics = VoronoiFVM.Physics(;
-                                 data = data,
-                                 flux = sedanflux!,
-                                 reaction = reaction!,
-                                 breaction = bcondition!,
-                                 storage = storage!,)
+        data = data,
+        flux = sedanflux!,
+        reaction = reaction!,
+        breaction = bcondition!,
+        storage = storage!,
+    )
 
-    sys = VoronoiFVM.System(grid,
-                            physics;
-                            unknown_storage = unknown_storage,
-                            species = [1, 2],
-                            assembly = assembly,)
+    sys = VoronoiFVM.System(
+        grid,
+        physics;
+        unknown_storage = unknown_storage,
+        species = [1, 2],
+        assembly = assembly,
+    )
 
     inival = unknowns(sys)
     @views inival[iphi, :] .= 0
@@ -129,30 +138,36 @@ function main(;
         control.Δu_opt = 0.1
         control.damp_initial = 0.5
 
-        tsol = solve(sys;
-                     method_linear = UMFPACKFactorization(),
-                     inival,
-                     times = [0.0, 10],
-                     control = control,)
+        tsol = solve(
+            sys;
+            method_linear = UMFPACKFactorization(),
+            inival,
+            times = [0.0, 10],
+            control = control,
+        )
 
         vis = GridVisualizer(; Plotter = Plotter, layout = (1, 1), fast = true)
-        for log10t = -4:0.025:0
+        for log10t in -4:0.025:0
             time = 10^(log10t)
             sol = tsol(time)
-            scalarplot!(vis[1, 1],
-                        grid,
-                        sol[iphi, :];
-                        label = "ϕ",
-                        title = @sprintf("time=%.3g", time),
-                        flimits = (0, 5),
-                        color = :green,)
-            scalarplot!(vis[1, 1],
-                        grid,
-                        sol[ic, :];
-                        label = "c",
-                        flimits = (0, 5),
-                        clear = false,
-                        color = :red,)
+            scalarplot!(
+                vis[1, 1],
+                grid,
+                sol[iphi, :];
+                label = "ϕ",
+                title = @sprintf("time=%.3g", time),
+                flimits = (0, 5),
+                color = :green,
+            )
+            scalarplot!(
+                vis[1, 1],
+                grid,
+                sol[ic, :];
+                label = "c",
+                flimits = (0, 5),
+                clear = false,
+                color = :red,
+            )
             reveal(vis)
         end
         return sum(tsol.u[end])
@@ -175,7 +190,7 @@ function main(;
         vis = GridVisualizer(; Plotter = Plotter, layout = (2, 1), fast = true)
         for dir in [1, -1]
             phi = 0.0
-            U.=inival
+            U .= inival
             while phi < phimax
                 data.V = dir * phi
                 U = solve(sys; inival = U, control, time = 1.0)
@@ -186,21 +201,25 @@ function main(;
                 cdl = (Qdelta[iphi] - Q[iphi]) / delta
 
                 if Plotter != nothing
-                    scalarplot!(vis[1, 1],
-                                grid,
-                                U[iphi, :];
-                                label = "ϕ",
-                                title = @sprintf("Δϕ=%.3g", phi),
-                                flimits = (-5, 5),
-                                clear = true,
-                                color = :green,)
-                    scalarplot!(vis[1, 1],
-                                grid,
-                                U[ic, :];
-                                label = "c",
-                                flimits = (0, 5),
-                                clear = false,
-                                color = :red,)
+                    scalarplot!(
+                        vis[1, 1],
+                        grid,
+                        U[iphi, :];
+                        label = "ϕ",
+                        title = @sprintf("Δϕ=%.3g", phi),
+                        flimits = (-5, 5),
+                        clear = true,
+                        color = :green,
+                    )
+                    scalarplot!(
+                        vis[1, 1],
+                        grid,
+                        U[ic, :];
+                        label = "c",
+                        flimits = (0, 5),
+                        clear = false,
+                        color = :red,
+                    )
                 end
                 if dir == 1
                     push!(vplus, dir * phi)
@@ -216,12 +235,14 @@ function main(;
                 v = vcat(reverse(vminus), vplus)
                 c = vcat(reverse(cdlminus), cdlplus)
                 if length(v) >= 2
-                    scalarplot!(vis[2, 1],
-                                v,
-                                c;
-                                color = :green,
-                                clear = false,
-                                title = "C_dl",)
+                    scalarplot!(
+                        vis[2, 1],
+                        v,
+                        c;
+                        color = :green,
+                        clear = false,
+                        title = "C_dl",
+                    )
                 end
 
                 phi += dphi
@@ -236,33 +257,50 @@ end
 using Test
 function runtests()
 
-    
+
     evolval = 18.721369939565655
     dlcapval = 0.025657355479449806
     rtol = 1.0e-5
-    @test isapprox(main(; unknown_storage = :sparse, dlcap = false, assembly = :edgewise),
-                   evolval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :sparse, dlcap = true, assembly = :edgewise),
-                   dlcapval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :dense, dlcap = false, assembly = :edgewise),
-                   evolval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :dense, dlcap = true, assembly = :edgewise),
-                   dlcapval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :sparse, dlcap = false, assembly = :cellwise),
-                   evolval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :sparse, dlcap = true, assembly = :cellwise),
-                   dlcapval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :dense, dlcap = false, assembly = :cellwise),
-                   evolval;
-                   rtol = rtol,)
-    @test isapprox(main(; unknown_storage = :dense, dlcap = true, assembly = :cellwise),
-                   dlcapval;
-                   rtol = rtol,)
+    @test isapprox(
+        main(; unknown_storage = :sparse, dlcap = false, assembly = :edgewise),
+        evolval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :sparse, dlcap = true, assembly = :edgewise),
+        dlcapval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :dense, dlcap = false, assembly = :edgewise),
+        evolval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :dense, dlcap = true, assembly = :edgewise),
+        dlcapval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :sparse, dlcap = false, assembly = :cellwise),
+        evolval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :sparse, dlcap = true, assembly = :cellwise),
+        dlcapval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :dense, dlcap = false, assembly = :cellwise),
+        evolval;
+        rtol = rtol,
+    )
+    @test isapprox(
+        main(; unknown_storage = :dense, dlcap = true, assembly = :cellwise),
+        dlcapval;
+        rtol = rtol,
+    )
+    return nothing
 end
 end

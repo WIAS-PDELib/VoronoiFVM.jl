@@ -26,8 +26,10 @@ using LinearSolve
 import Triangulate
 import Metis
 
-function main(; nref = 0, Plotter = nothing, verbose = "and", unknown_storage = :sparse, assembly = :edgewise,
-              ythin = 0.25)
+function main(;
+        nref = 0, Plotter = nothing, verbose = "and", unknown_storage = :sparse, assembly = :edgewise,
+        ythin = 0.25
+    )
 
     ## Create grid
     b = SimplexGridBuilder(; Generator = Triangulate)
@@ -50,7 +52,7 @@ function main(; nref = 0, Plotter = nothing, verbose = "and", unknown_storage = 
     facet!(b, p02, p00)
 
     grid = simplexgrid(b; maxvolume = 0.01 * 4.0^(-nref))
-    grid=partition(grid, PlainMetisPartitioning(npart=20); nodes=true, edges=true)
+    grid = partition(grid, PlainMetisPartitioning(npart = 20); nodes = true, edges = true)
     @show grid
     ## Describe problem
     iϕ::Int = 1
@@ -63,6 +65,7 @@ function main(; nref = 0, Plotter = nothing, verbose = "and", unknown_storage = 
 
     function storage!(y, u, node, data)
         y[iT] = c * u[iT]
+        return nothing
     end
 
     κ(T) = κ0 * exp(α * (T - T0))
@@ -70,12 +73,14 @@ function main(; nref = 0, Plotter = nothing, verbose = "and", unknown_storage = 
     function flux!(y, u, edge, data)
         y[iϕ] = κ(y[iT]) * (u[iϕ, 1] - u[iϕ, 2])
         y[iT] = λ * (u[iT, 1] - u[iT, 2])
+        return nothing
     end
 
     ## The convention in VoronoiFVM.jl is to have all terms depending on the solution
     ## on the left hand side of the equation. That is why we have the minus sign here.
     function jouleheat!(y, u, edge, data)
         y[iT] = -κ(y[iT]) * (u[iϕ, 1] - u[iϕ, 2]) * (u[iϕ, 1] - u[iϕ, 2])
+        return nothing
     end
 
     function bcondition!(y, u, node, data)
@@ -86,28 +91,33 @@ function main(; nref = 0, Plotter = nothing, verbose = "and", unknown_storage = 
         boundary_robin!(y, u, node; species = iT, region = 2, value = T0, factor = 0.5)
         boundary_robin!(y, u, node; species = iT, region = 3, value = T0, factor = 0.5)
         boundary_robin!(y, u, node; species = iT, region = 4, value = T0, factor = 0.5)
+        return nothing
     end
 
-    sys = VoronoiFVM.System(grid; bcondition = bcondition!, flux = flux!,
-                            edgereaction = jouleheat!, storage = storage!,
-                            species = [iϕ, iT], assembly = assembly)
-    
-    sol = solve(sys; verbose,
-                method_linear = KrylovJL_BICGSTAB(precs=LinearSolvePreconBuilder(UMFPACKFactorization())),
-                keepcurrent_linear =false
-                )
+    sys = VoronoiFVM.System(
+        grid; bcondition = bcondition!, flux = flux!,
+        edgereaction = jouleheat!, storage = storage!,
+        species = [iϕ, iT], assembly = assembly
+    )
+
+    sol = solve(
+        sys; verbose,
+        method_linear = KrylovJL_BICGSTAB(precs = LinearSolvePreconBuilder(UMFPACKFactorization())),
+        keepcurrent_linear = false
+    )
 
     vis = GridVisualizer(; Plotter, layout = (2, 1))
     scalarplot!(vis[1, 1], grid, sol[iϕ, :]; title = "ϕ", colormap = :bwr)
     scalarplot!(vis[2, 1], grid, sol[iT, :]; title = "T", colormap = :hot)
     reveal(vis)
-    norm(sol, Inf)
+    return norm(sol, Inf)
 end
 
 using Test
 function runtests()
     testval = 24.639120035942938
     @test main(; assembly = :edgewise) ≈ testval &&
-          main(; assembly = :cellwise) ≈ testval
+        main(; assembly = :cellwise) ≈ testval
+    return nothing
 end
 end
