@@ -58,12 +58,14 @@ function reaction(y, u, node, data)
     eplus = exp(u[1])
     eminus = 1 / eplus
     y[1] = eplus - eminus
+    return nothing
 end
 
 # ╔═╡ eab04557-5084-4174-b275-b4d4399238e5
 function bc(y, u, node, data)
     boundary_dirichlet!(y, u, node; region = 1, value = 100)
     boundary_dirichlet!(y, u, node; region = 2, value = 0.0)
+    return nothing
 end;
 
 # ╔═╡ 316112fd-6553-494a-8e4a-65b34829891d
@@ -81,12 +83,14 @@ begin
 end;
 
 # ╔═╡ b9bb8020-5470-4964-818c-7f9b3bf2a8b4
-scalarplot(system,
-           sol;
-           resolution = (500, 200),
-           xlabel = "x",
-           ylable = "y",
-           title = "solution")
+scalarplot(
+    system,
+    sol;
+    resolution = (500, 200),
+    xlabel = "x",
+    ylable = "y",
+    title = "solution"
+)
 
 # ╔═╡ b3124c06-1f40-46f5-abee-9c2e8e538162
 md"""
@@ -101,13 +105,15 @@ The history can be plotted:
 
 # ╔═╡ 20e925f3-43fa-4db1-a656-79cf9c1c3303
 function plothistory(h)
-    scalarplot(1:length(h),
-               h;
-               resolution = (500, 200),
-               yscale = :log,
-               xlabel = "step",
-               ylabel = "||δu||_∞",
-               title = "Maximum norm of Newton update")
+    return scalarplot(
+        1:length(h),
+        h;
+        resolution = (500, 200),
+        yscale = :log,
+        xlabel = "step",
+        ylabel = "||δu||_∞",
+        title = "Maximum norm of Newton update"
+    )
 end;
 
 # ╔═╡ ebdc2c82-f72e-4e35-a63f-4ba5154e294f
@@ -197,28 +203,34 @@ If the solution is unsuccessful, the parameter stepsize is halved and solution i
 function pbc(y, u, node, data)
     boundary_dirichlet!(y, u, node; region = 1, value = 100 * embedparam(node))
     boundary_dirichlet!(y, u, node; region = 2, value = 0)
+    return nothing
 end;
 
 # ╔═╡ 89435c65-0520-4430-8727-9d013df6182d
-system2 = VoronoiFVM.System(X;
-                            flux = flux,
-                            reaction = function (y, u, node, data)
-                                reaction(y, u, node, data)
+system2 = VoronoiFVM.System(
+    X;
+    flux = flux,
+    reaction = function (y, u, node, data)
+        reaction(y, u, node, data)
 
-                                y[1] = y[1] * embedparam(node)
-                            end,
-                            bcondition = pbc,
-                            species = 1,);
+        y[1] = y[1] * embedparam(node)
+        return nothing
+    end,
+    bcondition = pbc,
+    species = 1,
+);
 
 # ╔═╡ cb382145-c4f1-4222-aed7-32fa1e3bd7e4
 begin
-    sol2 = solve(system2;
-                 inival = 0,
-                 log = true,
-                 embed = (0, 1),
-                 Δp = 0.1,
-                 Δp_grow = 1.2,
-                 Δu_opt = 15)
+    sol2 = solve(
+        system2;
+        inival = 0,
+        log = true,
+        embed = (0, 1),
+        Δp = 0.1,
+        Δp_grow = 1.2,
+        Δu_opt = 15
+    )
     history2 = history(sol2)
 end
 

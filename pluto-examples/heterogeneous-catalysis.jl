@@ -6,8 +6,12 @@ using InteractiveUtils
 
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
-    quote
-        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+    return quote
+        local iv = try
+            Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value
+        catch
+            b -> missing
+        end
         local el = $(esc(element))
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
         el
@@ -17,10 +21,10 @@ end
 # ╔═╡ f75a3225-c7bf-4031-89c7-a792a592f639
 # Some tricks helping to run the notebook during VoronoiFVM.jl CI
 begin
-	doplots=!haskey(ENV,"VORONOIFVM_RUNTESTS")
+    doplots = !haskey(ENV, "VORONOIFVM_RUNTESTS")
     import Pkg as _Pkg
     haskey(ENV, "PLUTO_PROJECT") && _Pkg.activate(ENV["PLUTO_PROJECT"])
-	using Revise
+    using Revise
 end
 
 # ╔═╡ e04d9162-e6ed-4e9f-86ce-51b5175f8103
@@ -28,21 +32,21 @@ begin
     using SciMLBase: ODEProblem, solve
     using OrdinaryDiffEqLowOrderRK: DP5
     using OrdinaryDiffEqRosenbrock: Rosenbrock23
-    using OrdinaryDiffEqTsit5:Tsit5
+    using OrdinaryDiffEqTsit5: Tsit5
     using Catalyst
     using VoronoiFVM: VoronoiFVM, enable_species!, enable_boundary_species!
-	using VoronoiFVM: ramp, boundary_dirichlet!
-	using ExtendableGrids: simplexgrid
-	using GridVisualize: GridVisualize, GridVisualizer, reveal, scalarplot!, gridplot, available_kwargs
-	if doplots # defined in the Appendix
-      using Plots: Plots, plot, theme
-      using PlotThemes
-      Plots.gr()
-	  Plots.theme(:dark)
-	  GridVisualize.default_plotter!(Plots)
-	end
+    using VoronoiFVM: ramp, boundary_dirichlet!
+    using ExtendableGrids: simplexgrid
+    using GridVisualize: GridVisualize, GridVisualizer, reveal, scalarplot!, gridplot, available_kwargs
+    if doplots # defined in the Appendix
+        using Plots: Plots, plot, theme
+        using PlotThemes
+        Plots.gr()
+        Plots.theme(:dark)
+        GridVisualize.default_plotter!(Plots)
+    end
     import PlutoUI
-	using Test
+    using Test
     PlutoUI.TableOfContents(; depth = 4)
 end
 
@@ -155,7 +159,7 @@ function example1(du, u, p, t)
     (; k_p, k_m) = p
     r1 = k_p * u[1] - k_m * u[2]
     du[1] = -r1
-    du[2] = r1
+    return du[2] = r1
 end
 
 # ╔═╡ b68ec599-6e71-4522-ac1a-03dcd94b7668
@@ -205,7 +209,7 @@ the resulting reaction system. So we use this to build the same system:
 
 # ╔═╡ 6a246460-b389-4737-b264-cecfe19ecd4e
 rn1 = @reaction_network rn1 begin
-	@combinatoric_ratelaws false
+    @combinatoric_ratelaws false
     k_p, A --> B
     k_m, B --> A
 end
@@ -342,14 +346,16 @@ end
 convert(ODESystem, rn3)
 
 # ╔═╡ 5cb92c3c-299f-4077-9ff8-012e24d3f9e8
-p3 = (k_0A = 0.5, k_0B = 1,
-      k_1p = 10, k_1m = 0.1,
-      k_2p = 10, k_2m = 0.1,
-      k_3p = 10, k_3m = 0.1,
-      k_4p = 10, k_4m = 0.1)
+p3 = (
+    k_0A = 0.5, k_0B = 1,
+    k_1p = 10, k_1m = 0.1,
+    k_2p = 10, k_2m = 0.1,
+    k_3p = 10, k_3m = 0.1,
+    k_4p = 10, k_4m = 0.1,
+)
 
 # ╔═╡ 66500aa5-c2ec-4821-a926-658307614dd5
-Cini=40
+Cini = 40
 
 # ╔═╡ 9f20138a-74fd-4468-8c4d-92109f39545a
 u3_ini = (A = 0, B = 0, CA = 0, CB = 0, CAB2 = 0, AB2 = 0, C = Cini)
@@ -373,7 +379,7 @@ ctotal = rn3.C + rn3.CA + rn3.CB + rn3.CAB2
 sol3[ctotal]
 
 # ╔═╡ 58a527cf-2873-4d2d-ae8f-ffbfe6b10e22
-@test sol3[ctotal]≈ fill(Cini,length(sol3))
+@test sol3[ctotal] ≈ fill(Cini, length(sol3))
 
 # ╔═╡ 907c5c4d-e052-49ee-b96c-adcd37a9cf42
 md"""
@@ -468,7 +474,7 @@ rnv = @reaction_network rnv begin
 end
 
 # ╔═╡ f0501240-75e9-425b-8690-81a8284aef28
-odesys=convert(ODESystem, rnv)
+odesys = convert(ODESystem, rnv)
 
 # ╔═╡ 68a4d03f-a526-4d37-a45e-c951432e20e7
 eqns = equations(odesys);
@@ -511,7 +517,7 @@ Grid:
 grid = simplexgrid(0:0.01:1)
 
 # ╔═╡ 8abc6bb4-afe6-42a8-84a6-a38c81d0bcc0
-gridplot(grid, size=(600,100))
+gridplot(grid, size = (600, 100))
 
 # ╔═╡ 794d1fac-3c30-4c11-826b-50e198ddf874
 md"""
@@ -524,10 +530,12 @@ Reaction parameters:
 """
 
 # ╔═╡ bcc319bc-6586-428d-ba56-7ea25b2deed9
-pcat = (k_1p = 50, k_1m = 0.1,
-        k_2p = 50, k_2m = 0.1,
-        k_3p = 10, k_3m = 0.1,
-        k_4p = 50, k_4m = 0.1)
+pcat = (
+    k_1p = 50, k_1m = 0.1,
+    k_2p = 50, k_2m = 0.1,
+    k_3p = 10, k_3m = 0.1,
+    k_4p = 50, k_4m = 0.1,
+)
 
 # ╔═╡ 424a6774-9205-4da8-b8a5-943a50039934
 md"""
@@ -535,10 +543,12 @@ Parameters for the VoronoiFVM system:
 """
 
 # ╔═╡ 5b7ed6f1-0969-4bdd-9c58-676c2e3f3635
-params = (D_A = 1.0,
-          D_B = 1.0,
-          D_AB2 = 1.0,
-          pcat = pcat)
+params = (
+    D_A = 1.0,
+    D_B = 1.0,
+    D_AB2 = 1.0,
+    pcat = pcat,
+)
 
 # ╔═╡ e08ce9e1-2dd7-4852-91e6-75745a67d69f
 md"""
@@ -571,7 +581,7 @@ First, define flux and storage functions for the bulk process:
 function storage(y, u, node, p)
     y[iA] = u[iA]
     y[iB] = u[iB]
-    y[iAB2] = u[iAB2]
+    return y[iAB2] = u[iAB2]
 end
 
 # ╔═╡ 249d1d2a-9dbd-4853-842b-a3efdb5d2012
@@ -579,7 +589,7 @@ function flux(y, u, edge, p)
     (; D_A, D_B, D_AB2) = p
     y[iA] = D_A * (u[iA, 1] - u[iA, 2])
     y[iB] = D_B * (u[iB, 1] - u[iB, 2])
-    y[iAB2] = D_A * (u[iAB2, 1] - u[iAB2, 2])
+    return y[iAB2] = D_A * (u[iAB2, 1] - u[iAB2, 2])
 end
 
 # ╔═╡ d5624271-dd74-480d-9b45-d276185243a9
@@ -592,7 +602,7 @@ function bstorage(y, u, bnode, p)
     y[iC] = u[iC]
     y[iCA] = u[iCA]
     y[iCB] = u[iCB]
-    y[iCAB2] = u[iCAB2]
+    return y[iCAB2] = u[iCAB2]
 end
 
 # ╔═╡ 3ca90bdc-ec53-4aea-b4ee-ecd2c348d262
@@ -608,9 +618,10 @@ instead of `pcat`.
 # ╔═╡ 1cfb9878-453a-438b-9383-ada79b44ad1f
 function catreaction(f, u, bnode, p)
     probv.f(f, u, probv.p, bnode.time)
-    for i = 1:length(f)
+    for i in 1:length(f)
         f[i] = -f[i]
     end
+    return
 end
 
 # ╔═╡ 063f72b8-f021-49a3-bdb2-79aef69fdcff
@@ -623,7 +634,7 @@ function bulkbc(f, u, bnode, p)
     v = ramp(bnode.time; du = (0.0, 1.0), dt = (0.0, 0.01))
     boundary_dirichlet!(f, u, bnode; species = iA, value = v, region = 2)
     boundary_dirichlet!(f, u, bnode; species = iB, value = v, region = 2)
-    boundary_dirichlet!(f, u, bnode; species = iAB2, value = 0, region = 2)
+    return boundary_dirichlet!(f, u, bnode; species = iAB2, value = 0, region = 2)
 end
 
 # ╔═╡ 8374742e-d557-4fef-9ae1-2d8644bbcd6c
@@ -633,10 +644,10 @@ Dispatch the boundary conditions
 
 # ╔═╡ 461b603f-cee2-4731-825b-0a017fed162e
 function breaction(f, u, bnode, p)
-    if bnode.region == 1
-		catreaction(f,u,bnode,p)
+    return if bnode.region == 1
+        catreaction(f, u, bnode, p)
     else
- 		bulkbc(f,u,bnode,p)
+        bulkbc(f, u, bnode, p)
     end
 end
 
@@ -657,9 +668,11 @@ for the surface species values in the bulk.
 
 # ╔═╡ 41763843-a4fe-4adb-84af-c115a37bc265
 begin
-    sys = VoronoiFVM.System(grid; data = params,
-                            flux, breaction, bstorage, storage,
-                            unknown_storage = :sparse)
+    sys = VoronoiFVM.System(
+        grid; data = params,
+        flux, breaction, bstorage, storage,
+        unknown_storage = :sparse
+    )
     enable_species!(sys, iA, [1])
     enable_species!(sys, iB, [1])
     enable_species!(sys, iAB2, [1])
@@ -702,7 +715,7 @@ t: $(@bind log_t_plot PlutoUI.Slider(-4:0.1:log10(tvend), default = 0.4))
 # ╔═╡ 7f50d186-fad5-413b-bbc4-2d087474a72f
 let
     t_plot = round(10^log_t_plot; sigdigits = 3)
-    vis = GridVisualizer(;size = (600, 300), flimits = (0, 1), title = "Bulk concentrations: t=$t_plot", legend = :lt)
+    vis = GridVisualizer(; size = (600, 300), flimits = (0, 1), title = "Bulk concentrations: t=$t_plot", legend = :lt)
     sol = tsol(t_plot)
     scalarplot!(vis, grid, sol[iA, :]; color = :red, label = "A")
     scalarplot!(vis, grid, sol[iB, :]; color = :green, label = "B", clear = false)
@@ -714,14 +727,16 @@ end
 Ctotalv = tsol[iC, 1, :] + tsol[iCA, 1, :] + tsol[iCB, 1, :] + tsol[iCAB2, 1, :]
 
 # ╔═╡ a83e969e-ba25-4b6b-83e4-6febed1e8602
-@test Ctotalv≈ ones(length(tsol))
+@test Ctotalv ≈ ones(length(tsol))
 
 # ╔═╡ 2eeb7d1a-25bc-4c09-bc86-a998a7bf3ca7
 let
-    vis = GridVisualizer(; size = (600, 300),
-	                      xlabel="t",
-                         flimits = (0, 1), xlimits = (1.0e-3, tvend),
-                         legend = :lt, title = "Concentrations at x=0", xscale = :log10)
+    vis = GridVisualizer(;
+        size = (600, 300),
+        xlabel = "t",
+        flimits = (0, 1), xlimits = (1.0e-3, tvend),
+        legend = :lt, title = "Concentrations at x=0", xscale = :log10
+    )
     t = tsol.t
     scalarplot!(vis, t, tsol[iA, 1, :]; color = :darkred, label = "A")
     scalarplot!(vis, t, tsol[iCA, 1, :]; color = :red, label = "CA")

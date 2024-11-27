@@ -86,6 +86,7 @@ function flux(y, u, edge, data)
 
     bp, bm = fbernoulli_pm(vh / data.D)
     y[data.ic] = data.D * (bm * u[data.ic, 1] - bp * u[data.ic, 2])
+    return nothing
 end
 
 # ╔═╡ addf62a3-9a71-49b8-b54a-441f65a01d01
@@ -93,6 +94,7 @@ function bcondition(y, u, bnode, data)
     boundary_neumann!(y, u, bnode; species = data.ip, region = data.Γ_in, value = data.v_in)
     boundary_dirichlet!(y, u, bnode; species = data.ip, region = data.Γ_out, value = 0)
     boundary_dirichlet!(y, u, bnode; species = data.ic, region = data.Γ_in, value = data.c_in)
+    return nothing
 end
 
 # ╔═╡ e087d35c-47ca-47f4-ab20-32a7adf94f00
@@ -108,18 +110,21 @@ nodes, in that case it is assumed that the contribution is zero. In the present 
 # ╔═╡ c5fb189b-e542-4313-bad2-d6fe64d70771
 function boutflow(y, u, edge, data)
     y[data.ic] = -darcyvelo(u, data) * u[data.ic, outflownode(edge)]
+    return nothing
 end
 
 # ╔═╡ 210aeda9-9c37-4278-8466-8d0a62347367
 function flowtransportsystem(grid; kwargs...)
     data = FlowTransportData(; kwargs...)
-    VoronoiFVM.System(grid;
-                      flux,
-                      bcondition,
-                      boutflow,
-                      data,
-                      outflowboundaries = [data.Γ_out],
-                      species = [1, 2],)
+    return VoronoiFVM.System(
+        grid;
+        flux,
+        bcondition,
+        boutflow,
+        data,
+        outflowboundaries = [data.Γ_out],
+        species = [1, 2],
+    )
 end
 
 # ╔═╡ 3e6b27b4-066f-475e-99f4-8eba666f9dc2
@@ -128,7 +133,7 @@ function checkinout(sys, sol)
     tfact = TestFunctionFactory(sys)
     tf_in = testfunction(tfact, [data.Γ_out], [data.Γ_in])
     tf_out = testfunction(tfact, [data.Γ_in], [data.Γ_out])
-    (; in = integrate(sys, tf_in, sol), out = integrate(sys, tf_out, sol))
+    return (; in = integrate(sys, tf_in, sol), out = integrate(sys, tf_out, sol))
 end
 
 # ╔═╡ 3f273ed4-5522-4018-9551-b22a7db2e070
@@ -257,57 +262,57 @@ begin
     highlight(mdstring, color) = htl"""<blockquote style="padding: 10px; background-color: $(color);">$(mdstring)</blockquote>"""
 
     macro important_str(s)
-        :(highlight(Markdown.parse($s), "#ffcccc"))
+        return :(highlight(Markdown.parse($s), "#ffcccc"))
     end
     macro definition_str(s)
-        :(highlight(Markdown.parse($s), "#ccccff"))
+        return :(highlight(Markdown.parse($s), "#ccccff"))
     end
     macro statement_str(s)
-        :(highlight(Markdown.parse($s), "#ccffcc"))
+        return :(highlight(Markdown.parse($s), "#ccffcc"))
     end
 
     html"""
-        <style>
-    	/* Headers */
-         h1{background-color:#dddddd;  padding: 10px;}
-         h2{background-color:#e7e7e7;  padding: 10px;}
-         h3{background-color:#eeeeee;  padding: 10px;}
-         h4{background-color:#f7f7f7;  padding: 10px;}
+            <style>
+        	/* Headers */
+             h1{background-color:#dddddd;  padding: 10px;}
+             h2{background-color:#e7e7e7;  padding: 10px;}
+             h3{background-color:#eeeeee;  padding: 10px;}
+             h4{background-color:#f7f7f7;  padding: 10px;}
 
-		/* "Terminal"  */
-	     pluto-log-dot-sizer  { max-width: 655px;}
-         pluto-log-dot.Stdout { background: #002000;
-	                            color: #10f080;
-                                border: 6px solid #b7b7b7;
-                                min-width: 18em;
-                                max-height: 300px;
-                                width: 675px;
-                                overflow: auto;
- 	                           }
-        /* Standard cell width etc*/
-		main {
-   			flex: 1;
-		    max-width: calc(700px + 25px + 6px); /* 700px + both paddings */
-    		padding-top: 0px;
-    		padding-bottom: 4rem;
-    		padding-left: 25px;
-    		padding-right: 6px;
-    		align-content: center;
-    		width: 100%;
-			}
+    		/* "Terminal"  */
+    	     pluto-log-dot-sizer  { max-width: 655px;}
+             pluto-log-dot.Stdout { background: #002000;
+    	                            color: #10f080;
+                                    border: 6px solid #b7b7b7;
+                                    min-width: 18em;
+                                    max-height: 300px;
+                                    width: 675px;
+                                    overflow: auto;
+     	                           }
+            /* Standard cell width etc*/
+    		main {
+       			flex: 1;
+    		    max-width: calc(700px + 25px + 6px); /* 700px + both paddings */
+        		padding-top: 0px;
+        		padding-bottom: 4rem;
+        		padding-left: 25px;
+        		padding-right: 6px;
+        		align-content: center;
+        		width: 100%;
+    			}
 
-       /* Cell width for slides*/
-		xmain {
-			margin: 0 auto;
-			max-width: 750px;
-    		padding-left: max(20px, 3%);
-    		padding-right: max(20px, 3%);
-	        }
+           /* Cell width for slides*/
+    		xmain {
+    			margin: 0 auto;
+    			max-width: 750px;
+        		padding-left: max(20px, 3%);
+        		padding-right: max(20px, 3%);
+    	        }
 
-	
-	
-    </style>
-"""
+    	
+    	
+        </style>
+    """
 end
 
 # ╔═╡ 5beb3a0d-e57a-4aea-b7a0-59b8ce9ff5ce
@@ -317,43 +322,45 @@ hrule()
 begin
     function floataside(text::Markdown.MD; top = 1)
         uuid = uuid1()
-        @htl("""
-       		<style>
+        return @htl(
+            """
+            		<style>
 
 
-       		@media (min-width: calc(700px + 30px + 300px)) {
-       			aside.plutoui-aside-wrapper-$(uuid) {
+            		@media (min-width: calc(700px + 30px + 300px)) {
+            			aside.plutoui-aside-wrapper-$(uuid) {
 
-       	color: var(--pluto-output-color);
-       	position:fixed;
-       	right: 1rem;
-       	top: $(top)px;
-       	width: 400px;
-       	padding: 10px;
-       	border: 3px solid rgba(0, 0, 0, 0.15);
-       	border-radius: 10px;
-       	box-shadow: 0 0 11px 0px #00000010;
-       	/* That is, viewport minus top minus Live Docs */
-       	max-height: calc(100vh - 5rem - 56px);
-       	overflow: auto;
-       	z-index: 40;
-       	background-color: var(--main-bg-color);
-       	transition: transform 300ms cubic-bezier(0.18, 0.89, 0.45, 1.12);
+            	color: var(--pluto-output-color);
+            	position:fixed;
+            	right: 1rem;
+            	top: $(top)px;
+            	width: 400px;
+            	padding: 10px;
+            	border: 3px solid rgba(0, 0, 0, 0.15);
+            	border-radius: 10px;
+            	box-shadow: 0 0 11px 0px #00000010;
+            	/* That is, viewport minus top minus Live Docs */
+            	max-height: calc(100vh - 5rem - 56px);
+            	overflow: auto;
+            	z-index: 40;
+            	background-color: var(--main-bg-color);
+            	transition: transform 300ms cubic-bezier(0.18, 0.89, 0.45, 1.12);
 
-       			}
-       			aside.plutoui-aside-wrapper > div {
-       #				width: 300px;
-       			}
-       		}
-       		</style>
+            			}
+            			aside.plutoui-aside-wrapper > div {
+            #				width: 300px;
+            			}
+            		}
+            		</style>
 
-       		<aside class="plutoui-aside-wrapper-$(uuid)">
-       		<div>
-       		$(text)
-       		</div>
-       		</aside>
+            		<aside class="plutoui-aside-wrapper-$(uuid)">
+            		<div>
+            		$(text)
+            		</div>
+            		</aside>
 
-       		""")
+            		"""
+        )
     end
     floataside(stuff; kwargs...) = floataside(md"""$(stuff)"""; kwargs...)
 end;
@@ -361,52 +368,52 @@ end;
 # ╔═╡ 4652157f-3288-45b6-877e-17ed8dc7d18e
 function slidemodeswitch()
     uuid = uuid1()
-    html"""
-   	<script id=$(uuid)>
+    return html"""
+    	<script id=$(uuid)>
 
-       const right = document.querySelector('button.changeslide.next')
-       const left = document.querySelector('button.changeslide.prev')
+        const right = document.querySelector('button.changeslide.next')
+        const left = document.querySelector('button.changeslide.prev')
 
-       let fullScreen = false
+        let fullScreen = false
 
-       const func = (e) => {
-           if (e.key == "F10") {
-               e.preventDefault()
-               window.present()
-               if (fullScreen) {
-                   document.exitFullscreen().then(() => fullScreen = false)
-               } else {
+        const func = (e) => {
+            if (e.key == "F10") {
+                e.preventDefault()
+                window.present()
+                if (fullScreen) {
+                    document.exitFullscreen().then(() => fullScreen = false)
+                } else {
 
-                   document.documentElement.requestFullscreen().then(() => fullScreen = true)
-               }
-           }
-           if (document.body.classList.contains('presentation')) {
-            
-               if (e.target.tagName == "TEXTAREA") return
-               if (e.key == "PageUp") {
-                   e.preventDefault()
-                   left.click()
-                   return
+                    document.documentElement.requestFullscreen().then(() => fullScreen = true)
+                }
             }
+            if (document.body.classList.contains('presentation')) {
+             
+                if (e.target.tagName == "TEXTAREA") return
+                if (e.key == "PageUp") {
+                    e.preventDefault()
+                    left.click()
+                    return
+             }
 
-               if (e.key == "PageDown") {
-                   e.preventDefault()
-                   right.click()
-                   return
-               }
-               if (e.key == "Escape") {
-                   window.present()
-                   fullScreen = false
-               document.exitFullscreen().catch(() => {return})
-               }
-           }
-       }
+                if (e.key == "PageDown") {
+                    e.preventDefault()
+                    right.click()
+                    return
+                }
+                if (e.key == "Escape") {
+                    window.present()
+                    fullScreen = false
+                document.exitFullscreen().catch(() => {return})
+                }
+            }
+        }
 
-       document.addEventListener('keydown',func)
+        document.addEventListener('keydown',func)
 
-       invalidation.then(() => {document.removeEventListener('keydown',func)})
-   </script>
-   """
+        invalidation.then(() => {document.removeEventListener('keydown',func)})
+    </script>
+    """
 end;
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001

@@ -7,7 +7,7 @@ using InteractiveUtils
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
     #! format: off
-    quote
+    return quote
         local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
         local el = $(esc(element))
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
@@ -55,13 +55,15 @@ Define a "Swiss cheese domain" with punched-out holes, where each hole boundary 
 # ╔═╡ 928a70c5-4706-40a1-9387-abcb71c09443
 function swiss_cheese_2d()
     function circlehole!(builder, center, radius; n = 20)
-        points = [point!(builder, center[1] + radius * sin(t), center[2] + radius * cos(t))
-                  for t in range(0, 2π; length = n)]
-        for i = 1:(n - 1)
+        points = [
+            point!(builder, center[1] + radius * sin(t), center[2] + radius * cos(t))
+                for t in range(0, 2π; length = n)
+        ]
+        for i in 1:(n - 1)
             facet!(builder, points[i], points[i + 1])
         end
         facet!(builder, points[end], points[1])
-        holepoint!(builder, center)
+        return holepoint!(builder, center)
     end
 
     builder = SimplexGridBuilder(; Generator = Triangulate)
@@ -80,24 +82,26 @@ function swiss_cheese_2d()
     facet!(builder, p3, p4)
     facet!(builder, p4, p1)
 
-    holes = [1.0 2.0
-             8.0 9.0
-             2.0 8.0
-             8.0 4.0
-             9.0 1.0
-             3.0 4.0
-             4.0 6.0
-             7.0 9.0
-             4.0 7.0
-             7.0 5.0
-             2.0 1.0
-             4.0 1.0
-             4.0 8.0
-             3.0 6.0
-             4.0 9.0
-             6.0 9.0
-             3.0 5.0
-             1.0 4.0]'
+    holes = [
+        1.0 2.0
+        8.0 9.0
+        2.0 8.0
+        8.0 4.0
+        9.0 1.0
+        3.0 4.0
+        4.0 6.0
+        7.0 9.0
+        4.0 7.0
+        7.0 5.0
+        2.0 1.0
+        4.0 1.0
+        4.0 8.0
+        3.0 6.0
+        4.0 9.0
+        6.0 9.0
+        3.0 5.0
+        1.0 4.0
+    ]'
 
     radii = [
         0.15,
@@ -120,12 +124,12 @@ function swiss_cheese_2d()
         0.25,
     ]
 
-    for i = 1:length(radii)
+    for i in 1:length(radii)
         facetregion!(builder, i + 1)
         circlehole!(builder, holes[:, i], radii[i])
     end
 
-    simplexgrid(builder)
+    return simplexgrid(builder)
 end
 
 # ╔═╡ bc304085-69c3-4974-beb4-6f2b981ac0f1
@@ -165,6 +169,7 @@ function bc(y, u, bnode, data)
     boundary_dirichlet!(y, u, bnode; region = 2, value = 10.0)
     boundary_dirichlet!(y, u, bnode; region = 3, value = 0.0)
     boundary_dirichlet!(y, u, bnode; region = 11, value = data.val11)
+    return nothing
 end
 
 # ╔═╡ f4ebe6ad-4e04-4f33-9a66-6bec977adf4d
@@ -249,17 +254,20 @@ flux1d(y, u, edge, data) = y[1] = u[1, 1]^2 - u[1, 2]^2
 function bc1d(y, u, bnode, data)
     boundary_dirichlet!(y, u, bnode; region = 1, value = 0.01)
     boundary_dirichlet!(y, u, bnode; region = 2, value = 0.01)
+    return nothing
 end
 
 # ╔═╡ 159ffdb7-a5d9-45bd-a53f-ba3751c91ae5
 grid1d = simplexgrid(-1:0.01:1)
 
 # ╔═╡ 29257fc4-d94b-4cf1-8432-30ba3fc4dc1b
-sys1d = VoronoiFVM.System(grid1d;
-                          flux = flux1d,
-                          bcondition = bc1d,
-                          source = source1d,
-                          species = [1],)
+sys1d = VoronoiFVM.System(
+    grid1d;
+    flux = flux1d,
+    bcondition = bc1d,
+    source = source1d,
+    species = [1],
+)
 
 # ╔═╡ d8df038e-9cfc-4eb4-9845-2244ac95190b
 sol1d = solve(sys1d; inival = 0.1)

@@ -61,7 +61,7 @@ function tworegiongrid(; minangle = 20)
         0.2 0.2 Ω_1 0.18
         0.8 0.2 Ω_2 0.18
     ]'
-    (triout, vorout) = triangulate("paAq$(angle)DQv", triin)
+    return (triout, vorout) = triangulate("paAq$(angle)DQv", triin)
 end
 
 # ╔═╡ 40795d22-6091-4498-bd07-f716fb07682e
@@ -70,7 +70,7 @@ function plot_with_numbers(triout, vorout)
     Triangulate.plot_triangulateio(PyPlot, triout, voronoi = vorout)
     PyPlot.scatter(triout.pointlist[1, :], triout.pointlist[2, :], color = :red, alpha = 1)
     dxy = [-0.03, 0.01]
-    for ipoint = 1:size(triout.pointlist, 2)
+    for ipoint in 1:size(triout.pointlist, 2)
         PyPlot.text(
             (dxy .+ triout.pointlist[:, ipoint])...,
             "$(ipoint)",
@@ -78,7 +78,7 @@ function plot_with_numbers(triout, vorout)
             color = :red,
         )
     end
-    for ipoint = 1:size(vorout.pointlist, 2)
+    for ipoint in 1:size(vorout.pointlist, 2)
         PyPlot.text(
             (dxy .+ vorout.pointlist[:, ipoint])...,
             "$(ipoint)",
@@ -86,7 +86,7 @@ function plot_with_numbers(triout, vorout)
             color = :green,
         )
     end
-    PyPlot.gcf()
+    return PyPlot.gcf()
 end
 
 # ╔═╡ d55fdbfc-3f34-11eb-3f35-c3bcdb156288
@@ -303,7 +303,6 @@ We introduce the height of this thin layer by following variable as a variable f
 """
 
 
-
 # ╔═╡ 3b429e0c-c07a-40df-ab0b-1f71d515ece3
 n = 3
 
@@ -318,28 +317,34 @@ begin
         else
             f[1] = dA_bulk * (u[1, 1] - u[1, 2])
         end
+        return nothing
     end
 
     function fluxB!(f, u, edge)
         f[1] = dB_bulk * (u[1, 1] - u[1, 2])
+        return nothing
     end
 
     function reaction!(f, u, node)
         f[1] = k * u[1]
+        return nothing
     end
 
     function source!(f, node)
         f[1] = c
+        return nothing
     end
 
     function bfluxB!(f, u, bedge)
         if bedge.region == 3
             f[1] = thin_layer * dbB_interface * (u[1, 1] - u[1, 2])
         end
+        return nothing
     end
 
     function bfluxA!(f, u, bedge)
         f[1] = 0.0
+        return nothing
     end
 end
 
@@ -574,7 +579,7 @@ begin
         ),
     )
 
-    # enable species in all regions 
+    # enable species in all regions
     enable_species!(sysA, ispec_flux, regionsA)
     enable_species!(sysB, ispec_flux, regionsB)
 
@@ -587,8 +592,8 @@ begin
 
 
     ## Stationary solution of both problems
-    solA=solve(sysA)
-    solB=solve(sysB)
+    solA = solve(sysA)
+    solB = solve(sysB)
 end
 
 # ╔═╡ 80cfa231-23b1-48a3-a5ad-ee0e122da746
@@ -602,7 +607,7 @@ begin
     )
     # this is for variable transformation, since we consider right outer boundary and want to transform to x-axis.
     function tran32!(a, b)
-        a[1] = b[2]
+        return a[1] = b[2]
     end
 
     # note that if adjusting active_boundary to 3 or 4, then transform needs to be deleted.

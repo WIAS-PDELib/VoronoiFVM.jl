@@ -37,21 +37,21 @@ scalarplot(sin.(0:0.1:10), size = (500, 200))
 @test 1 == 1
 
 # ╔═╡ e7bb8e62-228b-4b80-824b-31ea22543fba
-let figure=Figure()
-axis=Axis(figure[1,1], aspect = DataAspect())
-X=0:0.1:1
-Y=0:0.1:1
-pts=[Point2f(x,y) for y in X, x in X]
-li=LinearIndices(pts)
-for j=1:length(Y)-1
-    for i=1:length(X)-1
-	t1=[li[i,j], li[i+1,j], li[i+1,j+1]]
-	@views poly!(axis,pts[t1], strokecolor=:black, color=:red, strokewidth=1)
-	t2=[li[i,j], li[i,j+1], li[i+1,j+1]]
-	@views poly!(axis,pts[t2], strokecolor=:black, color=:red, strokewidth=1)
+let figure = Figure()
+    axis = Axis(figure[1, 1], aspect = DataAspect())
+    X = 0:0.1:1
+    Y = 0:0.1:1
+    pts = [Point2f(x, y) for y in X, x in X]
+    li = LinearIndices(pts)
+    for j in 1:(length(Y) - 1)
+        for i in 1:(length(X) - 1)
+            t1 = [li[i, j], li[i + 1, j], li[i + 1, j + 1]]
+            @views poly!(axis, pts[t1], strokecolor = :black, color = :red, strokewidth = 1)
+            t2 = [li[i, j], li[i, j + 1], li[i + 1, j + 1]]
+            @views poly!(axis, pts[t2], strokecolor = :black, color = :red, strokewidth = 1)
+        end
     end
-end
-figure
+    figure
 end
 
 # ╔═╡ 9b8e9cd1-2b90-49b4-a7cf-51b8378e4db4

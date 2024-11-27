@@ -30,7 +30,7 @@ md"""
 # ╔═╡ b47b781b-ec11-485a-9de6-061ad0957f46
 function B_Big(x)
     bx = BigFloat(x)
-    Float64(bx / expm1(bx))
+    return Float64(bx / expm1(bx))
 end
 
 # ╔═╡ 33f6b010-e0c4-4c7b-9cbd-460b8ba0f606
@@ -39,7 +39,7 @@ function DB_Big(x)
     bone = one(BigFloat)
     bex = exp(bx)
     b = -(x * bex - bex + bone) / ((bex - bone) * (bex - bone))
-    Float64(b)
+    return Float64(b)
 end
 
 # ╔═╡ a0e3bf41-e5ca-4395-a26e-941a8b897705
@@ -48,7 +48,7 @@ md"""
 """
 
 # ╔═╡ c95c09fe-ac77-4032-a455-2a13b0d7edc2
-B(x)=x/expm1(x)
+B(x) = x / expm1(x)
 
 # ╔═╡ c3fd0ff2-7111-4165-ad93-d6d7257301fa
 md"""
@@ -70,13 +70,13 @@ B(nextfloat(0.0))
 fbernoulli(nextfloat(0.0))
 
 # ╔═╡ cb10e915-b753-4cd5-9355-71558c83369c
-derivative(B,0.0)
+derivative(B, 0.0)
 
 # ╔═╡ a63959f9-ed7a-47dc-b253-78c763dd359f
 derivative(fbernoulli, 0.0)
 
 # ╔═╡ 16db7f90-7d23-4864-a059-38d09f3e5d3b
-derivative(B,nextfloat(0.0))
+derivative(B, nextfloat(0.0))
 
 # ╔═╡ 7678ad35-f29b-448c-bd85-247140d42456
 derivative(fbernoulli, nextfloat(0.0))
@@ -89,7 +89,8 @@ let
     p = Figure(
         ; size = (600, 400),
     )
-    ax = Axis(p[1, 1];
+    ax = Axis(
+        p[1, 1];
         title = "|B_Big(x)-B(x)|",
         xminorticksvisible = true,
         xminorgridvisible = true,
@@ -97,13 +98,16 @@ let
         xticks = -0.5:0.1:0.5,
         yscale = log10,
         xlabel = "x",
-        ylabel = "error")
-
-    lines!(ax,
-        smallX,
-        abs.(B_Big.(smallX) .- B.(smallX)) .+ 1.0e-20;
+        ylabel = "error"
     )
-    ax2 = Axis(p[2, 1];
+
+    lines!(
+        ax,
+        smallX,
+        abs.(B_Big.(smallX) .- B.(smallX)) .+ 1.0e-20
+    )
+    ax2 = Axis(
+        p[2, 1];
         title = "|B_Big(x)-VoronoiFVM.bernoulli_horner(x)|",
         xminorticksvisible = true,
         xminorgridvisible = true,
@@ -111,10 +115,12 @@ let
         xticks = -0.5:0.1:0.5,
         yscale = log10,
         xlabel = "x",
-        ylabel = "error")
-    lines!(ax2,
+        ylabel = "error"
+    )
+    lines!(
+        ax2,
         smallX,
-        abs.(B_Big.(smallX) .- VoronoiFVM.bernoulli_horner.(smallX)) .+ 1.0e-20;
+        abs.(B_Big.(smallX) .- VoronoiFVM.bernoulli_horner.(smallX)) .+ 1.0e-20
     )
     p
 end
@@ -124,7 +130,8 @@ let
     p = Figure(
         ; size = (600, 400),
     )
-    ax = Axis(p[1, 1];
+    ax = Axis(
+        p[1, 1];
         title = "|DB_Big(x)-derivative(B,x)|",
         xminorticksvisible = true,
         xminorgridvisible = true,
@@ -132,13 +139,16 @@ let
         xticks = -0.5:0.1:0.5,
         yscale = log10,
         xlabel = "x",
-        ylabel = "error")
-
-    lines!(ax,
-        smallX,
-        abs.(DB_Big.(smallX) .- derivative.(B,smallX)) .+ 1.0e-20;
+        ylabel = "error"
     )
-    ax2 = Axis(p[2, 1];
+
+    lines!(
+        ax,
+        smallX,
+        abs.(DB_Big.(smallX) .- derivative.(B, smallX)) .+ 1.0e-20
+    )
+    ax2 = Axis(
+        p[2, 1];
         title = "|DB_Big(x)-derivative(bernoulli_horner,x)|",
         xminorticksvisible = true,
         xminorgridvisible = true,
@@ -146,10 +156,12 @@ let
         xticks = -0.5:0.1:0.5,
         yscale = log10,
         xlabel = "x",
-        ylabel = "error")
-    lines!(ax2,
+        ylabel = "error"
+    )
+    lines!(
+        ax2,
         smallX,
-        abs.(DB_Big.(smallX) .- derivative.(VoronoiFVM.bernoulli_horner,smallX)) .+ 1.0e-20;
+        abs.(DB_Big.(smallX) .- derivative.(VoronoiFVM.bernoulli_horner, smallX)) .+ 1.0e-20
     )
     p
 end
@@ -173,16 +185,19 @@ let
     vf = first.(fbernoulli_pm.(smallX))
     err = abs.(bf - vf) ./ bf
     maxerr = maximum(err)
-    ax1 = Axis(p[1, 0:2];
+    ax1 = Axis(
+        p[1, 0:2];
         title = "Maximum relative error for small x: $maxerr",
         xminorticksvisible = true,
         xminorgridvisible = true,
         xminorticks = IntervalsBetween(10),
         xticks = -0.5:0.1:0.5,
         xlabel = "x",
-        ylabel = "error")
+        ylabel = "error"
+    )
 
-    lines!(ax1,
+    lines!(
+        ax1,
         smallX,
         err;
         color = :red
@@ -193,20 +208,24 @@ let
     err = abs.(bf - vf)
     maxerr = maximum(err)
 
-    ax2 = Axis(p[2, 0:2];
+    ax2 = Axis(
+        p[2, 0:2];
         title = "Maximum absolute error for large x: $maxerr",
         xminorticksvisible = true,
         xminorgridvisible = true,
         xminorticks = IntervalsBetween(4),
         xticks = -100:20:100,
         xlabel = "x",
-        ylabel = "error")
+        ylabel = "error"
+    )
 
-    lines!(ax2,
+    lines!(
+        ax2,
         largeX,
         err;
-        color = :red)
-    save("bernoulli_posarg.png",p)
+        color = :red
+    )
+    save("bernoulli_posarg.png", p)
     p
 end
 
@@ -222,15 +241,18 @@ let
     err = abs.(bf - vf) ./ bf
     maxerr = maximum(err)
 
-    ax1 = Axis(p[1, 0:2];
+    ax1 = Axis(
+        p[1, 0:2];
         title = "Maximum relative error for small x: $(maxerr)",
         xminorticksvisible = true,
         xminorgridvisible = true,
         xminorticks = IntervalsBetween(10),
         xticks = -0.5:0.1:0.5,
         xlabel = "x",
-        ylabel = "error")
-    lines!(ax1,
+        ylabel = "error"
+    )
+    lines!(
+        ax1,
         smallX,
         err;
         color = :red
@@ -240,20 +262,24 @@ let
     vf = last.(fbernoulli_pm.(largeX))
     err = abs.(bf - vf)
     maxerr = maximum(err)
-    ax2 = Axis(p[2, 0:2];
+    ax2 = Axis(
+        p[2, 0:2];
         title = "Maximum absolute error for large x: $maxerr",
         xminorticksvisible = true,
         xminorgridvisible = true,
         xminorticks = IntervalsBetween(4),
         xticks = -100:20:100,
         xlabel = "x",
-        ylabel = "error")
+        ylabel = "error"
+    )
 
-    lines!(ax2,
+    lines!(
+        ax2,
         largeX,
         err;
-        color = :red)
-    save("bernoulli_negarg.png",p)
+        color = :red
+    )
+    save("bernoulli_negarg.png", p)
     p
 end
 
@@ -274,15 +300,18 @@ let
     err = abs.(bf - vf) ./ abs.(bf)
     maxerr = maximum(err)
 
-    ax1 = Axis(p[1, 0:2];
+    ax1 = Axis(
+        p[1, 0:2];
         title = "Maximum relative error for small x: $maxerr",
         xminorticksvisible = true,
         xminorgridvisible = true,
         xminorticks = IntervalsBetween(10),
         xticks = -0.5:0.1:0.5, xlabel = "x",
-        ylabel = "error")
+        ylabel = "error"
+    )
 
-    lines!(ax1,
+    lines!(
+        ax1,
         smallX,
         err;
         color = :red
@@ -292,20 +321,24 @@ let
     vf = derivative.(fbernoulli, largeX)
     err = abs.(bf - vf)
     maxerr = maximum(err)
-    ax2 = Axis(p[2, 0:2];
+    ax2 = Axis(
+        p[2, 0:2];
         title = "Maximum absolute error for large x: $maxerr",
         xminorticksvisible = true,
         xminorgridvisible = true,
         xminorticks = IntervalsBetween(4),
         xticks = -100:20:100,
         xlabel = "x",
-        ylabel = "error")
+        ylabel = "error"
+    )
 
-    lines!(ax2,
+    lines!(
+        ax2,
         largeX,
         err;
-        color = :red)
-save("bernoulli_derivative.png",p)
+        color = :red
+    )
+    save("bernoulli_derivative.png", p)
     p
 end
 

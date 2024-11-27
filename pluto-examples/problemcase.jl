@@ -6,8 +6,12 @@ using InteractiveUtils
 
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
-    quote
-        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+    return quote
+        local iv = try
+            Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value
+        catch
+            b -> missing
+        end
         local el = $(esc(element))
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
         el
@@ -265,7 +269,7 @@ function grid_2d(; nref = 0, ε_fix = 0.0)
     grid = simplexgrid(xc, yc)
     cellmask!(grid, [0, -W / 2], [L, W / 2], Ω_high)
     bfacemask!(grid, [0, -W / 2], [0, W / 2], Γ_in)
-    bfacemask!(grid, [L, -W / 2], [L, W / 2], Γ_out)
+    return bfacemask!(grid, [L, -W / 2], [L, W / 2], Γ_out)
 end
 
 # ╔═╡ 46a0f078-4165-4e37-9e69-e69af8584f6e
@@ -282,7 +286,7 @@ function grid_1d(; nref = 0)
     cellmask!(grid, [0], [L], Ω_high)
     bfacemask!(grid, [0], [0], Γ_in)
     bfacemask!(grid, [L], [L], Γ_out)
-    grid
+    return grid
 end
 
 # ╔═╡ d772ac1b-3cda-4a2b-b0a9-b22b63b30653
@@ -316,10 +320,10 @@ function breakthrough(sys, tf, sol)
     of = similar(sol.t)
     t = sol.t
     of[1] = 0
-    for i = 2:length(sol.t)
+    for i in 2:length(sol.t)
         of[i] = -integrate(sys, tf, sol.u[i], sol.u[i - 1], t[i] - t[i - 1])[ic]
     end
-    of
+    return of
 end
 
 # ╔═╡ 3df8bace-b4f1-4052-84f7-dff21d3a35f0
@@ -328,21 +332,25 @@ Transient solver:
 """
 
 # ╔═╡ e866db69-9388-4691-99f7-879cf0658418
-function trsolve(grid;
-                 κ = [1.0e-3, 5],
-                 D = [1.0e-12, 1.0e-12],
-                 Δp = 1.0,
-                 ϕ = [1, 1],
-                 tend = 100,)
+function trsolve(
+        grid;
+        κ = [1.0e-3, 5],
+        D = [1.0e-12, 1.0e-12],
+        Δp = 1.0,
+        ϕ = [1, 1],
+        tend = 100,
+    )
     function flux(y, u, edge, data)
         y[ip] = κ[edge.region] * (u[ip, 1] - u[ip, 2])
         bp, bm = fbernoulli_pm(y[ip] / D[edge.region])
         y[ic] = D[edge.region] * (bm * u[ic, 1] - bp * u[ic, 2])
+        return nothing
     end
 
     function stor(y, u, node, data)
         y[ip] = 0
         y[ic] = ϕ[node.region] * u[ic]
+        return nothing
     end
 
     dim = dim_space(grid)
@@ -357,31 +365,36 @@ function trsolve(grid;
             boundary_dirichlet!(y, u, bnode, ip, Γ_left, Δp)
             boundary_dirichlet!(y, u, bnode, ip, Γ_right, 0)
         end
+        return nothing
     end
 
-    sys = VoronoiFVM.System(grid;
-                            check_allocs = true,
-                            flux = flux,
-                            storage = stor,
-                            bcondition = bc,
-                            species = [ip, ic],)
+    sys = VoronoiFVM.System(
+        grid;
+        check_allocs = true,
+        flux = flux,
+        storage = stor,
+        bcondition = bc,
+        species = [ip, ic],
+    )
 
     inival = solve(sys; inival = 0, time = 0.0)
     factory = TestFunctionFactory(sys)
     tfc = testfunction(factory, [Γ_in, Γ_left, Γ_top, Γ_bot], [Γ_out])
 
-    sol = VoronoiFVM.solve(sys;
-                           inival = inival,
-                           times = [0, tend],
-                           Δt = 1.0e-4,
-                           Δt_min = 1.0e-6,)
+    sol = VoronoiFVM.solve(
+        sys;
+        inival = inival,
+        times = [0, tend],
+        Δt = 1.0e-4,
+        Δt_min = 1.0e-6,
+    )
 
     bt = breakthrough(sys, tfc, sol)
     if dim == 1
         bt = bt * W
     end
 
-    grid, sol, bt
+    return grid, sol, bt
 end
 
 # ╔═╡ cd88123a-b042-43e2-99b9-ec925a8794ed
@@ -403,13 +416,15 @@ grid_1, sol_1, bt_1 = trsolve(grid_1d(; nref = nref); tend = tend);
 @test sum(bt_1) ≈ 20.66209910195916
 
 # ╔═╡ e36d2aef-1b5a-45a7-9289-8d1e544bcedd
-scalarplot(grid_1,
-           sol_1(t)[ic, :];
-           levels = 0:0.2:1,
-           resolution = (500, 150),
-           xlabel = "x",
-           ylabel = "c",
-           title = "1D calculation, t=$t")
+scalarplot(
+    grid_1,
+    sol_1(t)[ic, :];
+    levels = 0:0.2:1,
+    resolution = (500, 150),
+    xlabel = "x",
+    ylabel = "c",
+    title = "1D calculation, t=$t"
+)
 
 # ╔═╡ 76b77ec0-27b0-4a02-9ae4-43d756eb09dd
 grid_f, sol_f, bt_f = trsolve(grid_2d(; nref = nref, ε_fix = ε_fix); tend = tend);
@@ -428,34 +443,42 @@ grid_ϕ, sol_ϕ, bt_ϕ = trsolve(grid_2d(; nref = nref); ϕ = [1.0e-3, 1], tend 
 
 # ╔═╡ ce49bb25-b2d0-4d17-a8fe-d7b62e9b20be
 begin
-    p1 = GridVisualizer(; resolution = (500, 200),
-                        xlabel = "t",
-                        ylabel = "outflow",
-                        legend = :rb,
-                        title = "Breakthrough Curves")
+    p1 = GridVisualizer(;
+        resolution = (500, 200),
+        xlabel = "t",
+        ylabel = "outflow",
+        legend = :rb,
+        title = "Breakthrough Curves"
+    )
     scalarplot!(p1, sol_n.t, bt_n; label = "naive grid", color = :red)
-    scalarplot!(p1,
-                sol_1.t,
-                bt_1;
-                label = "1D grid",
-                markershape = :x,
-                markersize = 10,
-                clear = false,
-                color = :green)
-    scalarplot!(p1,
-                sol_f.t,
-                bt_f;
-                label = "grid with fix",
-                markershape = :circle,
-                color = :green,
-                clear = false)
-    scalarplot!(p1,
-                sol_ϕ.t,
-                bt_ϕ;
-                label = "modified ϕ",
-                markershape = :cross,
-                color = :blue,
-                clear = false)
+    scalarplot!(
+        p1,
+        sol_1.t,
+        bt_1;
+        label = "1D grid",
+        markershape = :x,
+        markersize = 10,
+        clear = false,
+        color = :green
+    )
+    scalarplot!(
+        p1,
+        sol_f.t,
+        bt_f;
+        label = "grid with fix",
+        markershape = :circle,
+        color = :green,
+        clear = false
+    )
+    scalarplot!(
+        p1,
+        sol_ϕ.t,
+        bt_ϕ;
+        label = "modified ϕ",
+        markershape = :cross,
+        color = :blue,
+        clear = false
+    )
     reveal(p1)
 end
 
@@ -468,21 +491,26 @@ md"""
 function rdsolve(grid; D = [1.0e-12, 1.0], R = [1, 0.1])
     function flux(y, u, edge, data)
         y[1] = D[edge.region] * (u[1, 1] - u[1, 2])
+        return nothing
     end
 
     function rea(y, u, node, data)
         y[1] = R[node.region] * u[1]
+        return nothing
     end
     function bc(y, u, bnode, data)
         boundary_dirichlet!(y, u, bnode, 1, Γ_in, 1)
         boundary_dirichlet!(y, u, bnode, 1, Γ_out, 0)
+        return nothing
     end
-    sys = VoronoiFVM.System(grid;
-                            flux = flux,
-                            reaction = rea,
-                            species = 1,
-                            bcondition = bc,
-                            check_allocs = true)
+    sys = VoronoiFVM.System(
+        grid;
+        flux = flux,
+        reaction = rea,
+        species = 1,
+        bcondition = bc,
+        check_allocs = true
+    )
     dim = dim_space(grid)
 
     sol = VoronoiFVM.solve(sys)
@@ -493,7 +521,7 @@ function rdsolve(grid; D = [1.0e-12, 1.0], R = [1, 0.1])
     if dim == 1
         fac = W
     end
-    grid, sol[1, :], of[1] * fac
+    return grid, sol[1, :], of[1] * fac
 end
 
 # ╔═╡ 2f560406-d169-4027-9cfe-7689494edf45

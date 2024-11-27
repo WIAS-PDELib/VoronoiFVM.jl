@@ -6,8 +6,12 @@ using InteractiveUtils
 
 # This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
 macro bind(def, element)
-    quote
-        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+    return quote
+        local iv = try
+            Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value
+        catch
+            b -> missing
+        end
         local el = $(esc(element))
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
         el
@@ -79,45 +83,56 @@ begin
     const eps = 1.0e-2
     function reaction(f, u, node, data)
         f[1] = u[1]^2
+        return nothing
     end
 
     function flux(f, u, edge, data)
         f[1] = eps * (u[1, 1]^2 - u[1, 2]^2)
+        return nothing
     end
 
     function source(f, node, data)
         x1 = node[1] - 0.5
         x2 = node[2] - 0.5
         f[1] = exp(-20.0 * (x1^2 + x2^2))
+        return nothing
     end
 
     function storage(f, u, node, data)
         f[1] = u[1]
+        return nothing
     end
 
     function bcondition(f, u, node, data)
-        boundary_dirichlet!(f,
-                            u,
-                            node;
-                            species = 1,
-                            region = 2,
-                            value = ramp(node.time; dt = (0, 0.1), du = (0, 1)))
-        boundary_dirichlet!(f,
-                            u,
-                            node;
-                            species = 1,
-                            region = 4,
-                            value = ramp(node.time; dt = (0, 0.1), du = (0, 1)))
+        boundary_dirichlet!(
+            f,
+            u,
+            node;
+            species = 1,
+            region = 2,
+            value = ramp(node.time; dt = (0, 0.1), du = (0, 1))
+        )
+        boundary_dirichlet!(
+            f,
+            u,
+            node;
+            species = 1,
+            region = 4,
+            value = ramp(node.time; dt = (0, 0.1), du = (0, 1))
+        )
+        return nothing
     end
 
-    sys0 = VoronoiFVM.System(0.0:h:1.0,
-                             0.0:h:1.0;
-                             reaction,
-                             flux,
-                             source,
-                             storage,
-                             bcondition,
-                             species = [1],)
+    sys0 = VoronoiFVM.System(
+        0.0:h:1.0,
+        0.0:h:1.0;
+        reaction,
+        flux,
+        source,
+        storage,
+        bcondition,
+        species = [1],
+    )
 end
 
 # ╔═╡ 4279ae2e-a948-4358-9037-0c6895ecb809
@@ -202,11 +217,13 @@ The Jacobi preconditioner is defined in ExtendableSparse.jl.
 """
 
 # ╔═╡ b70524fc-b8b1-4dee-b77d-e3f8d6d2837b
-krydiag_sol = solve(sys0;
-                    inival = 0.1,
-                    method_linear = KrylovJL_BICGSTAB(),
-                    precon_linear = JacobiPreconditioner,
-                    verbose = true,)
+krydiag_sol = solve(
+    sys0;
+    inival = 0.1,
+    method_linear = KrylovJL_BICGSTAB(),
+    precon_linear = JacobiPreconditioner,
+    verbose = true,
+)
 
 # ╔═╡ d21d3236-b3d7-4cf8-ab9d-b0be44c9970b
 @test isapprox(krydiag_sol, sol0, atol = 1.0e-5)
@@ -217,11 +234,13 @@ md"""
 """
 
 # ╔═╡ 4c7f8bbf-40c4-45b9-a62e-99ffaae30af1
-krydel_sol = solve(sys0;
-                   inival = 0.1,
-                   method_linear = KrylovJL_BICGSTAB(),
-                   precon_linear = SparspakFactorization(),
-                   verbose = "nlad",)
+krydel_sol = solve(
+    sys0;
+    inival = 0.1,
+    method_linear = KrylovJL_BICGSTAB(),
+    precon_linear = SparspakFactorization(),
+    verbose = "nlad",
+)
 
 # ╔═╡ 4fa1c608-19b2-4eaa-8c0a-5881b373807c
 @test isapprox(krydel_sol, sol0, atol = 1.0e-5)
@@ -234,11 +253,13 @@ wraps the predonditioner defined in  ILUZero.jl .
 """
 
 # ╔═╡ 6895cdf9-8291-47ce-bd1d-4c5beec594ea
-kryilu0_sol = solve(sys0;
-                    inival = 0.5,
-                    method_linear = KrylovJL_BICGSTAB(),
-                    precon_linear = ILUZeroPreconditioner,
-                    verbose = true,)
+kryilu0_sol = solve(
+    sys0;
+    inival = 0.5,
+    method_linear = KrylovJL_BICGSTAB(),
+    precon_linear = ILUZeroPreconditioner,
+    verbose = true,
+)
 
 # ╔═╡ d341f60e-191d-4cf9-9df9-fbe25c84a7da
 @test isapprox(kryilu0_sol, sol0, atol = 1.0e-5)
@@ -268,7 +289,7 @@ D = 0.1
 
 # ╔═╡ 2ff77259-7a81-4c54-a291-cbc20ee56c5d
 function xflux(f, u, edge, data)
-    f[1] = D * (u[1, 1]^2 - u[1, 2]^2)
+    return f[1] = D * (u[1, 1]^2 - u[1, 2]^2)
 end
 
 # ╔═╡ b0a845d7-95d7-4212-9620-e1948698c596
@@ -304,6 +325,7 @@ const D1 = 0.1
 # ╔═╡ c40f1954-4fb7-48b2-ab4c-cdf6459b7383
 function xflux1(f, u, edge, data)
     f[1] = D1 * (u[1, 1]^2 - u[1, 2]^2)
+    return nothing
 end
 
 # ╔═╡ cec5152b-0597-4ea4-8387-b08e1e4ffcde
@@ -334,23 +356,27 @@ grid1 = simplexgrid(0:0.1:1);
 
 # ╔═╡ 90bbf212-c6c8-44f0-8132-4a98f094750e
 function multispecies_flux(y, u, edge, data)
-    for i = 1:(edge.nspec)
+    for i in 1:(edge.nspec)
         y[i] = u[i, 1] - u[i, 2]
     end
+    return nothing
 end
 
 # ╔═╡ adff41d1-9398-4a66-9a8e-e03809973fa6
 function test_reaction(y, u, node, data)
     y[1] = u[1]
     y[2] = -u[1]
+    return nothing
 end
 
 # ╔═╡ 5e6d83ab-65c7-4f33-b0a8-29cd5717b4d6
 begin
-    system1 = VoronoiFVM.System(grid1;
-                                flux = multispecies_flux,
-                                reaction = test_reaction,
-                                species = [1, 2])
+    system1 = VoronoiFVM.System(
+        grid1;
+        flux = multispecies_flux,
+        reaction = test_reaction,
+        species = [1, 2]
+    )
     boundary_dirichlet!(system1; species = 1, region = 1, value = 1)
     boundary_dirichlet!(system1; species = 2, region = 2, value = 0)
 end;
@@ -381,15 +407,18 @@ space and time dependent boundary conditions. One can specify them either in `br
 function bcond2(y, u, bnode, data)
     boundary_neumann!(y, u, bnode; species = 1, region = 1, value = sin(bnode.time))
     boundary_dirichlet!(y, u, bnode; species = 2, region = 2, value = 0)
+    return nothing
 end;
 
 # ╔═╡ c86e8a0f-299f-42ab-96f8-0cd62d50f196
-system2 = VoronoiFVM.System(grid1;
-                            flux = multispecies_flux,
-                            reaction = test_reaction,
-                            species = [1, 2],
-                            bcondition = bcond2,
-                            check_allocs = false);
+system2 = VoronoiFVM.System(
+    grid1;
+    flux = multispecies_flux,
+    reaction = test_reaction,
+    species = [1, 2],
+    bcondition = bcond2,
+    check_allocs = false
+);
 
 # ╔═╡ b3d936fe-69ab-4013-b787-2f0b5410638a
 sol2 = solve(system2; times = (0, 10), Δt_max = 0.01);
@@ -406,13 +435,15 @@ time: $(@bind t2 PlutoUI.Slider(0:0.01:10; default=5,show_value=true))
 let
     s = sol2(t2)
     scalarplot!(vis2, grid1, s[1, :]; color = :red, label = "species1")
-    scalarplot!(vis2,
-                grid1,
-                s[2, :];
-                color = :green,
-                label = "species2",
-                clear = false,
-                title = "time=$(t2)")
+    scalarplot!(
+        vis2,
+        grid1,
+        s[2, :];
+        color = :green,
+        label = "species2",
+        clear = false,
+        title = "time=$(t2)"
+    )
     reveal(vis2)
 end
 
@@ -434,14 +465,17 @@ This example also demonstrates position dependent boundary values.
 function bcond3(y, u, bnode, data)
     boundary_dirichlet!(y, u, bnode; region = 4, value = bnode[2])
     boundary_dirichlet!(y, u, bnode; region = 2, value = -bnode[2])
+    return nothing
 end;
 
 # ╔═╡ a514231a-e465-4f05-ba4c-b20aa968d96f
-system3 = VoronoiFVM.System(-1:0.1:1,
-                            -1:0.1:1;
-                            flux = multispecies_flux,
-                            bcondition = bcond3,
-                            species = 1);
+system3 = VoronoiFVM.System(
+    -1:0.1:1,
+    -1:0.1:1;
+    flux = multispecies_flux,
+    bcondition = bcond3,
+    species = 1
+);
 
 # ╔═╡ d55f615c-d586-4ef7-adf9-5faf052b75ac
 sol3 = solve(system3);
@@ -477,22 +511,26 @@ reaction4(y, u, bnode, data) = y[1] = -bnode[1]^2 + u[1]^4;
 bc4(f, u, node, data) = boundary_dirichlet!(f, u, node; value = 0);
 
 # ╔═╡ fe424654-f070-46a9-850a-738b1d4aca8f
-system4 = VoronoiFVM.System(-10:0.1:10;
-                            species = [1],
-                            reaction = reaction4,
-                            flux = multispecies_flux,
-                            bcondition = bc4);
+system4 = VoronoiFVM.System(
+    -10:0.1:10;
+    species = [1],
+    reaction = reaction4,
+    flux = multispecies_flux,
+    bcondition = bc4
+);
 
 # ╔═╡ 37fc8816-5ccd-436e-8335-ebb1218d8a35
 sol4 = solve(system4; log = true, damp_initial = 0.001, damp_growth = 3);
 
 # ╔═╡ 6a256a29-f15f-4d82-8e84-7ceacb786715
-scalarplot(system4,
-           sol4;
-           resolution = (500, 300),
-           xlabel = "x",
-           ylabel = "u",
-           title = "solution")
+scalarplot(
+    system4,
+    sol4;
+    resolution = (500, 300),
+    xlabel = "x",
+    ylabel = "u",
+    title = "solution"
+)
 
 # ╔═╡ 5c2a3836-dc81-4950-88e5-7f603514b1c0
 @test isapprox(sum(sol4), 418.58515700568535, rtol = 1.0e-14)

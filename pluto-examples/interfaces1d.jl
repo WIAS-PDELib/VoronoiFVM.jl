@@ -121,6 +121,7 @@ function flux!(f, u, edge, data)
     if edge.region == 2
         f[2] = u[2, 1] - u[2, 2]
     end
+    return nothing
 end
 
 # ╔═╡ dbd27f10-9fd9-450d-9f78-89ea738d605b
@@ -151,11 +152,11 @@ function make_system(breaction)
     enable_species!(sys, 2, [2])
 
     ## Set boundary conditions
-    for ispec = 1:2
+    for ispec in 1:2
         boundary_dirichlet!(sys, ispec, 1, g_1)
         boundary_dirichlet!(sys, ispec, 2, g_2)
     end
-    sys
+    return sys
 end
 
 # ╔═╡ de251b03-dd3a-4a44-9440-b7e654c32dac
@@ -168,7 +169,7 @@ function mysolve(sys)
     U = solve(sys)
     U1 = view(U[1, :], subgrid1)
     U2 = view(U[2, :], subgrid2)
-    U1, U2
+    return U1, U2
 end
 
 # ╔═╡ 0735c061-68e1-429f-80f1-d8410989a91d
@@ -179,23 +180,27 @@ Plot the results
 # ╔═╡ 467dc381-3b3d-4de7-a7f9-bfc51300832b
 function plot(U1, U2; title = "")
     vis = GridVisualizer(; resolution = (600, 300))
-    scalarplot!(vis,
-                subgrid1,
-                U1;
-                clear = false,
-                show = false,
-                color = :green,
-                label = "u1")
-    scalarplot!(vis,
-                subgrid2,
-                U2;
-                clear = false,
-                show = true,
-                color = :blue,
-                label = "u2",
-                legend = :rt,
-                title = title,
-                flimits = (-0.5, 1.5))
+    scalarplot!(
+        vis,
+        subgrid1,
+        U1;
+        clear = false,
+        show = false,
+        color = :green,
+        label = "u1"
+    )
+    return scalarplot!(
+        vis,
+        subgrid2,
+        U2;
+        clear = false,
+        show = true,
+        color = :blue,
+        label = "u2",
+        legend = :rt,
+        title = title,
+        flimits = (-0.5, 1.5)
+    )
 end
 
 # ╔═╡ fa4fcc0d-1d3a-45a2-8857-50536bbe39cc
@@ -206,7 +211,9 @@ This means we set ``f_1(u_1,u_2)=0`` and ``f_2(u_1,u_2)=0``.
 """
 
 # ╔═╡ 8f210696-fcf4-47bc-a5a2-c561ad7efcbd
-function noreaction(f, u, node, data) end
+function noreaction(f, u, node, data)
+    return nothing
+end
 
 # ╔═╡ 57e8515e-3be1-4478-af98-430501438ee7
 system1 = make_system(noreaction);
@@ -254,6 +261,7 @@ function mal_reaction(f, u, node, data)
         f[1] = react
         f[2] = -react
     end
+    return nothing
 end
 
 # ╔═╡ 610a0761-1c23-415d-a187-f7d93a1b7637
@@ -287,6 +295,7 @@ function penalty_reaction(f, u, node, data)
         f[1] = react
         f[2] = -react
     end
+    return nothing
 end
 
 # ╔═╡ 817738c0-f1a3-4779-9075-7ea051a81e73
@@ -312,6 +321,7 @@ function penalty_jump_reaction(f, u, node, data)
         f[1] = react
         f[2] = -react
     end
+    return nothing
 end
 
 # ╔═╡ 19b6dc1f-5e56-4487-be06-2ce90b030290
@@ -347,6 +357,7 @@ function recombination(f, u, node, data)
         f[1] = react
         f[2] = react
     end
+    return nothing
 end;
 
 # ╔═╡ 644149fb-2264-42bd-92c9-193ab07c08f6
@@ -395,6 +406,7 @@ function thinlayer(f, u, node, data)
         f[1] = react
         f[2] = -react
     end
+    return nothing
 end
 
 # ╔═╡ 8c0b4ab5-09da-4d8f-b001-5e15f823423c
@@ -432,14 +444,14 @@ We define a grid with N=$(N) subregions
 begin
     XX = collect(0:0.1:1)
     local xcoord = XX
-    for i = 1:(N - 1)
+    for i in 1:(N - 1)
         xcoord = glue(xcoord, XX .+ i)
     end
     grid2 = simplexgrid(xcoord)
-    for i = 1:N
+    for i in 1:N
         cellmask!(grid2, [i - 1], [i], i)
     end
-    for i = 1:(N - 1)
+    for i in 1:(N - 1)
         bfacemask!(grid2, [i], [i], i + 2)
     end
 end
@@ -469,7 +481,7 @@ A discontinuous quantity can be introduced as well. by default, each reagion get
 """
 
 # ╔═╡ 90298676-fda7-4168-8a40-7ff53e7c761b
-const dspec = DiscontinuousQuantity(system6, 1:N; regionspec = [2 + i % 2 for i = 1:N])
+const dspec = DiscontinuousQuantity(system6, 1:N; regionspec = [2 + i % 2 for i in 1:N])
 
 # ╔═╡ cebabf33-e769-47bd-b6f1-ddf525fea895
 md"""
@@ -479,7 +491,7 @@ For both quantities, we define simple diffusion fluxes:
 # ╔═╡ 719f206a-5b9f-4d78-8778-1d89edb2bc4d
 function flux2(f, u, edge, data)
     f[dspec] = u[dspec, 1] - u[dspec, 2]
-    f[cspec] = u[cspec, 1] - u[cspec, 2]
+    return f[cspec] = u[cspec, 1] - u[cspec, 2]
 end
 
 # ╔═╡ 1d7f442f-c057-4379-8a40-c6ce3646ad5c
@@ -511,6 +523,7 @@ function breaction2(f, u, node, data)
 
         f[cspec] = -q1
     end
+    return nothing
 end
 
 # ╔═╡ 59c83a22-a4cc-4b51-a1cc-5eb39588eacd
@@ -538,23 +551,27 @@ function plot2(U, subgrids, system6)
     dvws = VoronoiFVM.views(U, dspec, allsubgrids, system6)
     cvws = VoronoiFVM.views(U, cspec, allsubgrids, system6)
     vis = GridVisualizer(; resolution = (600, 300), legend = :rt)
-    scalarplot!(vis,
-                allsubgrids,
-                grid2,
-                dvws;
-                flimits = (-0.5, 1.5),
-                clear = false,
-                color = :red,
-                label = "discontinuous species")
-    scalarplot!(vis,
-                allsubgrids,
-                grid2,
-                cvws;
-                flimits = (-0.5, 1.5),
-                clear = false,
-                color = :green,
-                label = "continuous species")
-    reveal(vis)
+    scalarplot!(
+        vis,
+        allsubgrids,
+        grid2,
+        dvws;
+        flimits = (-0.5, 1.5),
+        clear = false,
+        color = :red,
+        label = "discontinuous species"
+    )
+    scalarplot!(
+        vis,
+        allsubgrids,
+        grid2,
+        cvws;
+        flimits = (-0.5, 1.5),
+        clear = false,
+        color = :green,
+        label = "continuous species"
+    )
+    return reveal(vis)
 end
 
 # ╔═╡ d58407fe-dcd4-47bb-a65e-db5fedb58edc
@@ -579,34 +596,34 @@ begin
     highlight(mdstring, color) = htl"""<blockquote style="padding: 10px; background-color: $(color);">$(mdstring)</blockquote>"""
 
     macro important_str(s)
-        :(highlight(Markdown.parse($s), "#ffcccc"))
+        return :(highlight(Markdown.parse($s), "#ffcccc"))
     end
     macro definition_str(s)
-        :(highlight(Markdown.parse($s), "#ccccff"))
+        return :(highlight(Markdown.parse($s), "#ccccff"))
     end
     macro statement_str(s)
-        :(highlight(Markdown.parse($s), "#ccffcc"))
+        return :(highlight(Markdown.parse($s), "#ccffcc"))
     end
 
     html"""
-    <style>
-     h1{background-color:#dddddd;  padding: 10px;}
-     h2{background-color:#e7e7e7;  padding: 10px;}
-     h3{background-color:#eeeeee;  padding: 10px;}
-     h4{background-color:#f7f7f7;  padding: 10px;}
+        <style>
+         h1{background-color:#dddddd;  padding: 10px;}
+         h2{background-color:#e7e7e7;  padding: 10px;}
+         h3{background-color:#eeeeee;  padding: 10px;}
+         h4{background-color:#f7f7f7;  padding: 10px;}
 
-	 pluto-log-dot-sizer  { max-width: 655px;}
-     pluto-log-dot.Stdout { background: #002000;
-	                        color: #10f080;
-                            border: 6px solid #b7b7b7;
-                            min-width: 18em;
-                            max-height: 300px;
-                            width: 675px;
-                            overflow: auto;
- 	                       }
-	
-    </style>
-"""
+    	 pluto-log-dot-sizer  { max-width: 655px;}
+         pluto-log-dot.Stdout { background: #002000;
+    	                        color: #10f080;
+                                border: 6px solid #b7b7b7;
+                                min-width: 18em;
+                                max-height: 300px;
+                                width: 675px;
+                                overflow: auto;
+     	                       }
+    	
+        </style>
+    """
 end
 
 # ╔═╡ b5a87200-eea5-4164-bfd5-dee1045a0464
