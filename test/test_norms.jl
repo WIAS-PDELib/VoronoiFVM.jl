@@ -5,13 +5,14 @@ using Test
 using LinearAlgebra
 
 function grid(X, dim)
-    return if dim == 1
-        simplexgrid(X)
+    if dim == 1
+        return simplexgrid(X)
     elseif dim == 2
-        simplexgrid(X, X)
+        return simplexgrid(X, X)
     else
-        simplexgrid(X, X, X)
+        return simplexgrid(X, X, X)
     end
+    return nothing
 end
 
 function test_solint(; dim = 2, c = 1.0, assembly = :edgewise, h = 0.1)
@@ -31,7 +32,8 @@ function test_edgeint(; dim = 2, c = 1.0, assembly = :edgewise, h = 0.1)
     VoronoiFVM._complete!(sys)
     u = map(c, sys)
     function f(y, u, edge, data = nothing)
-        return y[1] = 0.5 * (u[1, 1] + u[2, 1])
+        y[1] = 0.5 * (u[1, 1] + u[2, 1])
+        return nothing
     end
     return VoronoiFVM.edgeintegrate(sys, f, u)[1, 1]
 end

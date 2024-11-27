@@ -13,7 +13,8 @@ function run_tests_from_directory(testdir, prefix)
     @info "Directory $(testdir):"
     examples = filter(ex -> length(ex) >= length(prefix) && ex[1:length(prefix)] == prefix, basename.(readdir(testdir)))
     @info examples
-    return @testmodules(testdir, examples)
+    @testmodules(testdir, examples)
+    return nothing
 end
 
 function run_all_tests(; run_notebooks = false, notebooksonly = false)
@@ -81,11 +82,12 @@ function run_all_tests(; run_notebooks = false, notebooksonly = false)
         Aqua.test_persistent_tasks(VoronoiFVM)
     end
 
-    return if isdefined(Docs, :undocumented_names) # >=1.11
+    if isdefined(Docs, :undocumented_names) # >=1.11
         @testset "UndocumentedNames" begin
             @test isempty(Docs.undocumented_names(VoronoiFVM))
         end
     end
+    return nothing
 end
 
 # Don't run notebooks on 1.12: https://github.com/fonsp/Pluto.jl/issues/2939

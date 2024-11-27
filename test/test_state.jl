@@ -9,7 +9,8 @@ flux(y, u, edge, data) = y[1] = u[1, 1] - u[1, 2]
 
 function bcondition(y, u, bnode, data)
     boundary_robin!(y, u, bnode, region = 1, value = 0.0, factor = 0.1)
-    return boundary_robin!(y, u, bnode, region = 2, value = 1.0, factor = 0.1)
+    boundary_robin!(y, u, bnode, region = 2, value = 1.0, factor = 0.1)
+    return nothing
 end
 
 function main(; unknown_storage = :dense)
@@ -37,14 +38,14 @@ function main(; unknown_storage = :dense)
     xsol2 = solve!(state; inival = tsol1.u[end], times = (0.1, 0.2), control)
     xsol3 = solve!(state; inival = 0.0, times = [0.0, 0.1, 0.2], control)
     @test xsol3.u[end] ≈ xsol2.u[end]
-    return @test xsol3.u[end] ≈ tsol3.u[end]
-
+    @test xsol3.u[end] ≈ tsol3.u[end]
+    return nothing
 
 end
 
 function runtests()
     main(; unknown_storage = :dense)
-    return main(; unknown_storage = :sparse)
-
+    main(; unknown_storage = :sparse)
+    return nothing
 end
 end

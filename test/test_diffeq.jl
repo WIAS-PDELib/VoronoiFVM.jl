@@ -11,14 +11,14 @@ function test_matrices(nspec)
         for i in 1:length(y)
             y[i] = u[i, 1] - u[i, 2]
         end
-        return
+        return nothing
     end
 
     function storage(y, u, node, data)
         for i in 1:length(y)
             y[i] = i * u[i]
         end
-        return
+        return nothing
     end
 
     sys = VoronoiFVM.System(grid; flux, storage, species = collect(1:nspec))
@@ -42,7 +42,8 @@ function test_matrices(nspec)
     u = unknowns(sys)
     J = similar(jac_proto)
     eval_jacobian!(J, u, state, 0.0)
-    return @test jac_proto == -J
+    @test jac_proto == -J
+    return nothing
 end
 
 function runtests()

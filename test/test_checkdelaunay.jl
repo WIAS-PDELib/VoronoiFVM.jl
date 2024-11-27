@@ -15,7 +15,8 @@ function runtests()
         coord[2, i] += 0.01 * (rand() - 0.5)
     end
 
-    return @test length(nondelaunay(g)) > 0
+    @test length(nondelaunay(g)) > 0
+    return nothing
 end
 
 end

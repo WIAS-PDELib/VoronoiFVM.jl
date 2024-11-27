@@ -21,7 +21,7 @@ function ttri(; ntest = 100)
         @test npar3d ≈ npar2d
         @test epar3d ≈ epar2d
     end
-    return
+    return nothing
 end
 
 
