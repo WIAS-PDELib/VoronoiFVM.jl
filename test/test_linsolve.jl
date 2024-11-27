@@ -13,8 +13,8 @@ function checklux0(::Type{Val{N}}, ::Type{T}) where {N, T}
     x = StrideArray{T}(undef, StaticInt(N))
     b = StrideArray{T}(undef, StaticInt(N))
 
-    for i = 1:N
-        for j = 1:N
+    for i in 1:N
+        for j in 1:N
             A[i, j] = -rand()
         end
         A[i, i] += 100
@@ -25,11 +25,11 @@ function checklux0(::Type{Val{N}}, ::Type{T}) where {N, T}
     @gc_preserve inplace_linsolve!(A, b)
 
     nm = 0
-    for i = 1:N
+    for i in 1:N
         nm += (b[i] - x[i])^2
     end
     @assert sqrt(nm) / N < 100.0 * eps(Float64)
-    nothing
+    return nothing
 end
 
 checklux(n, T) = checklux0(Val{n}, T)
@@ -39,8 +39,8 @@ function checklum0(::Type{Val{N}}, ::Type{T}) where {N, T}
     x = MVector{N, Float64}(undef)
     b = MVector{N, Float64}(undef)
 
-    for i = 1:N
-        for j = 1:N
+    for i in 1:N
+        for j in 1:N
             A[i, j] = -rand()
         end
         A[i, i] += 100
@@ -51,12 +51,12 @@ function checklum0(::Type{Val{N}}, ::Type{T}) where {N, T}
     @gc_preserve inplace_linsolve!(A, b)
 
     nm = 0
-    for i = 1:N
+    for i in 1:N
         nm += (b[i] - x[i])^2
     end
 
     @assert sqrt(nm) / N < 100.0 * eps(Float64)
-    nothing
+    return nothing
 end
 
 checklum(n, T) = checklum0(Val{n}, T)
@@ -67,34 +67,8 @@ function checklurx0(::Type{Val{N}}, ::Type{T}) where {N, T}
     x = StrideArray{T}(undef, StaticInt(N))
     b = StrideArray{T}(undef, StaticInt(N))
     ipiv = StrideArray{Int64}(undef, StaticInt(N))
-    for i = 1:N
-        for j = 1:N
-            A[i, j] = -rand()
-            end
-        A[i, i] += 100
-        x[i] = 1
-    end
-    @gc_preserve mul!(b, A, x)
-    @gc_preserve inplace_linsolve!(A, b, ipiv)
-
-        nm = 0
-    for i = 1:N
-        nm += (b[i] - x[i])^2
-    end
-
-    @assert sqrt(nm) / N < 100.0 * eps(Float64)
-    nothing
-end
-
-checklurx(n, T) = checklurx0(Val{n}, T)
-
-function checklurm0(::Type{Val{N}}, ::Type{T}) where {N, T}
-    A = MMatrix{N, N, Float64}(undef)
-    x = MVector{N, Float64}(undef)
-    b = MVector{N, Float64}(undef)
-    ipiv = MVector{N, Int64}(undef)
-    for i = 1:N
-        for j = 1:N
+    for i in 1:N
+        for j in 1:N
             A[i, j] = -rand()
         end
         A[i, i] += 100
@@ -104,12 +78,38 @@ function checklurm0(::Type{Val{N}}, ::Type{T}) where {N, T}
     @gc_preserve inplace_linsolve!(A, b, ipiv)
 
     nm = 0
-    for i = 1:N
+    for i in 1:N
         nm += (b[i] - x[i])^2
     end
 
     @assert sqrt(nm) / N < 100.0 * eps(Float64)
-    nothing
+    return nothing
+end
+
+checklurx(n, T) = checklurx0(Val{n}, T)
+
+function checklurm0(::Type{Val{N}}, ::Type{T}) where {N, T}
+    A = MMatrix{N, N, Float64}(undef)
+    x = MVector{N, Float64}(undef)
+    b = MVector{N, Float64}(undef)
+    ipiv = MVector{N, Int64}(undef)
+    for i in 1:N
+        for j in 1:N
+            A[i, j] = -rand()
+        end
+        A[i, i] += 100
+        x[i] = 1
+    end
+    @gc_preserve mul!(b, A, x)
+    @gc_preserve inplace_linsolve!(A, b, ipiv)
+
+    nm = 0
+    for i in 1:N
+        nm += (b[i] - x[i])^2
+    end
+
+    @assert sqrt(nm) / N < 100.0 * eps(Float64)
+    return nothing
 end
 
 checklurm(n, T) = checklurm0(Val{n}, T)
@@ -146,7 +146,7 @@ function runtests()
     @test rn3 == 0
     rn4 = @allocated checklurm(10, Dual64)
     @test rn4 == 0
-    true
+    return true
 end
 
 end

@@ -19,10 +19,10 @@ using DocStringExtensions: DocStringExtensions, SIGNATURES
 id(u) = (u, Identity)
 
 
-dist(p1,p2) =  sqrt( (p1[1] - p2[1] )^2 + (p1[2] -p2[2])^2 )
+dist(p1, p2) = sqrt((p1[1] - p2[1])^2 + (p1[2] - p2[2])^2)
 
 function iscloser(pint, p1, p2, eps)
-    return dist(pint,p2) < dist(p2,p1) - eps
+    return dist(pint, p2) < dist(p2, p1) - eps
 end
 
 #This is the FEVectorBlock with lots of info from ExtendableFEMBase
@@ -48,7 +48,6 @@ end
 function AugmentedFEVectorBlock(vel, seg_integrator, point_evaluator, cf, flowgrid)
 
 
-
     bp1 = zeros(Float64, 3)
     bp2 = zeros(Float64, 3)
     result = zeros(Float64, 2)
@@ -58,14 +57,16 @@ function AugmentedFEVectorBlock(vel, seg_integrator, point_evaluator, cf, flowgr
     bary = [1 / 3, 1 / 3, 1 / 3]
 
 
-    AugmentedFEVectorBlock(vel, seg_integrator, point_evaluator, cf, flowgrid,
-                           bp1,
-                           bp2,
-                           result,
-                           summand,
-                           pint,
-                           bpint,
-                           bary)
+    return AugmentedFEVectorBlock(
+        vel, seg_integrator, point_evaluator, cf, flowgrid,
+        bp1,
+        bp2,
+        result,
+        summand,
+        pint,
+        bpint,
+        bary
+    )
 
 
 end
@@ -76,7 +77,7 @@ function multiply_r(result, input, qpinfo)
     return nothing
 end
 
-function prepare_segment_integration(vel; axisymmetric=false, reconst=false, kwargs...)
+function prepare_segment_integration(vel; axisymmetric = false, reconst = false, kwargs...)
     flowgrid = vel.FES.xgrid
 
     # reference mappings not implemented for other coord types
@@ -86,7 +87,7 @@ function prepare_segment_integration(vel; axisymmetric=false, reconst=false, kwa
         if reconst
             seg_integrator = SegmentIntegrator(Edge1D, [id(1)])
         else
-            seg_integrator = SegmentIntegrator(Edge1D, multiply_r, [id(1)]; bonus_quadorder=1)
+            seg_integrator = SegmentIntegrator(Edge1D, multiply_r, [id(1)]; bonus_quadorder = 1)
         end
     else
         seg_integrator = SegmentIntegrator(Edge1D, [id(1)])
@@ -148,21 +149,21 @@ end
 # We need two explicitly type-annotated methods for a working method specialization.
 # This one...
 function VoronoiFVM.integrate(::Type{<:Cartesian2D}, p1, p2, hnormal, aug_vec_block::AugmentedFEVectorBlock; kwargs...)
-    _integrate_along_segments(p1, p2, hnormal, aug_vec_block; kwargs...)
+    return _integrate_along_segments(p1, p2, hnormal, aug_vec_block; kwargs...)
 end
 
 # ... and that one.
 function VoronoiFVM.integrate(::Type{<:Cylindrical2D}, p1, p2, hnormal, aug_vec_block::AugmentedFEVectorBlock; kwargs...)
-    _integrate_along_segments(p1, p2, hnormal, aug_vec_block; kwargs...)
+    return _integrate_along_segments(p1, p2, hnormal, aug_vec_block; kwargs...)
 end
 
 # compute the path integral for the velocity in aug_vec_block between p1 and p2 by
 # incrementally walking through each cell in the grid between p1 and p2
 # and summing up each cell's contribution
-function _integrate_along_segments(p1, p2, hnormal, aug_vec_block::AugmentedFEVectorBlock{TVB, TSE, TPE, TCF, TFG}; interpolate_eps=1.0e-12, axisymmetric=false, kwargs...) where {TVB, TSE, TPE, TCF, TFG}
-    edge_length = dist(p1,p2)
+function _integrate_along_segments(p1, p2, hnormal, aug_vec_block::AugmentedFEVectorBlock{TVB, TSE, TPE, TCF, TFG}; interpolate_eps = 1.0e-12, axisymmetric = false, kwargs...) where {TVB, TSE, TPE, TCF, TFG}
+    edge_length = dist(p1, p2)
     avg_r = (p1[1] + p2[1]) / 2
-    (; bp1, result, summand, bp2, pint, bpint, bary)= aug_vec_block
+    (; bp1, result, summand, bp2, pint, bpint, bary) = aug_vec_block
 
 
     if axisymmetric && avg_r < eps()
@@ -170,7 +171,7 @@ function _integrate_along_segments(p1, p2, hnormal, aug_vec_block::AugmentedFEVe
     end
 
     CF = aug_vec_block.cellfinder
-    icell::Int = gFindLocal!(bp1, CF, p1; eps=interpolate_eps)
+    icell::Int = gFindLocal!(bp1, CF, p1; eps = interpolate_eps)
     if edge_length ≤ interpolate_eps
         point_evaluator = aug_vec_block.point_evaluator
         evaluate_bary!(p2, point_evaluator, bp1, icell)
@@ -200,15 +201,15 @@ function _integrate_along_segments(p1, p2, hnormal, aug_vec_block::AugmentedFEVe
     p1_temp3 = @MVector zeros(3)
 
     function calc_barycentric_coords!(bp, p)
-        for j = 1:2
+        for j in 1:2
             cx[j] = p[j] - L2Gb[j]
         end
 
         fill!(bp, 0)
-        for j = 1:2, k = 1:2
+        for j in 1:2, k in 1:2
             bp[k] += invA[j, k] * cx[j]
         end
-        postprocess_xreftest!(bp, CF.xCellGeometries[icell])
+        return postprocess_xreftest!(bp, CF.xCellGeometries[icell])
     end
 
     while (true)
@@ -232,7 +233,7 @@ function _integrate_along_segments(p1, p2, hnormal, aug_vec_block::AugmentedFEVe
         # a cell containing p1 in the direction of (p2-p1)
         if count(<=(interpolate_eps), bp1) == 2 # 10^(-13)
             @. p1_temp2 = p1 + 10 * interpolate_eps * (p2 - p1)
-            icell_new = gFindLocal!(bp1, CF, p1_temp2; eps=10 * interpolate_eps, icellstart=icell) #!!! allocates
+            icell_new = gFindLocal!(bp1, CF, p1_temp2; eps = 10 * interpolate_eps, icellstart = icell) #!!! allocates
             if icell_new == 0
                 # TODO: test the following
                 # icell_new = gFindBruteForce!(bp1, CF, p1_temp[1:2])
@@ -280,8 +281,8 @@ function _integrate_along_segments(p1, p2, hnormal, aug_vec_block::AugmentedFEVe
             p1_temp3 .= 0
 
             while !iscloser(pint, p1, p2, interpolate_eps) ||
-                (any(x->x<= -interpolate_eps, bpint) || any(x->x>= 1 + interpolate_eps, bpint)) ||
-                dist(bpint,bp1) <= interpolate_eps #!!! .< allocates a temp vector
+                    (any(x -> x <= -interpolate_eps, bpint) || any(x -> x >= 1 + interpolate_eps, bpint)) ||
+                    dist(bpint, bp1) <= interpolate_eps #!!! .< allocates a temp vector
                 # check if pint takes us closer to p2 and if bpint is inside the cell *and* if we actually moved with pint from p1
                 imin += 1
                 if imin == 4
@@ -292,9 +293,9 @@ function _integrate_along_segments(p1, p2, hnormal, aug_vec_block::AugmentedFEVe
                 t = bp1[imin] / (bp1[imin] - bp2[imin])
                 bpint = bp1 + t * (bp2 - bp1)
                 eval_trafo!(pint, L2G, bpint)
-                if dist(pint,p2) < closestdist && ((all(x->x>= -interpolate_eps, bpint) && all(x->x<= 1 + interpolate_eps, bpint)))
+                if dist(pint, p2) < closestdist && ((all(x -> x >= -interpolate_eps, bpint) && all(x -> x <= 1 + interpolate_eps, bpint)))
                     closestimin = imin
-                    closestdist = dist(pint,p2)
+                    closestdist = dist(pint, p2)
                     p1_temp3 .= bpint
                 end
             end

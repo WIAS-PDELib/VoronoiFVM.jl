@@ -7,7 +7,7 @@ function test_addrows(m, n, mx)
     sa = sprand(m, n, 0.5)
     da = Matrix(sa)
     SparseMatrixCSC(VoronoiFVM.addzrows(da, mx)) == VoronoiFVM.addzrows(sa, mx)
-    sa == da
+    return sa == da
 end
 
 function runtests()
@@ -17,7 +17,7 @@ function runtests()
     @test test_addrows(1, 100, 4)
     @test test_addrows(10, 100, 11)
     @test test_addrows(10, 100, 1)
-    true
+    return true
 end
 
 end

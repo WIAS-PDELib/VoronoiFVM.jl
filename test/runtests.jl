@@ -13,7 +13,7 @@ function run_tests_from_directory(testdir, prefix)
     @info "Directory $(testdir):"
     examples = filter(ex -> length(ex) >= length(prefix) && ex[1:length(prefix)] == prefix, basename.(readdir(testdir)))
     @info examples
-    @testmodules(testdir, examples)
+    return @testmodules(testdir, examples)
 end
 
 function run_all_tests(; run_notebooks = false, notebooksonly = false)
@@ -21,7 +21,7 @@ function run_all_tests(; run_notebooks = false, notebooksonly = false)
         @testset "basictest" begin
             run_tests_from_directory(@__DIR__, "test_")
         end
-        
+
         @testset "Development Examples" begin
             run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example0")
         end
@@ -45,7 +45,7 @@ function run_all_tests(; run_notebooks = false, notebooksonly = false)
     end
 
     if run_notebooks
-        ENV["VORONOIFVM_RUNTESTS"]="1"
+        ENV["VORONOIFVM_RUNTESTS"] = "1"
         notebooks = [
             "nbproto.jl",
             "ode-diffusion1d.jl",
@@ -59,7 +59,7 @@ function run_all_tests(; run_notebooks = false, notebooksonly = false)
             "nonlinear-solvers.jl",
             "api-update.jl",
             "heterogeneous-catalysis.jl",
-                     ]
+        ]
         @testset "Notebooks" begin
             @testscripts(joinpath(@__DIR__, "..", "pluto-examples"), notebooks)
         end
@@ -71,17 +71,17 @@ function run_all_tests(; run_notebooks = false, notebooksonly = false)
     end
 
     @testset "Aqua" begin
-        Aqua.test_ambiguities(VoronoiFVM, broken=true)
+        Aqua.test_ambiguities(VoronoiFVM, broken = true)
         Aqua.test_unbound_args(VoronoiFVM)
         Aqua.test_undefined_exports(VoronoiFVM)
         Aqua.test_project_extras(VoronoiFVM)
         Aqua.test_stale_deps(VoronoiFVM)
         Aqua.test_deps_compat(VoronoiFVM)
-        Aqua.test_piracies(VoronoiFVM, broken=true)
+        Aqua.test_piracies(VoronoiFVM, broken = true)
         Aqua.test_persistent_tasks(VoronoiFVM)
     end
-    
-    if isdefined(Docs,:undocumented_names) # >=1.11
+
+    return if isdefined(Docs, :undocumented_names) # >=1.11
         @testset "UndocumentedNames" begin
             @test isempty(Docs.undocumented_names(VoronoiFVM))
         end
@@ -89,10 +89,10 @@ function run_all_tests(; run_notebooks = false, notebooksonly = false)
 end
 
 # Don't run notebooks on 1.12: https://github.com/fonsp/Pluto.jl/issues/2939
-if haskey(ENV,"EXAMPLES_ONLY")
+if haskey(ENV, "EXAMPLES_ONLY")
     run_all_tests(; run_notebooks = false, notebooksonly = false)
-elseif haskey(ENV,"NOTEBOOKS_ONLY")
-    run_all_tests(; run_notebooks=true, notebooksonly = true)
+elseif haskey(ENV, "NOTEBOOKS_ONLY")
+    run_all_tests(; run_notebooks = true, notebooksonly = true)
 else
-    run_all_tests(; run_notebooks = VERSION < v"1.12.0-DEV.0" , notebooksonly = false)
+    run_all_tests(; run_notebooks = VERSION < v"1.12.0-DEV.0", notebooksonly = false)
 end
