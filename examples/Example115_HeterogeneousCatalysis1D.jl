@@ -62,9 +62,11 @@ using LinearAlgebra
 using OrdinaryDiffEqRosenbrock
 using SciMLBase: NoInit
 
-function main(; n = 10, Plotter = nothing, verbose = false, tend = 1,
-              unknown_storage = :sparse, assembly = :edgewise,
-              diffeq=false)
+function main(;
+        n = 10, Plotter = nothing, verbose = false, tend = 1,
+        unknown_storage = :sparse, assembly = :edgewise,
+        diffeq = false
+    )
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
     N = length(X)
@@ -83,25 +85,28 @@ function main(; n = 10, Plotter = nothing, verbose = false, tend = 1,
     function flux!(f, u, edge, data)
         f[iA] = D_A * (u[iA, 1] - u[iA, 2])
         f[iB] = D_B * (u[iB, 1] - u[iB, 2])
+        return nothing
     end
 
     ## Storage term of species A and B
     function storage!(f, u, node, data)
         f[iA] = u[iA]
         f[iB] = u[iB]
+        return nothing
     end
 
     ## Source term for species a around 0.5
     function source!(f, node, data)
         x1 = node[1] - 0.5
         f[iA] = exp(-100 * x1^2)
+        return nothing
     end
 
     ## Reaction constants (p = + , m = -)
     ## Chosen to prefer path A-> C -> B
     ## More over, A reacts faster than to C than C to B
     ## leading to "catalyst poisoning", i.e. C taking up most of the
-    ## available catalyst sites 
+    ## available catalyst sites
     kp_AC = 100.0
     km_AC = 1.0
 
@@ -119,6 +124,7 @@ function main(; n = 10, Plotter = nothing, verbose = false, tend = 1,
             f[iB] = S * R_BC(u[iB], u[iC])
             f[iC] = -R_BC(u[iB], u[iC]) - R_AC(u[iA], u[iC])
         end
+        return nothing
     end
 
     ## This is for the term \partial_t u_C at the boundary
@@ -126,13 +132,16 @@ function main(; n = 10, Plotter = nothing, verbose = false, tend = 1,
         if node.region == 1
             f[iC] = u[iC]
         end
+        return nothing
     end
 
-    physics = VoronoiFVM.Physics(; breaction = breaction!,
-                                 bstorage = bstorage!,
-                                 flux = flux!,
-                                 storage = storage!,
-                                 source = source!)
+    physics = VoronoiFVM.Physics(;
+        breaction = breaction!,
+        bstorage = bstorage!,
+        flux = flux!,
+        storage = storage!,
+        source = source!
+    )
 
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage)
 
@@ -158,25 +167,31 @@ function main(; n = 10, Plotter = nothing, verbose = false, tend = 1,
 
     p = GridVisualizer(; Plotter = Plotter, layout = (3, 1))
     if diffeq
-        inival=unknowns(sys,inival=0)
-        problem = ODEProblem(sys,inival,(0,tend))
+        inival = unknowns(sys, inival = 0)
+        problem = ODEProblem(sys, inival, (0, tend))
         ## use fixed timesteps just for the purpose of CI
-        odesol = solve(problem,Rosenbrock23(); initializealg=NoInit(), dt=tstep, adaptive=false)
-        tsol=reshape(odesol,sys)
+        odesol = solve(problem, Rosenbrock23(); initializealg = NoInit(), dt = tstep, adaptive = false)
+        tsol = reshape(odesol, sys)
     else
         control = fixed_timesteps!(VoronoiFVM.NewtonControl(), tstep)
         tsol = solve(sys; inival, times = [0, tend], control, verbose = verbose)
     end
-    
+
     p = GridVisualizer(; Plotter = Plotter, layout = (3, 1), fast = true)
-    for it = 1:length(tsol)
+    for it in 1:length(tsol)
         time = tsol.t[it]
-        scalarplot!(p[1, 1], grid, tsol[iA, :, it]; clear = true,
-                    title = @sprintf("[A]: (%.3f,%.3f)", extrema(tsol[iA, :, it])...))
-        scalarplot!(p[2, 1], grid, tsol[iB, :, it]; clear = true,
-                    title = @sprintf("[B]: (%.3f,%.3f)", extrema(tsol[iB, :, it])...))
-        scalarplot!(p[3, 1], tsol.t[1:it], tsol[iC, 1, 1:it]; title = @sprintf("[C]"),
-                    clear = true, show = true)
+        scalarplot!(
+            p[1, 1], grid, tsol[iA, :, it]; clear = true,
+            title = @sprintf("[A]: (%.3f,%.3f)", extrema(tsol[iA, :, it])...)
+        )
+        scalarplot!(
+            p[2, 1], grid, tsol[iB, :, it]; clear = true,
+            title = @sprintf("[B]: (%.3f,%.3f)", extrema(tsol[iB, :, it])...)
+        )
+        scalarplot!(
+            p[3, 1], tsol.t[1:it], tsol[iC, 1, 1:it]; title = @sprintf("[C]"),
+            clear = true, show = true
+        )
     end
 
     return tsol[iC, 1, end]
@@ -186,15 +201,15 @@ using Test
 function runtests()
     testval = 0.87544440641274
     testvaldiffeq = 0.8891082547874963
-    @test isapprox(main(; unknown_storage = :sparse, assembly = :edgewise), testval; rtol = 1.0e-12) 
-    @test isapprox(main(; unknown_storage = :dense, assembly = :edgewise), testval; rtol = 1.0e-12) 
-    @test isapprox(main(; unknown_storage = :sparse, assembly = :cellwise), testval; rtol = 1.0e-12) 
+    @test isapprox(main(; unknown_storage = :sparse, assembly = :edgewise), testval; rtol = 1.0e-12)
+    @test isapprox(main(; unknown_storage = :dense, assembly = :edgewise), testval; rtol = 1.0e-12)
+    @test isapprox(main(; unknown_storage = :sparse, assembly = :cellwise), testval; rtol = 1.0e-12)
     @test isapprox(main(; unknown_storage = :dense, assembly = :cellwise), testval; rtol = 1.0e-12)
 
-    @test isapprox(main(; diffeq=true, unknown_storage = :sparse, assembly = :edgewise), testvaldiffeq; rtol = 1.0e-12) 
-    @test isapprox(main(; diffeq=true, unknown_storage = :dense, assembly = :edgewise), testvaldiffeq; rtol = 1.0e-12) 
-    @test isapprox(main(; diffeq=true, unknown_storage = :sparse, assembly = :cellwise), testvaldiffeq; rtol = 1.0e-12) 
-    @test isapprox(main(; diffeq=true, unknown_storage = :dense, assembly = :cellwise), testvaldiffeq; rtol = 1.0e-12)
-
+    @test isapprox(main(; diffeq = true, unknown_storage = :sparse, assembly = :edgewise), testvaldiffeq; rtol = 1.0e-12)
+    @test isapprox(main(; diffeq = true, unknown_storage = :dense, assembly = :edgewise), testvaldiffeq; rtol = 1.0e-12)
+    @test isapprox(main(; diffeq = true, unknown_storage = :sparse, assembly = :cellwise), testvaldiffeq; rtol = 1.0e-12)
+    @test isapprox(main(; diffeq = true, unknown_storage = :dense, assembly = :cellwise), testvaldiffeq; rtol = 1.0e-12)
+    return nothing
 end
 end

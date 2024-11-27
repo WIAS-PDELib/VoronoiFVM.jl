@@ -31,7 +31,7 @@ function main(; N = 5, Plotter = nothing, unknown_storage = :sparse, assembly = 
 
     function init(u, node)
         ireg = node.region
-        if ireg == 1
+        return if ireg == 1
             u[dspec] = 1
             u[cspec] = 10
         else
@@ -51,7 +51,7 @@ function main(; N = 5, Plotter = nothing, unknown_storage = :sparse, assembly = 
         (cuviews[2] == fill(20.0, (N - 1) ÷ 2 + 1)) |> psh!
         (cuviews[1][1:(end - 1)] == fill(10.0, (N - 1) ÷ 2)) |> psh!
 
-        all(result)
+        return all(result)
     end
 
     ## "Classical" solution creation
@@ -64,15 +64,15 @@ function main(; N = 5, Plotter = nothing, unknown_storage = :sparse, assembly = 
     w = unknowns(system)
     map!(init, w, system)
 
-    check(u) && check(v) && check(w)
+    return check(u) && check(v) && check(w)
 end
 
 using Test
 function runtests()
-    @test main(; unknown_storage = :sparse, assembly = :edgewise) &&
-          main(; unknown_storage = :dense, assembly = :edgewise) &&
-          main(; unknown_storage = :sparse, assembly = :cellwise) &&
-          main(; unknown_storage = :dense, assembly = :cellwise)
+    return @test main(; unknown_storage = :sparse, assembly = :edgewise) &&
+        main(; unknown_storage = :dense, assembly = :edgewise) &&
+        main(; unknown_storage = :sparse, assembly = :cellwise) &&
+        main(; unknown_storage = :dense, assembly = :cellwise)
 end
 
 end

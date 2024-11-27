@@ -98,11 +98,13 @@ function main()
     ## between neighboring control volumes
     function flux!(f, u, edge, data)
         f[1] = u[1, 1] - u[1, 2]
+        return nothing
     end
 
     function bcond!(f, u, node, data)
         boundary_dirichlet!(f, u, node; region = 1, value = 0)
         boundary_dirichlet!(f, u, node; region = 2, value = 1)
+        return nothing
     end
 
     ## Create a one dimensional discretization grid
@@ -110,7 +112,7 @@ function main()
     ## By default, there is only one region numbered with 1
     grid = simplexgrid(0:0.2:1)
 
-    ## Create a finite volume system 
+    ## Create a finite volume system
     sys = VoronoiFVM.System(grid; flux = flux!, breaction = bcond!, species = ispec)
 
     ## Solve stationary problem
@@ -123,6 +125,7 @@ end
 using Test
 function runtests()
     @test main() ≈ 3.0
+    return nothing
 end
 
 end

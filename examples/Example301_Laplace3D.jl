@@ -14,11 +14,13 @@ using GridVisualize
 ## between neighboring control volumes
 function g!(f, u, edge, data)
     f[1] = u[1, 1] - u[1, 2]
+    return nothing
 end
 
 function s(f, node, data)
     n = view(node.coord, :, node.index)
     f[1] = n[1] * sin(5.0 * n[2]) * exp(n[3])
+    return nothing
 end
 
 function main(; Plotter = nothing, n = 5, assembly = :edgewise)
@@ -42,7 +44,8 @@ using Test
 function runtests()
     testval = 0.012234524449380824
     @test main(; assembly = :edgewise) ≈ testval &&
-          main(; assembly = :cellwise) ≈ testval
+        main(; assembly = :cellwise) ≈ testval
+    return nothing
 end
 
 end

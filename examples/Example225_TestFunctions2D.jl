@@ -108,8 +108,10 @@ module Example225_TestFunctions2D
 
 using VoronoiFVM, GridVisualize, ExtendableGrids
 
-function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
-              dim = 2, tend = 5, dt = 0.2)
+function main(;
+        n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
+        dim = 2, tend = 5, dt = 0.2
+    )
     n = [101, 21, 5]
     X = collect(range(0.0, 1; length = n[dim]))
     if dim == 1
@@ -128,11 +130,13 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
 
     function storage(f, u, node, data)
         f .= u
+        return nothing
     end
 
     function flux(f, u, edge, data)
         f[1] = u[1, 1] - u[1, 2]
         f[2] = u[2, 1] - u[2, 2]
+        return nothing
     end
 
     r(u1, u2) = u1 - 0.1 * u2
@@ -140,16 +144,20 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     function reaction(f, u, node, data)
         f[1] = r(u[1], u[2])
         f[2] = -r(u[1], u[2])
+        return nothing
     end
 
     function source(f, node, data)
         f[1] = 1.0
+        return nothing
     end
 
-    physics = VoronoiFVM.Physics(; flux = flux,
-                                 storage = storage,
-                                 reaction = reaction,
-                                 source = source)
+    physics = VoronoiFVM.Physics(;
+        flux = flux,
+        storage = storage,
+        reaction = reaction,
+        source = source
+    )
 
     system = VoronoiFVM.System(grid, physics; assembly = assembly)
 
@@ -159,8 +167,10 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
 
     sol = solve(system; inival = 0.0)
 
-    vis = GridVisualizer(; Plotter = Plotter, layout = (1, 2), resolution = (600, 300),
-                         fignumber = 1)
+    vis = GridVisualizer(;
+        Plotter = Plotter, layout = (1, 2), resolution = (600, 300),
+        fignumber = 1
+    )
     scalarplot!(vis[1, 1], grid, sol[1, :]; flimits = (0, 1.5), title = "u_1")
     scalarplot!(vis[1, 2], grid, sol[2, :]; flimits = (0, 1.5), title = "u_2", show = true)
 
@@ -197,28 +207,32 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
 
     tsol = solve(system; inival = 0.0, times = [t0, tend], control)
 
-    vis1 = GridVisualizer(; Plotter = Plotter, layout = (1, 2), resolution = (600, 300),
-                          fignumber = 4)
+    vis1 = GridVisualizer(;
+        Plotter = Plotter, layout = (1, 2), resolution = (600, 300),
+        fignumber = 4
+    )
 
-    for i = 1:length(tsol)
+    for i in 1:length(tsol)
         sol = tsol.u[i]
         scalarplot!(vis1[1, 1], grid, sol[1, :]; flimits = (0, 1.5), clear = true)
         scalarplot!(vis1[1, 2], grid, sol[2, :]; flimits = (0, 1.5), show = true)
     end
 
     outflow_rate = Float64[]
-    for i = 2:length(tsol)
+    for i in 2:length(tsol)
         ofr = integrate(system, T, tsol.u[i], tsol.u[i - 1], tsol.t[i] - tsol.t[i - 1])
         push!(outflow_rate, ofr[2])
     end
 
-    vis2 = GridVisualizer(; Plotter = Plotter, layout = (1, 1), resolution = (600, 300),
-                          fignumber = 2)
+    vis2 = GridVisualizer(;
+        Plotter = Plotter, layout = (1, 1), resolution = (600, 300),
+        fignumber = 2
+    )
     scalarplot!(vis2[1, 1], [0, tend], -[I[2], I[2]]; label = "stationary", clear = true)
     scalarplot!(vis2[1, 1], tsol.t[2:end], -outflow_rate; label = "transient", show = true)
 
     all_outflow = 0.0
-    for i = 1:(length(tsol) - 1)
+    for i in 1:(length(tsol) - 1)
         all_outflow -= outflow_rate[i] * (tsol.t[i + 1] - tsol.t[i])
     end
 
@@ -226,8 +240,8 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     isapprox(F[1], R[1]; rtol = 1.0e-12) ? true : return false
     isapprox(I[1], 0.0; atol = 1.0e-12) ? true : return false
     isapprox(R[2], I[2]; rtol = 1.0e-12) ? true : return false
-    isapprox(F[1] * (tend - t0), (Uend[1] + Uend[2] + all_outflow); rtol = 1.0e-12) ? true :
-    return false
+    return isapprox(F[1] * (tend - t0), (Uend[1] + Uend[2] + all_outflow); rtol = 1.0e-12) ? true :
+        return false
 end
 
 using Test
@@ -245,6 +259,7 @@ function runtests()
     @test main(; dim = 2, unknown_storage = :dense, assembly = :cellwise)
     @test main(; dim = 3, unknown_storage = :sparse, assembly = :cellwise)
     @test main(; dim = 3, unknown_storage = :dense, assembly = :cellwise)
+    return nothing
 end
 
 end

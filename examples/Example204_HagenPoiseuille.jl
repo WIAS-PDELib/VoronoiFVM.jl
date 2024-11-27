@@ -21,8 +21,10 @@ using GridVisualize
 function main(; nref = 0, Plotter = nothing, D = 0.01, v = 1.0, tend = 100, cin = 1.0, assembly = :edgewise)
     H = 1.0
     L = 5.0
-    grid = simplexgrid(range(0, L; length = 20 * 2^nref),
-                       range(0, H; length = 5 * 2^nref))
+    grid = simplexgrid(
+        range(0, L; length = 20 * 2^nref),
+        range(0, H; length = 5 * 2^nref)
+    )
 
     function fhp(x, y)
         yh = y / H
@@ -37,12 +39,14 @@ function main(; nref = 0, Plotter = nothing, D = 0.01, v = 1.0, tend = 100, cin 
         bp = fbernoulli(vd)
         bm = fbernoulli(-vd)
         f[1] = D * (bp * u[1] - bm * u[2])
+        return nothing
     end
 
     function outflow!(f, u, node, data)
         if node.region == 2
             f[1] = bfvelo[node.ibnode, node.ibface] * u[1]
         end
+        return nothing
     end
 
     ispec = 1
@@ -61,19 +65,22 @@ function main(; nref = 0, Plotter = nothing, D = 0.01, v = 1.0, tend = 100, cin 
     tsol = solve(sys; inival = 0, times = [0, tend], control = control)
 
     vis = GridVisualizer(; Plotter = Plotter)
-    for i = 1:length(tsol.t)
-        scalarplot!(vis[1, 1], grid, tsol[1, :, i]; flimits = (0, cin + 1.0e-5),
-                    title = @sprintf("time=%3f", tsol.t[i]), show = true)
+    for i in 1:length(tsol.t)
+        scalarplot!(
+            vis[1, 1], grid, tsol[1, :, i]; flimits = (0, cin + 1.0e-5),
+            title = @sprintf("time=%3f", tsol.t[i]), show = true
+        )
     end
-    tsol
+    return tsol
 end
 
 using Test
 function runtests()
     tsol1 = main(; assembly = :edgewise)
     tsol2 = main(; assembly = :cellwise)
-    @test all(tsol1.u[end] .≈ 1) 
     @test all(tsol1.u[end] .≈ 1)
+    @test all(tsol1.u[end] .≈ 1)
+    return nothing
 end
 
 end

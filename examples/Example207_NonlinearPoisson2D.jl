@@ -11,8 +11,10 @@ using GridVisualize
 using LinearSolve
 using ILUZero
 
-function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse,
-              method_linear = nothing, assembly = :edgewise)
+function main(;
+        n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse,
+        method_linear = nothing, assembly = :edgewise
+    )
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
     Y = collect(0.0:h:1.0)
@@ -21,17 +23,23 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
 
     eps = 1.0e-2
 
-    physics = VoronoiFVM.Physics(; reaction = function (f, u, node, data)
-                                     f[1] = u[1]^2
-                                 end, flux = function (f, u, edge, data)
-                                     f[1] = eps * (u[1, 1]^2 - u[1, 2]^2)
-                                 end, source = function (f, node, data)
-                                     x1 = node[1] - 0.5
-                                     x2 = node[2] - 0.5
-                                     f[1] = exp(-20.0 * (x1^2 + x2^2))
-                                 end, storage = function (f, u, node, data)
-                                     f[1] = u[1]
-                                 end)
+    physics = VoronoiFVM.Physics(;
+        reaction = function (f, u, node, data)
+            f[1] = u[1]^2
+            return nothing
+        end, flux = function (f, u, edge, data)
+            f[1] = eps * (u[1, 1]^2 - u[1, 2]^2)
+            return nothing
+        end, source = function (f, node, data)
+            x1 = node[1] - 0.5
+            x2 = node[2] - 0.5
+            f[1] = exp(-20.0 * (x1^2 + x2^2))
+            return nothing
+        end, storage = function (f, u, node, data)
+            f[1] = u[1]
+            return nothing
+        end
+    )
     sys = VoronoiFVM.System(grid, physics; unknown_storage, assembly = assembly)
     enable_species!(sys, 1, [1])
 
@@ -66,16 +74,25 @@ function runtests()
     # test at once for iterative solution here
     testval = 0.3554284760906605
     @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, method_linear = KrylovJL_CG(precs=ILUZeroPreconBuilder()),
-               assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :dense, method_linear =  KrylovJL_CG(precs=ILUZeroPreconBuilder()),
-               assembly = :edgewise) ≈ testval &&
-          main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :sparse, method_linear =  KrylovJL_CG(precs=ILUZeroPreconBuilder()),
-               assembly = :cellwise) ≈ testval &&
-          main(; unknown_storage = :dense, method_linear =  KrylovJL_CG(precs=ILUZeroPreconBuilder()),
-               assembly = :cellwise) ≈ testval
+        main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval &&
+        main(;
+        unknown_storage = :sparse, method_linear = KrylovJL_CG(precs = ILUZeroPreconBuilder()),
+        assembly = :edgewise
+    ) ≈ testval &&
+        main(;
+        unknown_storage = :dense, method_linear = KrylovJL_CG(precs = ILUZeroPreconBuilder()),
+        assembly = :edgewise
+    ) ≈ testval &&
+        main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval &&
+        main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval &&
+        main(;
+        unknown_storage = :sparse, method_linear = KrylovJL_CG(precs = ILUZeroPreconBuilder()),
+        assembly = :cellwise
+    ) ≈ testval &&
+        main(;
+        unknown_storage = :dense, method_linear = KrylovJL_CG(precs = ILUZeroPreconBuilder()),
+        assembly = :cellwise
+    ) ≈ testval
+    return nothing
 end
 end

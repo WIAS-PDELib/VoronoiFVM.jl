@@ -19,8 +19,10 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
-function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = :sparse,
-              brea = false, assembly = :edgewise)
+function main(;
+        nref = 0, Plotter = nothing, verbose = false, unknown_storage = :sparse,
+        brea = false, assembly = :edgewise
+    )
 
     ## Create grid in (-1,1) refined around 0
     hmax = 0.2 / 2.0^nref
@@ -42,9 +44,11 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
 
     function flux!(f, u, edge, data)
         f[1] = u[1, 1] - u[1, 2]
+        return nothing
     end
     function storage!(f, u, node, data)
         f[1] = u[1]
+        return nothing
     end
 
     ## Define boundary reaction defining charge
@@ -53,12 +57,15 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
         if node.region == 3
             f[1] = -Q
         end
+        return nothing
     end
 
     ## Create physics
-    physics = VoronoiFVM.Physics(; flux = flux!,
-                                 storage = storage!,
-                                 breaction = breaction!)
+    physics = VoronoiFVM.Physics(;
+        flux = flux!,
+        storage = storage!,
+        breaction = breaction!
+    )
 
     ## Create system
     sys = VoronoiFVM.System(grid, physics; unknown_storage = :dense, assembly = assembly)
@@ -93,8 +100,10 @@ function main(; nref = 0, Plotter = nothing, verbose = false, unknown_storage = 
 
         ## Plot data
 
-        scalarplot!(vis, grid, U[1, :]; title = @sprintf("Q=%.2f", q), clear = true,
-                    show = true)
+        scalarplot!(
+            vis, grid, U[1, :]; title = @sprintf("Q=%.2f", q), clear = true,
+            show = true
+        )
     end
     return sum(U)
 end
@@ -103,6 +112,7 @@ using Test
 function runtests()
     testval = 20.254591679579015
     @test main(; assembly = :edgewise) ≈ testval &&
-          main(; assembly = :cellwise) ≈ testval
+        main(; assembly = :cellwise) ≈ testval
+    return nothing
 end
 end

@@ -38,7 +38,7 @@ function stagnation_flow_cartesian(x, y)
 end
 
 # In the cylindrical case: since the reconstruction space $\mathtt{HDIVBDM2}$
-# is only quadratic, but we have to reconstruct $r \, \mathbf{v}(r,z)$ for a 
+# is only quadratic, but we have to reconstruct $r \, \mathbf{v}(r,z)$ for a
 # (reconstructed) divergence-free solution,
 # we can only resolve at most the linear case exactly.
 function stagnation_flow_cylindrical(r, z)
@@ -48,11 +48,13 @@ end
 function inflow_cylindrical(u, qpinfo)
     x = qpinfo.x
     u .= stagnation_flow_cylindrical(x[1], x[2])
+    return nothing
 end
 
 function inflow_cartesian(u, qpinfo)
     x = qpinfo.x
     u .= stagnation_flow_cartesian(x[1], x[2])
+    return nothing
 end
 
 function flux!(f, u, edge, data)
@@ -60,6 +62,7 @@ function flux!(f, u, edge, data)
     bp = fbernoulli(vd)
     bm = fbernoulli(-vd)
     f[1] = data.D * (bp * u[1] - bm * u[2])
+    return nothing
 end
 
 function bconditions!(f, u, node, data)
@@ -77,6 +80,7 @@ function bconditions!(f, u, node, data)
     if node.region == 3
         boundary_dirichlet!(f, u, node, 1, node.region, data.cin)
     end
+    return nothing
 end
 
 mutable struct Data
@@ -110,8 +114,9 @@ The passed flags regulate the following behavior:
 =#
 function main(;
         cylindrical_grid = false, usefem = true, reconst = cylindrical_grid, use_different_grids = false, nref = 1,
-        Plotter = nothing, μ = 1.0e-02, D = 0.01, cin = 1.0, assembly = :edgewise,
-        interpolation_eps = 1.0e-09)
+        Plotter = nothing, μ = 1.0e-2, D = 0.01, cin = 1.0, assembly = :edgewise,
+        interpolation_eps = 1.0e-9
+    )
     H = 1.0
     L = 5.0
 
@@ -121,15 +126,19 @@ function main(;
         coord_system = Cartesian2D
     end
 
-    flowgrid = simplexgrid(range(0, L; length = 20 * 2^nref),
-        range(0, H; length = 5 * 2^nref))
+    flowgrid = simplexgrid(
+        range(0, L; length = 20 * 2^nref),
+        range(0, H; length = 5 * 2^nref)
+    )
 
     if use_different_grids
-        h_fine = 1.0e-01
-        X_bottom = geomspace(0.0, L / 2, 5.0e-01, h_fine)
+        h_fine = 1.0e-1
+        X_bottom = geomspace(0.0, L / 2, 5.0e-1, h_fine)
         X_cat = range(L / 2, L; step = h_fine)
-        chemgrid = simplexgrid([X_bottom; X_cat[2:end]],
-            geomspace(0.0, H, 1.0e-03, 1.0e-01))
+        chemgrid = simplexgrid(
+            [X_bottom; X_cat[2:end]],
+            geomspace(0.0, H, 1.0e-3, 1.0e-1)
+        )
         bfacemask!(chemgrid, [L / 2, 0.0], [3 * L / 4, 0.0], 5)
     else
         chemgrid = deepcopy(flowgrid)
@@ -138,7 +147,8 @@ function main(;
 
     if usefem
         velocity = compute_velocity(
-            flowgrid, cylindrical_grid, reconst, μ; interpolation_eps)
+            flowgrid, cylindrical_grid, reconst, μ; interpolation_eps
+        )
         DivIntegrator = L2NormIntegrator([div(1)]; quadorder = 2 * 2, resultdim = 1)
         div_v = sqrt(sum(evaluate(DivIntegrator, [velocity])))
         @info "||div(R(v))||_2 = $(div_v)"
@@ -160,7 +170,7 @@ function main(;
     ## since the velocity calculation works by adjusting
     ## the kernels for the Stokes operator directly while
     ## the finite volume machinery relies upon the CoordinateSystem
-    ## for selecting the correct geometrical factors for the 
+    ## for selecting the correct geometrical factors for the
     ## Voronoi cell contributions
     if cylindrical_grid
         chemgrid[CoordinateSystem] = Cylindrical2D
@@ -187,8 +197,10 @@ function main(;
 
     vis = GridVisualizer(; Plotter = Plotter)
 
-    scalarplot!(vis[1, 1], chemgrid, sol[1, :]; flimits = (0, cin + 1.0e-5),
-        show = true)
+    scalarplot!(
+        vis[1, 1], chemgrid, sol[1, :]; flimits = (0, cin + 1.0e-5),
+        show = true
+    )
 
     minmax = extrema(sol)
     @info "Minimal/maximal values of concentration: $(minmax)"
@@ -201,19 +213,23 @@ function runtests()
     cin = 1.0
     for cylindrical_grid in [false, true]
         sol_analytical, evelo_analytical, bfvelo_analytical, minmax_analytical = main(;
-            cylindrical_grid, cin, usefem = false)
+            cylindrical_grid, cin, usefem = false
+        )
         sol_fem, evelo_fem, bfvelo_fem, minmax_fem = main(;
-            cylindrical_grid, cin, usefem = true)
+            cylindrical_grid, cin, usefem = true
+        )
         @test norm(evelo_analytical .- evelo_fem, Inf) ≤ 1.0e-11
-        @test norm(bfvelo_analytical .- bfvelo_fem, Inf) ≤ 1.0e-09
+        @test norm(bfvelo_analytical .- bfvelo_fem, Inf) ≤ 1.0e-9
         @test norm(sol_analytical .- sol_fem, Inf) ≤ 1.0e-10
-        @test norm(minmax_analytical .- [0.,cin], Inf) ≤ 1.0e-15
-        @test norm(minmax_fem .- [0.,cin], Inf) ≤ 1.0e-11
+        @test norm(minmax_analytical .- [0.0, cin], Inf) ≤ 1.0e-15
+        @test norm(minmax_fem .- [0.0, cin], Inf) ≤ 1.0e-11
     end
+    return nothing
 end
 
 function compute_velocity(
-        flowgrid, cylindrical_grid, reconst, μ = 1.0e-02; interpolation_eps = 1.0e-10)
+        flowgrid, cylindrical_grid, reconst, μ = 1.0e-2; interpolation_eps = 1.0e-10
+    )
     ## define finite element spaces
     FE_v, FE_p = H1P2B{2, 2}, L2P1{1}
     reconst_FEType = HDIVBDM2{2}
@@ -227,20 +243,25 @@ function compute_velocity(
     assign_unknown!(Problem, p)
 
     ## assign stokes operator
-    assign_operator!(Problem,
+    assign_operator!(
+        Problem,
         BilinearOperator(
             kernel_stokes!, cylindrical_grid ? [id(v), grad(v), id(p)] : [grad(v), id(p)];
             bonus_quadorder = 2, store = false,
-            params = [μ, cylindrical_grid]))
+            params = [μ, cylindrical_grid]
+        )
+    )
 
-    ## assign Dirichlet boundary conditions on all boundary regions to 
+    ## assign Dirichlet boundary conditions on all boundary regions to
     ## enforce match with analytical solution
     if cylindrical_grid
         assign_operator!(
-            Problem, InterpolateBoundaryData(v, inflow_cylindrical; regions = [1, 2, 3, 4]))
+            Problem, InterpolateBoundaryData(v, inflow_cylindrical; regions = [1, 2, 3, 4])
+        )
     else
         assign_operator!(
-            Problem, InterpolateBoundaryData(v, inflow_cartesian; regions = [1, 2, 3, 4]))
+            Problem, InterpolateBoundaryData(v, inflow_cartesian; regions = [1, 2, 3, 4])
+        )
     end
 
     velocity_solution = solve(Problem, FES)
@@ -250,12 +271,15 @@ function compute_velocity(
     R = FEVector(FES_reconst)
     if reconst
         if cylindrical_grid
-            lazy_interpolate!(R[1], velocity_solution, [id(v)]; postprocess = multiply_r,
-                bonus_quadorder = 2, eps = interpolation_eps)
+            lazy_interpolate!(
+                R[1], velocity_solution, [id(v)]; postprocess = multiply_r,
+                bonus_quadorder = 2, eps = interpolation_eps
+            )
         else
             lazy_interpolate!(
                 R[1], velocity_solution, [id(v)];
-                bonus_quadorder = 2, eps = interpolation_eps)
+                bonus_quadorder = 2, eps = interpolation_eps
+            )
         end
     else
         return velocity_solution[1]

@@ -30,8 +30,10 @@ function barenblatt(x, t, m)
     return tx * xx^(1.0 / (m - 1.0))
 end
 
-function main(; n = 20, m = 2.0, Plotter = nothing, verbose = false,
-              unknown_storage = :sparse, tend = 0.01, tstep = 0.0001, assembly = :edgewise)
+function main(;
+        n = 20, m = 2.0, Plotter = nothing, verbose = false,
+        unknown_storage = :sparse, tend = 0.01, tstep = 0.0001, assembly = :edgewise
+    )
 
     ## Create a one-dimensional discretization
     h = 1.0 / convert(Float64, n / 2)
@@ -42,6 +44,7 @@ function main(; n = 20, m = 2.0, Plotter = nothing, verbose = false,
     ## between neighboring control volumes
     function flux!(f, u, edge, data)
         f[1] = u[1, 1] - u[1, 2]
+        return nothing
     end
 
     ϵ = 1.0e-10
@@ -51,11 +54,14 @@ function main(; n = 20, m = 2.0, Plotter = nothing, verbose = false,
     ## at 0 is infinity
     function storage!(f, u, node, data)
         f[1] = (ϵ + u[1])^(1.0 / m)
+        return nothing
     end
 
     ## Create a physics structure
-    physics = VoronoiFVM.Physics(; flux = flux!,
-                                 storage = storage!)
+    physics = VoronoiFVM.Physics(;
+        flux = flux!,
+        storage = storage!
+    )
 
     ## Create a finite volume system - either
     ## in the dense or  the sparse version.
@@ -83,12 +89,16 @@ function main(; n = 20, m = 2.0, Plotter = nothing, verbose = false,
 
     if Plotter != nothing
         p = GridVisualizer(; Plotter = Plotter, layout = (1, 1), fast = true)
-        for i = 1:length(tsol)
+        for i in 1:length(tsol)
             time = tsol.t[i]
-            scalarplot!(p[1, 1], grid, tsol[1, :, i]; title = @sprintf("t=%.3g", time),
-                        color = :red, label = "numerical")
-            scalarplot!(p[1, 1], grid, map(x -> barenblatt(x, time, m)^m, grid); clear = false,
-                        color = :green, label = "exact")
+            scalarplot!(
+                p[1, 1], grid, tsol[1, :, i]; title = @sprintf("t=%.3g", time),
+                color = :red, label = "numerical"
+            )
+            scalarplot!(
+                p[1, 1], grid, map(x -> barenblatt(x, time, m)^m, grid); clear = false,
+                color = :green, label = "exact"
+            )
             reveal(p)
             sleep(1.0e-2)
         end
@@ -99,10 +109,12 @@ end
 using Test
 function runtests()
     testval = 174.72418935404414
-    @test main(; unknown_storage = :sparse, assembly = :edgewise)≈testval rtol=1.0e-5
-    @test main(; unknown_storage = :dense, assembly = :edgewise)≈testval rtol=1.0e-5
-    @test main(; unknown_storage = :sparse, assembly = :cellwise)≈testval rtol=1.0e-5
-    @test main(; unknown_storage = :dense, assembly = :cellwise)≈testval rtol=1.0e-5
+    @test main(; unknown_storage = :sparse, assembly = :edgewise) ≈ testval rtol = 1.0e-5
+    @test main(; unknown_storage = :dense, assembly = :edgewise) ≈ testval rtol = 1.0e-5
+    @test main(; unknown_storage = :sparse, assembly = :cellwise) ≈ testval rtol = 1.0e-5
+    @test main(; unknown_storage = :dense, assembly = :cellwise) ≈ testval rtol = 1.0e-5
+
+    return nothing
 end
 
 end
