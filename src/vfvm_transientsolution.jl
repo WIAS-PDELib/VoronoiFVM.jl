@@ -47,7 +47,7 @@ end
 
 
 function TransientSolution(vec::AbstractVector{T}, ts, ::NTuple{N}) where {T, N}
-    TransientSolution{eltype(T), N, typeof(vec), typeof(ts)}(vec, ts, TransientSolverHistory())
+    return TransientSolution{eltype(T), N, typeof(vec), typeof(ts)}(vec, ts, TransientSolverHistory())
 end
 
 TransientSolution(vec::AbstractVector, ts::AbstractVector) = TransientSolution(vec, ts, (size(vec[1])..., length(vec)))
@@ -61,11 +61,11 @@ If during a time steping process it is the same vector, a `copy` should appended
 
 Defined in VoronoiFVM.jl.
 """
-Base.append! 
+Base.append!
 
 Base.append!(s::AbstractTransientSolution, t::Real, sol::AbstractArray) = push!(s.t, t), push!(s.u, sol)
 
-Base.append!(s::AbstractTransientSolution, t::Real, sol::AbstractSolutionArray) = append!(s,t,sol.u)
+Base.append!(s::AbstractTransientSolution, t::Real, sol::AbstractSolutionArray) = append!(s, t, sol.u)
 
 (sol::AbstractTransientSolution)(t) = _interpolate(sol, t)
 
@@ -96,7 +96,7 @@ end
 
 function Base.push!(v::VectorOfDiskArrays, obj)
     v.n += 1
-    if isnothing(v.file)
+    return if isnothing(v.file)
         jldopen(v.fname, "a+") do file
             file[string(v.n)] = obj
         end
@@ -109,7 +109,7 @@ Base.size(v::VectorOfDiskArrays) = (v.n,)
 Base.length(v::VectorOfDiskArrays) = v.n
 Base.eltype(v::VectorOfDiskArrays{T}) where {T} = T
 function Base.getindex(v::VectorOfDiskArrays, i)
-    if isnothing(v.file)
+    return if isnothing(v.file)
         jldopen(v.fname, "r") do file
             file[string(i)]
         end
@@ -143,11 +143,11 @@ function VectorOfDiskArrays(obj::AbstractArray{T}; keep_open = true, fname = _te
     end
     v = VectorOfDiskArrays{T}(fname, file, 1)
     finalizer(v -> (isnothing(v.file) ? nothing : close(v.file); rm(v.fname; force = true)), v)
-    v
+    return v
 end
 
 function Base.append!(s::AbstractTransientSolution{T, N, VectorOfDiskArrays{T}, B}, t::Real, sol::AbstractArray) where {T, N, B}
-    push!(s.t, t), push!(s.u, sol)
+    return push!(s.t, t), push!(s.u, sol)
 end
 
 """
@@ -163,16 +163,18 @@ Constructor of transient solution with initial value and initial time.
 - `keep_open`: if true, disk file is not closed during the existence of the object
 - `fname`: file name for the disk file
 """
-function TransientSolution(t0::Number,
-                           inival::AbstractArray{T};
-                           in_memory = true,
-                           keep_open = true,
-                           fname = _tempname()) where {T}
-    if !in_memory && !isa(inival, SparseSolutionArray)
+function TransientSolution(
+        t0::Number,
+        inival::AbstractArray{T};
+        in_memory = true,
+        keep_open = true,
+        fname = _tempname()
+    ) where {T}
+    return if !in_memory && !isa(inival, SparseSolutionArray)
         TransientSolution(VectorOfDiskArrays(inival; keep_open = keep_open, fname = fname), [t0])
     else
         TransientSolution([inival], [t0])
     end
 end
 
-TransientSolution(t0::Number,inival::AbstractSolutionArray{T,N};kwargs...) where{T,N} = TransientSolution(t0,inival.u; kwargs...)
+TransientSolution(t0::Number, inival::AbstractSolutionArray{T, N}; kwargs...) where {T, N} = TransientSolution(t0, inival.u; kwargs...)

@@ -34,15 +34,17 @@ $(TYPEDSIGNATURES)
 Constructor for TestFunctionFactory from System
 """
 function TestFunctionFactory(system::AbstractSystem{Tv}; control = SolverControl()) where {Tv}
-    physics = Physics(; flux = function (f, u, edge, data)
-                          f[1] = u[1] - u[2]
-                      end,
-                      storage = function (f, u, node, data)
-                          f[1] = u[1]
-                      end)
+    physics = Physics(;
+        flux = function (f, u, edge, data)
+            return f[1] = u[1] - u[2]
+        end,
+        storage = function (f, u, node, data)
+            return f[1] = u[1]
+        end
+    )
     tfsystem = System(system.grid, physics; unknown_storage = :dense)
-    enable_species!(tfsystem, 1, [i for i = 1:num_cellregions(system.grid)])
-    state=SystemState(tfsystem)
+    enable_species!(tfsystem, 1, [i for i in 1:num_cellregions(system.grid)])
+    state = SystemState(tfsystem)
     return TestFunctionFactory(system, state, control)
 end
 
@@ -63,17 +65,17 @@ function testfunction(factory::TestFunctionFactory{Tv}, bc0, bc1) where {Tv}
     factory.state.system.boundary_factors .= 0
     factory.state.system.boundary_values .= 0
 
-    for i = 1:length(bc1)
+    for i in 1:length(bc1)
         factory.state.system.boundary_factors[1, bc1[i]] = Dirichlet(Tv)
         factory.state.system.boundary_values[1, bc1[i]] = -1
     end
 
-    for i = 1:length(bc0)
+    for i in 1:length(bc0)
         factory.state.system.boundary_factors[1, bc0[i]] = Dirichlet(Tv)
         factory.state.system.boundary_values[1, bc0[i]] = 0
     end
 
-    eval_and_assemble(factory.state.system, u, u, f, factory.state.matrix, factory.state.dudp, Inf, Inf,  0.0, nothing, zeros(0))
+    eval_and_assemble(factory.state.system, u, u, f, factory.state.matrix, factory.state.dudp, Inf, Inf, 0.0, nothing, zeros(0))
 
     _initialize!(u, factory.state.system)
 
@@ -84,7 +86,7 @@ function testfunction(factory::TestFunctionFactory{Tv}, bc0, bc1) where {Tv}
 
     p = LinearProblem(SparseMatrixCSC(factory.state.matrix), dofs(f))
     sol = solve(p, method_linear)
-    sol.u
+    return sol.u
 end
 
 ############################################################################
@@ -94,8 +96,10 @@ $(SIGNATURES)
 
 Calculate test function integral for transient solution.
 """
-function integrate(system::AbstractSystem, tf, U::AbstractMatrix{Tv},
-                   Uold::AbstractMatrix{Tv}, tstep; params = Tv[], data=system.physics.data) where {Tv}
+function integrate(
+        system::AbstractSystem, tf, U::AbstractMatrix{Tv},
+        Uold::AbstractMatrix{Tv}, tstep; params = Tv[], data = system.physics.data
+    ) where {Tv}
     grid = system.grid
     nspecies = num_species(system)
     integral = zeros(Tv, nspecies)
@@ -131,7 +135,7 @@ function integrate(system::AbstractSystem, tf, U::AbstractMatrix{Tv},
     for item in nodebatch(system.assembly_data)
         for inode in noderange(system.assembly_data, item)
             _fill!(node, system.assembly_data, inode, item)
-            for ispec = 1:nspecies
+            for ispec in 1:nspecies
                 UK[ispec] = U[ispec, node.index]
                 UKold[ispec] = Uold[ispec, node.index]
             end
@@ -146,8 +150,8 @@ function integrate(system::AbstractSystem, tf, U::AbstractMatrix{Tv},
             src = res(src_eval)
 
             function asm_res(idof, ispec)
-                integral[ispec] += node.fac *
-                                   (rea[ispec] - src[ispec] + (stor[ispec] - storold[ispec]) * tstepinv) * tf[node.index]
+                return integral[ispec] += node.fac *
+                    (rea[ispec] - src[ispec] + (stor[ispec] - storold[ispec]) * tstepinv) * tf[node.index]
             end
             assemble_res(node, system, asm_res)
         end
@@ -163,7 +167,7 @@ function integrate(system::AbstractSystem, tf, U::AbstractMatrix{Tv},
             flux = res(flux_eval)
 
             function asm_res(idofK, idofL, ispec)
-                integral[ispec] += edge.fac * flux[ispec] * (tf[edge.node[1]] - tf[edge.node[2]])
+                return integral[ispec] += edge.fac * flux[ispec] * (tf[edge.node[1]] - tf[edge.node[2]])
             end
             assemble_res(edge, system, asm_res)
 
@@ -172,7 +176,7 @@ function integrate(system::AbstractSystem, tf, U::AbstractMatrix{Tv},
                 erea = res(erea_eval)
 
                 function easm_res(idofK, idofL, ispec)
-                    integral[ispec] += edge.fac * erea[ispec] * (tf[edge.node[1]] + tf[edge.node[2]])
+                    return integral[ispec] += edge.fac * erea[ispec] * (tf[edge.node[1]] + tf[edge.node[2]])
                 end
                 assemble_res(edge, system, easm_res)
             end
@@ -189,7 +193,7 @@ $(SIGNATURES)
 Calculate test function integral for steady state solution.
 """
 function integrate(system::AbstractSystem, tf::Vector{Tv}, U::AbstractMatrix{Tu}; kwargs...) where {Tu, Tv}
-    integrate(system, tf, U, U, Inf; kwargs...)
+    return integrate(system, tf, U, U, Inf; kwargs...)
 end
 
 ############################################################################
@@ -198,7 +202,7 @@ $(SIGNATURES)
 
 Steady state part of test function integral.
 """
-function integrate_stdy(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray{Tu, 2}; data=system.physics.data) where {Tu, Tv}
+function integrate_stdy(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray{Tu, 2}; data = system.physics.data) where {Tu, Tv}
     grid = system.grid
     nspecies = num_species(system)
     integral = zeros(Tu, nspecies)
@@ -229,7 +233,7 @@ function integrate_stdy(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray
             src = res(src_eval)
 
             function asm_res(idof, ispec)
-                integral[ispec] += node.fac * (rea[ispec] - src[ispec]) * tf[node.index]
+                return integral[ispec] += node.fac * (rea[ispec] - src[ispec]) * tf[node.index]
             end
             assemble_res(node, system, asm_res)
         end
@@ -244,7 +248,7 @@ function integrate_stdy(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray
             flux = res(flux_eval)
 
             function asm_res(idofK, idofL, ispec)
-                integral[ispec] += edge.fac * flux[ispec] * (tf[edge.node[1]] - tf[edge.node[2]])
+                return integral[ispec] += edge.fac * flux[ispec] * (tf[edge.node[1]] - tf[edge.node[2]])
             end
             assemble_res(edge, system, asm_res)
 
@@ -253,7 +257,7 @@ function integrate_stdy(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray
                 erea = res(erea_eval)
 
                 function easm_res(idofK, idofL, ispec)
-                    integral[ispec] += edge.fac * erea[ispec] * (tf[edge.node[1]] + tf[edge.node[2]])
+                    return integral[ispec] += edge.fac * erea[ispec] * (tf[edge.node[1]] + tf[edge.node[2]])
                 end
                 assemble_res(edge, system, easm_res)
             end
@@ -269,7 +273,7 @@ $(SIGNATURES)
 
 Calculate transient part of test function integral.
 """
-function integrate_tran(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray{Tu, 2}; data=system.physics.data) where {Tu, Tv}
+function integrate_tran(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray{Tu, 2}; data = system.physics.data) where {Tu, Tv}
     grid = system.grid
     nspecies = num_species(system)
     integral = zeros(Tu, nspecies)

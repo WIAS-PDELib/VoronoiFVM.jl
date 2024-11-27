@@ -107,7 +107,7 @@ end
 DirectSolver(factorization::FactorizationStrategy; kwargs...) = DirectSolver(; factorization, kwargs...)
 
 function VoronoiFVM.SolverControl(strat::DirectSolver, sys; kwargs...)
-    SolverControl(; method_linear = strat.factorization, kwargs...)
+    return SolverControl(; method_linear = strat.factorization, kwargs...)
 end
 
 """
@@ -124,15 +124,18 @@ Base.@kwdef struct GMRESIteration <: LinearSolverStrategy
 end
 
 function GMRESIteration(factorization::FactorizationStrategy, blocking = NoBlock(); kwargs...)
-    GMRESIteration(; factorization, blocking, kwargs...)
+    return GMRESIteration(; factorization, blocking, kwargs...)
 end
 
 function VoronoiFVM.SolverControl(strat::GMRESIteration, sys; kwargs...)
-    SolverControl(;
-                  method_linear = KrylovJL_GMRES(; gmres_restart = strat.memory,
-                                                 restart = strat.restart),
-                  precon_linear = factorizationstrategy(strat.factorization, strat.blocking, sys),
-                  kwargs...,)
+    return SolverControl(;
+        method_linear = KrylovJL_GMRES(;
+            gmres_restart = strat.memory,
+            restart = strat.restart
+        ),
+        precon_linear = factorizationstrategy(strat.factorization, strat.blocking, sys),
+        kwargs...,
+    )
 end
 
 """
@@ -147,14 +150,15 @@ Base.@kwdef struct CGIteration <: LinearSolverStrategy
 end
 
 function CGIteration(factorization::FactorizationStrategy, blocking = NoBlock(); kwargs...)
-    CGIteration(; factorization, blocking, kwargs...)
+    return CGIteration(; factorization, blocking, kwargs...)
 end
 
 function VoronoiFVM.SolverControl(strat::CGIteration, sys; kwargs...)
-    SolverControl(;
-                  method_linear = KrylovJL_CG(),
-                  precon_linear = factorizationstrategy(strat.factorization, strat.blocking, sys),
-                  kwargs...,)
+    return SolverControl(;
+        method_linear = KrylovJL_CG(),
+        precon_linear = factorizationstrategy(strat.factorization, strat.blocking, sys),
+        kwargs...,
+    )
 end
 
 """
@@ -169,14 +173,15 @@ Base.@kwdef struct BICGstabIteration <: LinearSolverStrategy
 end
 
 function BICGstabIteration(factorization::FactorizationStrategy, blocking = NoBlock(); kwargs...)
-    BICGstabIteration(; factorization, blocking, kwargs...)
+    return BICGstabIteration(; factorization, blocking, kwargs...)
 end
 
 function VoronoiFVM.SolverControl(strat::BICGstabIteration, sys; kwargs...)
-    SolverControl(;
-                  method_linear = KrylovJL_BICGSTAB(),
-                  precon_linear = factorizationstrategy(strat.factorization, strat.blocking, sys),
-                  kwargs...,)
+    return SolverControl(;
+        method_linear = KrylovJL_BICGSTAB(),
+        precon_linear = factorizationstrategy(strat.factorization, strat.blocking, sys),
+        kwargs...,
+    )
 end
 
 """
@@ -187,15 +192,16 @@ Create a factorizations strategy from preconditioner and block information
 factorizationstrategy(p::FactorizationStrategy, ::NoBlock, sys) = p
 
 function factorizationstrategy(strat::FactorizationStrategy, ::EquationBlock, sys)
-    BlockPreconditioner(;
-                        partitioning = partitioning(sys, Equationwise()),
-                        factorization = factorizationstrategy(strat, NoBlock(), sys),)
+    return BlockPreconditioner(;
+        partitioning = partitioning(sys, Equationwise()),
+        factorization = factorizationstrategy(strat, NoBlock(), sys),
+    )
 end
 
 function factorizationstrategy(::ExtendableSparse.ILUZeroPreconditioner, ::PointBlock, sys)
     !isdensesystem(sys) ?
-    error("Point block preconditioner needs dense system") : nothing
-    PointBlockILUZeroPreconditioner(; blocksize = num_species(sys))
+        error("Point block preconditioner needs dense system") : nothing
+    return PointBlockILUZeroPreconditioner(; blocksize = num_species(sys))
 end
 
 VoronoiFVM.SolverControl(::AbstractStrategy, sys; kwargs...) = SolverControl(; kwargs...)
@@ -207,20 +213,20 @@ VoronoiFVM.SolverControl(::Nothing, sys; kwargs...) = SolverControl(; kwargs...)
 
 function (method::LinearSolve.AbstractFactorization)(A)
     pr = LinearProblem(A, zeros(eltype(A), size(A, 1)))
-    init(pr, method)
+    return init(pr, method)
 end
 
 function (method::LinearSolve.SciMLLinearSolveAlgorithm)(A)
     pr = LinearProblem(SparseMatrixCSC(A), zeros(eltype(A), size(A, 1)))
-    init(pr, method)
+    return init(pr, method)
 end
 
 function (f::ExtendableSparse.AbstractFactorization)(A)
-    factorize!(f, A)
+    return factorize!(f, A)
 end
 
 function LinearAlgebra.ldiv!(u, cache::LinearSolve.LinearCache, b)
     cache.b = b
     sol = solve!(cache)
-    copyto!(u, sol.u)
+    return copyto!(u, sol.u)
 end

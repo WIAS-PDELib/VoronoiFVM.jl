@@ -56,7 +56,7 @@ Return abstract vector of parameters passed via vector of unknowns.
 This allows differentiation with respect to these parameters.
 """
 function parameters(u::AbstractNodeData)
-    DParameters(u.val, u.nspec)
+    return DParameters(u.val, u.nspec)
 end
 
 """
@@ -81,7 +81,7 @@ Base.size(u::AbstractEdgeData) = (u.n1, 2)
 Base.getindex(u::AbstractEdgeData, i, j) = @inbounds u.val[(j - 1) * u.n1 + i]
 
 function parameters(u::AbstractEdgeData)
-    DParameters(u.val, u.n1 + u.n1)
+    return DParameters(u.val, u.n1 + u.n1)
 end
 
 ##################################################################
@@ -154,17 +154,19 @@ mutable struct Node{Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     _idx::Ti
 
     function Node{Tc, Tp, Ti}(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
-        new(zero(Ti), 0,
+        return new(
+            zero(Ti), 0,
             num_species(sys), 0,
             coordinates(sys.grid),
             sys.grid[CellNodes],
             sys.grid[CellRegions],
-            time, embedparam, params, 0.0, 0)
+            time, embedparam, params, 0.0, 0
+        )
     end
 end
 
 function Node(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
-    Node{Tc, Tp, Ti}(sys, time, embedparam, params)
+    return Node{Tc, Tp, Ti}(sys, time, embedparam, params)
 end
 
 Node(sys) = Node(sys, 0, 0, zeros(0))
@@ -181,7 +183,7 @@ struct NodeUnknowns{Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
 end
 
 @inline function unknowns(node::Node{Tc, Tp, Ti}, u::AbstractVector{Tv}) where {Tv, Tc, Tp, Ti}
-    NodeUnknowns{Tv, Tc, Tp, Ti}(u, node.nspec, node)
+    return NodeUnknowns{Tv, Tc, Tp, Ti}(u, node.nspec, node)
 end
 
 """
@@ -267,9 +269,12 @@ mutable struct BNode{Tv, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
 
     fac::Float64
 
-    function BNode{Tv, Tc, Tp, Ti}(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam,
-                                   params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
-        new(0, 0, 0, 0, zeros(Ti, 2),
+    function BNode{Tv, Tc, Tp, Ti}(
+            sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam,
+            params::Vector{Tp}
+        ) where {Tv, Tc, Tp, Ti, Tm}
+        return new(
+            0, 0, 0, 0, zeros(Ti, 2),
             num_species(sys),
             coordinates(sys.grid),
             sys.grid[BFaceNodes],
@@ -277,11 +282,12 @@ mutable struct BNode{Tv, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
             sys.grid[CellRegions],
             sys.grid[BFaceCells],
             Dirichlet(Tv), time, embedparam, params,
-            zeros(Tv, num_species(sys)), 0.0)
+            zeros(Tv, num_species(sys)), 0.0
+        )
     end
 end
 function BNode(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
-    BNode{Tv, Tc, Tp, Ti}(sys, time, embedparam, params)
+    return BNode{Tv, Tc, Tp, Ti}(sys, time, embedparam, params)
 end
 BNode(sys) = BNode(sys, 0, 0, zeros(0))
 
@@ -292,7 +298,7 @@ struct BNodeUnknowns{Tval, Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
 end
 
 @inline function unknowns(bnode::BNode{Tv, Tc, Tp, Ti}, u::AbstractVector{Tval}) where {Tval, Tv, Tc, Tp, Ti}
-    BNodeUnknowns{Tval, Tv, Tc, Tp, Ti}(u, bnode.nspec, bnode)
+    return BNodeUnknowns{Tval, Tv, Tc, Tp, Ti}(u, bnode.nspec, bnode)
 end
 
 struct BNodeRHS{Tval, Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
@@ -302,7 +308,7 @@ struct BNodeRHS{Tval, Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
 end
 
 @inline function rhs(bnode::BNode{Tv, Tc, Tp, Ti}, f::AbstractVector{Tval}) where {Tval, Tv, Tc, Tp, Ti}
-    BNodeRHS{Tval, Tv, Tc, Tp, Ti}(f, bnode.nspec, bnode)
+    return BNodeRHS{Tval, Tv, Tc, Tp, Ti}(f, bnode.nspec, bnode)
 end
 
 ##################################################################
@@ -370,8 +376,8 @@ mutable struct Edge{Tc, Tp, Ti} <: AbstractEdge{Tc, Tp, Ti}
     fac::Float64
 
     """
-   Local loop index
-   """
+    Local loop index
+    """
     _idx::Ti
 
     outflownoderegions::Union{Nothing, SparseMatrixCSC{Bool, Int}}
@@ -413,7 +419,7 @@ function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vec
     edge.outflownode = 0
     edge._idx = 0
     edge.outflownoderegions = sys.outflownoderegions
-    edge
+    return edge
 end
 
 struct EdgeUnknowns{Tv, Tc, Tp, Ti} <: AbstractEdgeData{Tv}
@@ -423,7 +429,7 @@ struct EdgeUnknowns{Tv, Tc, Tp, Ti} <: AbstractEdgeData{Tv}
 end
 
 @inline function unknowns(edge::Edge{Tc, Tp, Ti}, u::AbstractVector{Tv}) where {Tv, Tc, Tp, Ti}
-    EdgeUnknowns{Tv, Tc, Tp, Ti}(u, edge.nspec, edge)
+    return EdgeUnknowns{Tv, Tc, Tp, Ti}(u, edge.nspec, edge)
 end
 
 struct EdgeRHS{Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
@@ -469,7 +475,7 @@ Set `edge.outflownode` entry.
 """
 function outflownode!(edge)
     isoutflownode(edge, 1) ? edge.outflownode = 1 : true
-    isoutflownode(edge, 2) ? edge.outflownode = 2 : true
+    return isoutflownode(edge, 2) ? edge.outflownode = 2 : true
 end
 
 ##################################################################
@@ -553,7 +559,7 @@ function BEdge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Ve
     bedge.embedparam = embedparam
     bedge.params = params
     bedge.fac = 0.0
-    bedge
+    return bedge
 end
 
 struct BEdgeUnknowns{Tv, Tc, Tp, Ti} <: AbstractEdgeData{Tv}
@@ -563,7 +569,7 @@ struct BEdgeUnknowns{Tv, Tc, Tp, Ti} <: AbstractEdgeData{Tv}
 end
 
 @inline function unknowns(edge::BEdge{Tc, Tp, Ti}, u::AbstractVector{Tv}) where {Tv, Tc, Tp, Ti}
-    BEdgeUnknowns{Tv, Tc, Tp, Ti}(u, edge.nspec, edge)
+    return BEdgeUnknowns{Tv, Tc, Tp, Ti}(u, edge.nspec, edge)
 end
 
 struct BEdgeRHS{Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
@@ -590,7 +596,7 @@ Calculate the length of an edge.
 """
 function meas(edge::AbstractEdge)
     l = 0.0
-    for i = 1:size(edge.coord)[1]
+    for i in 1:size(edge.coord)[1]
         d = edge.coord[i, edge.node[1]] - edge.coord[i, edge.node[2]]
         l = l + d * d
     end
@@ -612,7 +618,7 @@ of `vector` with the difference of the edge end coordinates.
 """
 function project(edge::Edge, vec)
     vh = zero(eltype(vec))
-    for i = 1:size(edge.coord)[1]
+    for i in 1:size(edge.coord)[1]
         vh += (edge.coord[i, edge.node[2]] - edge.coord[i, edge.node[1]]) * vec[i]
     end
     return vh

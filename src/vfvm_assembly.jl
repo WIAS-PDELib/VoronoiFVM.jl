@@ -10,7 +10,7 @@ Add value `v*fac` to matrix if `v` is nonzero
     if isnan(v)
         error("trying to assemble NaN")
     end
-    if v != zero(Tv)
+    return if v != zero(Tv)
         rawupdateindex!(matrix, +, v * fac, i, j, part)
     end
 end
@@ -19,15 +19,17 @@ ExtendableSparse.rawupdateindex!(m::AbstractMatrix, op, v, i, j) = m[i, j] = op(
 
 function zero!(m::ExtendableSparseMatrix{Tv, Ti}) where {Tv, Ti}
     nzv = nonzeros(m)
-    nzv .= zero(Tv)
+    return nzv .= zero(Tv)
 end
 
 zero!(m::AbstractMatrix{T}) where {T} = m .= zero(T)
 
-function assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, part,
-                        U::AbstractMatrix{Tv}, # Actual solution iteration
-                        UOld::AbstractMatrix{Tv}, # Old timestep solution
-                        F::AbstractMatrix{Tv}) where {Tv}
+function assemble_nodes(
+        system, matrix, dudp, time, tstepinv, λ, data, params, part,
+        U::AbstractMatrix{Tv}, # Actual solution iteration
+        UOld::AbstractMatrix{Tv}, # Old timestep solution
+        F::AbstractMatrix{Tv}
+    ) where {Tv}
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
@@ -69,24 +71,30 @@ function assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, 
             oldstor = res(oldstor_evaluator)
 
             @inline function asm_res(idof, ispec)
-                _add(F,
-                     idof,
-                     node.fac * (res_react[ispec] - src[ispec] +
-                                 (res_stor[ispec] - oldstor[ispec]) * tstepinv))
+                _add(
+                    F,
+                    idof,
+                    node.fac * (
+                        res_react[ispec] - src[ispec] +
+                            (res_stor[ispec] - oldstor[ispec]) * tstepinv
+                    )
+                )
             end
 
             @inline function asm_jac(idof, jdof, ispec, jspec)
-                _addnz(matrix,
-                       idof,
-                       jdof,
-                       jac_react[ispec, jspec] + jac_stor[ispec, jspec] * tstepinv,
-                       node.fac, part)
+                _addnz(
+                    matrix,
+                    idof,
+                    jdof,
+                    jac_react[ispec, jspec] + jac_stor[ispec, jspec] * tstepinv,
+                    node.fac, part
+                )
             end
 
             @inline function asm_param(idof, ispec, iparam)
                 jparam = nspecies + iparam
                 dudp[iparam][ispec, idof] += (jac_react[ispec, jparam] + jac_stor[ispec, jparam] * tstepinv) *
-                                             node.fac
+                    node.fac
             end
 
             assemble_res_jac(node, system, asm_res, asm_jac, asm_param)
@@ -95,10 +103,12 @@ function assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, 
     return ncalloc
 end
 
-function assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, part,
-                        U::AbstractMatrix{Tv}, # Actual solution iteration
-                        UOld::AbstractMatrix{Tv}, # Old timestep solution
-                        F::AbstractMatrix{Tv}) where {Tv}
+function assemble_edges(
+        system, matrix, dudp, time, tstepinv, λ, data, params, part,
+        U::AbstractMatrix{Tv}, # Actual solution iteration
+        UOld::AbstractMatrix{Tv}, # Old timestep solution
+        F::AbstractMatrix{Tv}
+    ) where {Tv}
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
@@ -112,7 +122,7 @@ function assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, 
     erea_evaluator = ResJacEvaluator(physics, data, :edgereaction, UKL, edge, nspecies)
     outflow_evaluator = ResJacEvaluator(physics, data, :boutflow, UKL, edge, nspecies)
 
-    @allocations for item in edgebatch(system.assembly_data, part)
+    return @allocations for item in edgebatch(system.assembly_data, part)
         for iedge in edgerange(system.assembly_data, item)
             _fill!(edge, system.assembly_data, iedge, item)
 
@@ -132,16 +142,20 @@ function assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, 
             @inline function asm_jac(idofK, jdofK, idofL, jdofL, ispec, jspec)
                 _addnz(matrix, idofK, jdofK, +jac_flux[ispec, jspec], edge.fac, part)
                 _addnz(matrix, idofL, jdofK, -jac_flux[ispec, jspec], edge.fac, part)
-                _addnz(matrix,
-                       idofK,
-                       jdofL,
-                       +jac_flux[ispec, jspec + nspecies],
-                       edge.fac, part)
-                _addnz(matrix,
-                       idofL,
-                       jdofL,
-                       -jac_flux[ispec, jspec + nspecies],
-                       edge.fac, part)
+                _addnz(
+                    matrix,
+                    idofK,
+                    jdofL,
+                    +jac_flux[ispec, jspec + nspecies],
+                    edge.fac, part
+                )
+                _addnz(
+                    matrix,
+                    idofL,
+                    jdofL,
+                    -jac_flux[ispec, jspec + nspecies],
+                    edge.fac, part
+                )
             end
 
             @inline function asm_param(idofK, idofL, ispec, iparam)
@@ -166,16 +180,20 @@ function assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, 
                 @inline function ereaasm_jac(idofK, jdofK, idofL, jdofL, ispec, jspec)
                     _addnz(matrix, idofK, jdofK, +jac_erea[ispec, jspec], edge.fac, part)
                     _addnz(matrix, idofL, jdofK, -jac_erea[ispec, jspec], edge.fac, part)
-                    _addnz(matrix,
-                           idofK,
-                           jdofL,
-                           -jac_erea[ispec, jspec + nspecies],
-                           edge.fac, part)
-                    _addnz(matrix,
-                           idofL,
-                           jdofL,
-                           +jac_erea[ispec, jspec + nspecies],
-                           edge.fac, part)
+                    _addnz(
+                        matrix,
+                        idofK,
+                        jdofL,
+                        -jac_erea[ispec, jspec + nspecies],
+                        edge.fac, part
+                    )
+                    _addnz(
+                        matrix,
+                        idofL,
+                        jdofL,
+                        +jac_erea[ispec, jspec + nspecies],
+                        edge.fac, part
+                    )
                 end
 
                 @inline function ereaasm_param(idofK, idofL, ispec, iparam)
@@ -208,29 +226,37 @@ function assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, 
 
                 @inline function outflowasm_jac(idofK, jdofK, idofL, jdofL, ispec, jspec)
                     if isoutflownode(edge, 1)
-                        _addnz(matrix,
-                               idofK,
-                               jdofK,
-                               +jac_outflow[ispec, jspec],
-                               edge.fac, part)
-                        _addnz(matrix,
-                               idofK,
-                               jdofL,
-                               jac_outflow[ispec, jspec + nspecies],
-                               edge.fac, part)
+                        _addnz(
+                            matrix,
+                            idofK,
+                            jdofK,
+                            +jac_outflow[ispec, jspec],
+                            edge.fac, part
+                        )
+                        _addnz(
+                            matrix,
+                            idofK,
+                            jdofL,
+                            jac_outflow[ispec, jspec + nspecies],
+                            edge.fac, part
+                        )
                     end
 
                     if isoutflownode(edge, 2)
-                        _addnz(matrix,
-                               idofL,
-                               jdofK,
-                               -jac_outflow[ispec, jspec],
-                               edge.fac, part)
-                        _addnz(matrix,
-                               idofL,
-                               jdofL,
-                               -jac_outflow[ispec, jspec + nspecies],
-                               edge.fac, part)
+                        _addnz(
+                            matrix,
+                            idofL,
+                            jdofK,
+                            -jac_outflow[ispec, jspec],
+                            edge.fac, part
+                        )
+                        _addnz(
+                            matrix,
+                            idofL,
+                            jdofL,
+                            -jac_outflow[ispec, jspec + nspecies],
+                            edge.fac, part
+                        )
                     end
                 end
 
@@ -244,20 +270,24 @@ function assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, 
                     end
                 end
 
-                assemble_res_jac(edge,
-                                 system,
-                                 outflowasm_res,
-                                 outflowasm_jac,
-                                 outflowasm_param)
+                assemble_res_jac(
+                    edge,
+                    system,
+                    outflowasm_res,
+                    outflowasm_jac,
+                    outflowasm_param
+                )
             end
         end
     end
 end
 
-function assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part,
-                         U::AbstractMatrix{Tv}, # Actual solution iteration
-                         UOld::AbstractMatrix{Tv}, # Old timestep solution
-                         F::AbstractMatrix{Tv}) where {Tv}
+function assemble_bnodes(
+        system, matrix, dudp, time, tstepinv, λ, data, params, part,
+        U::AbstractMatrix{Tv}, # Actual solution iteration
+        UOld::AbstractMatrix{Tv}, # Old timestep solution
+        F::AbstractMatrix{Tv}
+    ) where {Tv}
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
@@ -278,7 +308,7 @@ function assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params,
     bstor_evaluator = ResJacEvaluator(physics, data, :bstorage, UK, bnode, nspecies)
     oldbstor_evaluator = ResEvaluator(physics, data, :bstorage, UK, bnode, nspecies)
 
-    @allocations for item in nodebatch(system.boundary_assembly_data, part)
+    return @allocations for item in nodebatch(system.boundary_assembly_data, part)
         for ibnode in noderange(system.boundary_assembly_data, item)
             _fill!(bnode, system.boundary_assembly_data, ibnode, item)
 
@@ -289,7 +319,7 @@ function assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params,
                 # Assemble "standard" boundary conditions: Robin or
                 # Dirichlet
                 # valid only for interior species, currently not checked
-                for ispec = 1:nspecies
+                for ispec in 1:nspecies
                     idof = dof(F, ispec, K)
                     # If species is present, assemble the boundary condition
                     if idof > 0
@@ -345,16 +375,20 @@ function assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params,
                 evaluate!(oldbstor_evaluator, UKOld)
                 oldbstor = res(oldbstor_evaluator)
 
-                asm_res2(idof, ispec) = _add(F,
-                                             idof,
-                                             bnode.fac * (res_bstor[ispec] - oldbstor[ispec]) * tstepinv)
+                asm_res2(idof, ispec) = _add(
+                    F,
+                    idof,
+                    bnode.fac * (res_bstor[ispec] - oldbstor[ispec]) * tstepinv
+                )
 
                 function asm_jac2(idof, jdof, ispec, jspec)
-                    _addnz(matrix,
-                           idof,
-                           jdof,
-                           jac_bstor[ispec, jspec],
-                           bnode.fac * tstepinv, part)
+                    _addnz(
+                        matrix,
+                        idof,
+                        jdof,
+                        jac_bstor[ispec, jspec],
+                        bnode.fac * tstepinv, part
+                    )
                 end
 
                 function asm_param2(idof, ispec, iparam)
@@ -367,10 +401,12 @@ function assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params,
     end
 end
 
-function assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part,
-                         U::AbstractMatrix{Tv}, # Actual solution iteration
-                         UOld::AbstractMatrix{Tv}, # Old timestep solution
-                         F::AbstractMatrix{Tv}) where {Tv}
+function assemble_bedges(
+        system, matrix, dudp, time, tstepinv, λ, data, params, part,
+        U::AbstractMatrix{Tv}, # Actual solution iteration
+        UOld::AbstractMatrix{Tv}, # Old timestep solution
+        F::AbstractMatrix{Tv}
+    ) where {Tv}
     physics = system.physics
     bedge = BEdge(system, time, λ, params)
     nspecies::Int = num_species(system)
@@ -380,7 +416,7 @@ function assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params,
         UKL[(2 * nspecies + 1):end] .= params
     end
     bflux_evaluator = ResJacEvaluator(physics, data, :bflux, UKL, bedge, nspecies)
-    if isnontrivial(bflux_evaluator)
+    return if isnontrivial(bflux_evaluator)
         @allocations for item in edgebatch(system.boundary_assembly_data, part)
             for ibedge in edgerange(system.boundary_assembly_data, item)
                 _fill!(bedge, system.boundary_assembly_data, ibedge, item)
@@ -399,16 +435,20 @@ function assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params,
                 function asm_jac(idofK, jdofK, idofL, jdofL, ispec, jspec)
                     _addnz(matrix, idofK, jdofK, +jac_bflux[ispec, jspec], bedge.fac, part)
                     _addnz(matrix, idofL, jdofK, -jac_bflux[ispec, jspec], bedge.fac, part)
-                    _addnz(matrix,
-                           idofK,
-                           jdofL,
-                           +jac_bflux[ispec, jspec + nspecies],
-                           bedge.fac, part)
-                    _addnz(matrix,
-                           idofL,
-                           jdofL,
-                           -jac_bflux[ispec, jspec + nspecies],
-                           bedge.fac, part)
+                    _addnz(
+                        matrix,
+                        idofK,
+                        jdofL,
+                        +jac_bflux[ispec, jspec + nspecies],
+                        bedge.fac, part
+                    )
+                    _addnz(
+                        matrix,
+                        idofL,
+                        jdofL,
+                        -jac_bflux[ispec, jspec + nspecies],
+                        bedge.fac, part
+                    )
                 end
 
                 function asm_param(idofK, idofL, ispec, iparam)
@@ -432,18 +472,20 @@ Main assembly method.
 Evaluate solution with result in right hand side F and 
 assemble Jacobi matrix into system.matrix.
 """
-function eval_and_assemble(system,
-                           U::AbstractMatrix{Tv}, # Actual solution iteration
-                           UOld::AbstractMatrix{Tv}, # Old timestep solution
-                           F::AbstractMatrix{Tv},# Right hand side
-                           matrix::AbstractMatrix,
-                           dudp,
-                           time,
-                           tstep,# time step size. Inf means stationary solution
-                           λ,
-                           data,
-                           params::AbstractVector;
-                           edge_cutoff = 0.0,) where {Tv}
+function eval_and_assemble(
+        system,
+        U::AbstractMatrix{Tv}, # Actual solution iteration
+        UOld::AbstractMatrix{Tv}, # Old timestep solution
+        F::AbstractMatrix{Tv}, # Right hand side
+        matrix::AbstractMatrix,
+        dudp,
+        time,
+        tstep, # time step size. Inf means stationary solution
+        λ,
+        data,
+        params::AbstractVector;
+        edge_cutoff = 0.0,
+    ) where {Tv}
     _complete!(system) # needed here as well for test function system which does not use newton
 
     grid = system.grid
@@ -456,7 +498,7 @@ function eval_and_assemble(system,
     nparams::Int = system.num_parameters
     @assert length(params) == nparams
 
-    for iparam = 1:nparams
+    for iparam in 1:nparams
         dudp[iparam] .= 0.0
     end
     # Inverse of timestep
@@ -542,7 +584,7 @@ function eval_and_assemble(system,
     _eval_and_assemble_generic_operator(system, matrix, U, F)
     _eval_and_assemble_inactive_species(system, matrix, U, UOld, F)
 
-    allncallocs, allnballocs, neval
+    return allncallocs, allnballocs, neval
 end
 
 """
@@ -558,18 +600,21 @@ function _eval_and_assemble_generic_operator(system::AbstractSystem, matrix, U, 
     y = similar(vecF)
     generic_operator(y, vecU)
     vecF .+= y
-    forwarddiff_color_jacobian!(system.generic_matrix,
-                                generic_operator,
-                                vecU;
-                                colorvec = system.generic_matrix_colors,)
+    forwarddiff_color_jacobian!(
+        system.generic_matrix,
+        generic_operator,
+        vecU;
+        colorvec = system.generic_matrix_colors,
+    )
     rowval = system.generic_matrix.rowval
     colptr = system.generic_matrix.colptr
     nzval = system.generic_matrix.nzval
-    for i = 1:(length(colptr) - 1)
-        for j = colptr[i]:(colptr[i + 1] - 1)
+    for i in 1:(length(colptr) - 1)
+        for j in colptr[i]:(colptr[i + 1] - 1)
             updateindex!(matrix, +, nzval[j], rowval[j], i)
         end
     end
+    return
 end
 
 function _eval_generic_operator(system::AbstractSystem, U, F)
@@ -581,5 +626,5 @@ function _eval_generic_operator(system::AbstractSystem, U, F)
     vecU = dofs(U)
     y = similar(vecF)
     generic_operator(y, vecU)
-    vecF .+= y
+    return vecF .+= y
 end

@@ -1,4 +1,3 @@
-
 """
     $(SIGNATURES)
 
@@ -7,7 +6,7 @@ See https://github.com/SciML/DifferentialEquations.jl/issues/521 for discussion 
 """
 function _eval_res_jac!(state, u, t)
     uhash = hash(u)
-    if uhash != state.uhash
+    return if uhash != state.uhash
         ur = reshape(u, state.system)
         eval_and_assemble(state.system, ur, ur, state.residual, state.matrix, state.dudp, value(t), Inf, 0.0, state.system.physics.data, state.params)
         state.uhash = uhash
@@ -25,7 +24,7 @@ function eval_rhs!(du, u, state, t)
     _eval_res_jac!(state, u, t)
     du .= -dofs(state.residual)
     state.history.nf += 1
-    nothing
+    return nothing
 end
 
 """
@@ -39,7 +38,7 @@ function eval_jacobian!(J, u, state, t)
     # Need to implement broadcast for ExtendableSparse.
     J .= -state.matrix.cscmatrix
     state.history.njac += 1
-    nothing
+    return nothing
 end
 
 """
@@ -55,8 +54,8 @@ function mass_matrix(state::SystemState{Tv, TMatrix, TSolArray, TData}) where {T
     bnode = BNode(state.system)
     nspecies = num_species(state.system)
     ndof = num_dof(state.system)
-    data=state.system.physics.data
-    
+    data = state.system.physics.data
+
     stor_eval = ResJacEvaluator(physics, data, :storage, zeros(Tv, nspecies), node, nspecies)
     bstor_eval = ResJacEvaluator(physics, data, :bstorage, zeros(Tv, nspecies), node, nspecies)
 
@@ -89,7 +88,7 @@ function mass_matrix(state::SystemState{Tv, TMatrix, TSolArray, TData}) where {T
         end
     end
     Mcsc = SparseMatrixCSC(M)
-    isdiag(Mcsc) ? Diagonal([Mcsc[i, i] for i = 1:ndof]) : Mcsc
+    return isdiag(Mcsc) ? Diagonal([Mcsc[i, i] for i in 1:ndof]) : Mcsc
 end
 
 """
@@ -106,7 +105,7 @@ function prepare_diffeq!(state, jacval, tjac)
     _complete!(state.system)
     _eval_res_jac!(state, jacval, tjac)
     flush!(state.matrix)
-    state.matrix.cscmatrix
+    return state.matrix.cscmatrix
 end
 
 ###################################################################################################
@@ -119,10 +118,12 @@ Create an [ODEFunction](https://diffeq.sciml.ai/stable/basics/overview/#Defining
 For more documentation, see [`SciMLBase.ODEFunction(state::VoronoiFVM.SystemState; kwargs...)`](@ref)
 """
 function SciMLBase.ODEFunction(state::VoronoiFVM.SystemState; jacval = unknowns(sys, 0), tjac = 0)
-    SciMLBase.ODEFunction(eval_rhs!;
-                          jac = eval_jacobian!,
-                          jac_prototype = prepare_diffeq!(state, dofs(jacval), tjac),
-                          mass_matrix = mass_matrix(state))
+    return SciMLBase.ODEFunction(
+        eval_rhs!;
+        jac = eval_jacobian!,
+        jac_prototype = prepare_diffeq!(state, dofs(jacval), tjac),
+        mass_matrix = mass_matrix(state)
+    )
 end
 
 """
@@ -140,7 +141,7 @@ Parameters:
 The `jacval` and `tjac` are passed  for a first evaluation of the Jacobian, allowing to detect
 the sparsity pattern which is passed to the solver.
 """
-SciMLBase.ODEFunction(sys::VoronoiFVM.System; kwargs...)=SciMLBase.ODEFunction(SystemState(sys); kwargs...)
+SciMLBase.ODEFunction(sys::VoronoiFVM.System; kwargs...) = SciMLBase.ODEFunction(SystemState(sys); kwargs...)
 
 """
     ODEProblem(state,inival,tspan,callback=SciMLBase.CallbackSet())
@@ -151,11 +152,13 @@ for more documentation.
 
 Defined in VoronoiFVM.jl.
 """
-function SciMLBase.ODEProblem(state::VoronoiFVM.SystemState, inival, tspan;
-                              params=state.params, callback = SciMLBase.CallbackSet())
-    state.params.=params
+function SciMLBase.ODEProblem(
+        state::VoronoiFVM.SystemState, inival, tspan;
+        params = state.params, callback = SciMLBase.CallbackSet()
+    )
+    state.params .= params
     odefunction = SciMLBase.ODEFunction(state; jacval = dofs(inival), tjac = tspan[1])
-    SciMLBase.ODEProblem(odefunction, dofs(inival), tspan, state, callback)
+    return SciMLBase.ODEProblem(odefunction, dofs(inival), tspan, state, callback)
 end
 
 """
@@ -176,9 +179,11 @@ by [solve()](https://diffeq.sciml.ai/stable/basics/common_solver_opts/).
 
 Defined in VoronoiFVM.jl.
 """
-function SciMLBase.ODEProblem(sys::VoronoiFVM.System, inival, tspan;
-                              params=zeros(sys.num_parameters), kwargs...)
-    SciMLBase.ODEProblem(SystemState(sys), inival, tspan; params, kwargs...)
+function SciMLBase.ODEProblem(
+        sys::VoronoiFVM.System, inival, tspan;
+        params = zeros(sys.num_parameters), kwargs...
+    )
+    return SciMLBase.ODEProblem(SystemState(sys), inival, tspan; params, kwargs...)
 end
 
 """
@@ -192,15 +197,15 @@ If `times` is specified, the (possibly higher order) interpolated solution at th
 
 Defined in VoronoiFVM.jl.
 """
-function Base.reshape(sol::AbstractDiffEqArray, sys::VoronoiFVM.AbstractSystem; times = nothing, state=nothing)
+function Base.reshape(sol::AbstractDiffEqArray, sys::VoronoiFVM.AbstractSystem; times = nothing, state = nothing)
     if isnothing(times)
-        tsol=TransientSolution([reshape(sol.u[i], sys) for i = 1:length(sol.u)], sol.t)
+        tsol = TransientSolution([reshape(sol.u[i], sys) for i in 1:length(sol.u)], sol.t)
     else
         isol = sol(times)
-        tsol=TransientSolution([reshape(isol[i], sys) for t = 1:length(times)], times)
+        tsol = TransientSolution([reshape(isol[i], sys) for t in 1:length(times)], times)
     end
     if !isnothing(state)
-        tsol.history=state.history
+        tsol.history = state.history
     end
-    tsol
+    return tsol
 end

@@ -19,7 +19,7 @@ function cellfactors!(T::Type{Edge1D}, ::Type{Cartesian1D}, coord, cellnodes, ic
     nodefac[1] = d / 2
     nodefac[2] = d / 2
     edgefac[1] = 1 / d
-    nothing
+    return nothing
 end
 
 function cellfactors!(T::Type{Edge1D}, ::Type{<:Polar1D}, coord, cellnodes, icell, nodefac, edgefac)
@@ -39,7 +39,7 @@ function cellfactors!(T::Type{Edge1D}, ::Type{<:Polar1D}, coord, cellnodes, icel
     nodefac[1] = π * (rhalf * rhalf - r0 * r0)   # circular volume between midline and boundary
     nodefac[2] = π * (r1 * r1 - rhalf * rhalf)   # circular volume between midline and boundary
     edgefac[1] = 2.0 * π * rhalf / (r1 - r0)     # circular surface / width
-    nothing
+    return nothing
 end
 
 function cellfactors!(T::Type{Edge1D}, ::Type{<:Spherical1D}, coord, cellnodes, icell, nodefac, edgefac)
@@ -58,7 +58,7 @@ function cellfactors!(T::Type{Edge1D}, ::Type{<:Spherical1D}, coord, cellnodes, 
     nodefac[1] = π * (rhalf^3 - r0^3) * 4.0 / 3.0   # sphere volume between midline and boundary
     nodefac[2] = π * (r1^3 - rhalf^3) * 4.0 / 3.0   # sphere volume between midline and boundary
     edgefac[1] = 4.0 * π * rhalf^2 / (r1 - r0)      # circular surface / width
-    nothing
+    return nothing
 end
 
 function cellfactors!(T::Type{Triangle2D}, ::Type{Cartesian2D}, coord, cellnodes, icell, npar, epar)
@@ -66,18 +66,22 @@ function cellfactors!(T::Type{Triangle2D}, ::Type{Cartesian2D}, coord, cellnodes
     @views n = cellnodes[:, icell]
 
     # Fill matrix of edge vectors
-    V = @SMatrix[coord[1, n[en[1, 1]]]-coord[1, n[en[2, 1]]] coord[1, n[en[1, 2]]]-coord[1, n[en[2, 2]]] coord[1, n[en[1, 3]]]-coord[1, n[en[2, 3]]];
-                 coord[2, n[en[1, 1]]]-coord[2, n[en[2, 1]]] coord[2, n[en[1, 2]]]-coord[2, n[en[2, 2]]] coord[2, n[en[1, 3]]]-coord[2, n[en[2, 3]]]]
+    V = @SMatrix[
+        coord[1, n[en[1, 1]]] - coord[1, n[en[2, 1]]] coord[1, n[en[1, 2]]] - coord[1, n[en[2, 2]]] coord[1, n[en[1, 3]]] - coord[1, n[en[2, 3]]];
+        coord[2, n[en[1, 1]]] - coord[2, n[en[2, 1]]] coord[2, n[en[1, 2]]] - coord[2, n[en[2, 2]]] coord[2, n[en[1, 3]]] - coord[2, n[en[2, 3]]]
+    ]
 
-    # Compute determinant 
+    # Compute determinant
     det = V[1, 3] * V[2, 2] - V[1, 2] * V[2, 3]
     vol = abs(0.5 * det)
     ivol = 1.0 / vol
 
     # squares of edge lengths
-    dd = (V[1, 1] * V[1, 1] + V[2, 1] * V[2, 1],
-          V[1, 2] * V[1, 2] + V[2, 2] * V[2, 2],
-          V[1, 3] * V[1, 3] + V[2, 3] * V[2, 3])
+    dd = (
+        V[1, 1] * V[1, 1] + V[2, 1] * V[2, 1],
+        V[1, 2] * V[1, 2] + V[2, 2] * V[2, 2],
+        V[1, 3] * V[1, 3] + V[2, 3] * V[2, 3],
+    )
 
     # contributions to \sigma_kl/h_kl
     epar[1] = (dd[2] + dd[3] - dd[1]) * 0.125 * ivol
@@ -87,12 +91,12 @@ function cellfactors!(T::Type{Triangle2D}, ::Type{Cartesian2D}, coord, cellnodes
     # contributions to \omega_k
 
     npar .= 0.0
-    for i = 1:3
+    for i in 1:3
         npar[en[1, i]] += epar[i] * dd[i] * 0.25
         npar[en[2, i]] += epar[i] * dd[i] * 0.25
     end
 
-    nothing
+    return nothing
 end
 
 function cellfactors!(T::Type{Triangle2D}, ::Type{Cylindrical2D}, coord, cellnodes, icell, npar, epar)
@@ -100,22 +104,28 @@ function cellfactors!(T::Type{Triangle2D}, ::Type{Cylindrical2D}, coord, cellnod
     @views n = cellnodes[:, icell]
 
     # Fill matrix of edge vectors
-    V = @SMatrix[coord[1, n[en[1, 1]]]-coord[1, n[en[2, 1]]] coord[1, n[en[1, 2]]]-coord[1, n[en[2, 2]]] coord[1, n[en[1, 3]]]-coord[1, n[en[2, 3]]];
-                 coord[2, n[en[1, 1]]]-coord[2, n[en[2, 1]]] coord[2, n[en[1, 2]]]-coord[2, n[en[2, 2]]] coord[2, n[en[1, 3]]]-coord[2, n[en[2, 3]]]]
+    V = @SMatrix[
+        coord[1, n[en[1, 1]]] - coord[1, n[en[2, 1]]] coord[1, n[en[1, 2]]] - coord[1, n[en[2, 2]]] coord[1, n[en[1, 3]]] - coord[1, n[en[2, 3]]];
+        coord[2, n[en[1, 1]]] - coord[2, n[en[2, 1]]] coord[2, n[en[1, 2]]] - coord[2, n[en[2, 2]]] coord[2, n[en[1, 3]]] - coord[2, n[en[2, 3]]]
+    ]
 
-    # Compute determinant 
+    # Compute determinant
     det = V[1, 3] * V[2, 2] - V[1, 2] * V[2, 3]
     vol = abs(0.5 * det)
     ivol = 1.0 / vol
 
     # squares of edge lengths
-    dd = (V[1, 1] * V[1, 1] + V[2, 1] * V[2, 1],
-          V[1, 2] * V[1, 2] + V[2, 2] * V[2, 2],
-          V[1, 3] * V[1, 3] + V[2, 3] * V[2, 3])
+    dd = (
+        V[1, 1] * V[1, 1] + V[2, 1] * V[2, 1],
+        V[1, 2] * V[1, 2] + V[2, 2] * V[2, 2],
+        V[1, 3] * V[1, 3] + V[2, 3] * V[2, 3],
+    )
 
     # Edge midpoints
-    emid = @SArray[0.5*(coord[1, n[en[1, 1]]] + coord[1, n[en[2, 1]]]) 0.5*(coord[1, n[en[1, 2]]] + coord[1, n[en[2, 2]]]) 0.5*(coord[1, n[en[1, 3]]] + coord[1, n[en[2, 3]]]);
-                   0.5*(coord[2, n[en[1, 1]]] + coord[2, n[en[2, 1]]]) 0.5*(coord[2, n[en[1, 2]]] + coord[2, n[en[2, 2]]]) 0.5*(coord[2, n[en[1, 3]]] + coord[2, n[en[2, 3]]])]
+    emid = @SArray[
+        0.5 * (coord[1, n[en[1, 1]]] + coord[1, n[en[2, 1]]]) 0.5 * (coord[1, n[en[1, 2]]] + coord[1, n[en[2, 2]]]) 0.5 * (coord[1, n[en[1, 3]]] + coord[1, n[en[2, 3]]]);
+        0.5 * (coord[2, n[en[1, 1]]] + coord[2, n[en[2, 1]]]) 0.5 * (coord[2, n[en[1, 2]]] + coord[2, n[en[2, 2]]]) 0.5 * (coord[2, n[en[1, 3]]] + coord[2, n[en[2, 3]]])
+    ]
 
     # Circumcenter; use epar as temp storage
     @views tricircumcenter!(epar, coord[:, n[1]], coord[:, n[2]], coord[:, n[3]])
@@ -129,7 +139,7 @@ function cellfactors!(T::Type{Triangle2D}, ::Type{Cylindrical2D}, coord, cellnod
     # contributions to \omega_k
     # for integration we multiply cartesian areas with 2\pi the average radius
     npar .= 0.0
-    for i = 1:3
+    for i in 1:3
         @views r1 = coord[1, n[en[1, i]]]
         @views r2 = coord[1, n[en[2, i]]]
 
@@ -142,12 +152,12 @@ function cellfactors!(T::Type{Triangle2D}, ::Type{Cylindrical2D}, coord, cellnod
 
     # for angular integration we multiply interface lengths with 2\pi the average radius of the interface
     # need to do this after angular integrating volume contributions
-    for i = 1:3
+    for i in 1:3
         rmid = (rcc + emid[1, i]) / 2
         epar[i] *= 2π * rmid
     end
 
-    nothing
+    return nothing
 end
 
 function cellfactors!(T::Type{Tetrahedron3D}, ::Type{Cartesian3D}, coord, cellnodes, icell, npar, epar)
@@ -166,7 +176,7 @@ function cellfactors!(T::Type{Tetrahedron3D}, ::Type{Cartesian3D}, coord, cellno
     po3 = (3, 5, 4, 5)
 
     # use epar as intermediate memory
-    for i = 1:6
+    for i in 1:6
         p1 = cellnodes[pp1[i], icell]
         p2 = cellnodes[pp2[i], icell]
         dx = coord[1, p1] - coord[1, p2]
@@ -199,7 +209,7 @@ function cellfactors!(T::Type{Tetrahedron3D}, ::Type{Cartesian3D}, coord, cellno
     vol = det / 6
     vv = 96 * 6 * vol
 
-    for i = 1:4
+    for i in 1:4
         npar[i] = 0.0
         i1 = pi1[i]
         i2 = pi2[i]
@@ -216,12 +226,12 @@ function cellfactors!(T::Type{Tetrahedron3D}, ::Type{Cartesian3D}, coord, cellno
         epar[i3] += h3 * vf
     end
 
-    for i = 1:6
+    for i in 1:6
         npar[pp1[i]] += epar[i]
         npar[pp2[i]] += epar[i]
         epar[i] = 6 * epar[i] / dd[i]
     end
-    nothing
+    return nothing
 end
 
 ################################################
@@ -233,21 +243,21 @@ Calculate node volume  contributions for boundary face.
 
 function bfacefactors!(T::Type{Vertex0D}, ::Type{Cartesian1D}, coord, bfacenodes, ibface, nodefac, edgefac)
     nodefac[1] = 1.0
-    nothing
+    return nothing
 end
 
 function bfacefactors!(T::Type{Vertex0D}, ::Type{<:Polar1D}, coord, bfacenodes, ibface, nodefac, edgefac)
     inode = bfacenodes[1, ibface]
     r = coord[1, inode]
     nodefac[1] = 2 * π * r
-    nothing
+    return nothing
 end
 
 function bfacefactors!(T::Type{Vertex0D}, ::Type{<:Spherical1D}, coord, bfacenodes, ibface, nodefac, edgefac)
     inode = bfacenodes[1, ibface]
     r = coord[1, inode]
     nodefac[1] = 4 * π * r^2
-    nothing
+    return nothing
 end
 
 function bfacefactors!(T::Type{Edge1D}, ::Type{Cartesian2D}, coord, bfacenodes, ibface, nodefac, edgefac)
@@ -260,7 +270,7 @@ function bfacefactors!(T::Type{Edge1D}, ::Type{Cartesian2D}, coord, bfacenodes, 
     nodefac[1] = d / 2
     nodefac[2] = d / 2
     edgefac[1] = 1 / d
-    nothing
+    return nothing
 end
 
 function bfacefactors!(T::Type{Edge1D}, ::Type{<:Cylindrical2D}, coord, bfacenodes, ibface, nodefac, edgefac)
@@ -277,7 +287,7 @@ function bfacefactors!(T::Type{Edge1D}, ::Type{<:Cylindrical2D}, coord, bfacenod
     l = sqrt(dr * dr + dz * dz)
     nodefac[1] = π * (r1 + rmid) * l / 2
     nodefac[2] = π * (r2 + rmid) * l / 2
-    nothing
+    return nothing
 end
 
 function bfacefactors!(T::Type{Triangle2D}, ::Type{<:Cartesian3D}, coord, bfacenodes, ibface, npar, epar)
@@ -287,7 +297,7 @@ function bfacefactors!(T::Type{Triangle2D}, ::Type{<:Cartesian3D}, coord, bfacen
     @views n = bfacenodes[:, ibface]
 
     epar .= 0
-    for j = 1:3
+    for j in 1:3
         d = coord[j, n[en[1, 1]]] - coord[j, n[en[2, 1]]]
         epar[1] += d * d
         d = coord[j, n[en[1, 2]]] - coord[j, n[en[2, 2]]]
@@ -308,7 +318,7 @@ function bfacefactors!(T::Type{Triangle2D}, ::Type{<:Cartesian3D}, coord, bfacen
 
     # Knoten-Flaechenanteile (ohne Abschneiden)
     npar .= 0.0
-    for i = 1:3
+    for i in 1:3
         npar[en[1, i]] += epar[i] * d * 0.25
         npar[en[2, i]] += epar[i] * d * 0.25
     end
@@ -318,7 +328,7 @@ function bfacefactors!(T::Type{Triangle2D}, ::Type{<:Cartesian3D}, coord, bfacen
     epar[2] = epar[2] * d / dd[2]
     epar[3] = epar[3] * d / dd[3]
 
-    nothing
+    return nothing
 end
 
 ##################################################################
@@ -338,7 +348,7 @@ function integrate(::Type{<:Cartesian2D}, coordl, coordr, hnormal, velofunc; kwa
     wl = 1.0 / 6.0
     wm = 2.0 / 3.0
     wr = 1.0 / 6.0
-    coordm=( 0.5*(coordl[1]+coordr[1]), 0.5*(coordl[2]+coordr[2]) )
+    coordm = (0.5 * (coordl[1] + coordr[1]), 0.5 * (coordl[2] + coordr[2]))
     (vxl, vyl) = velofunc(coordl[1], coordl[2])
     (vxm, vym) = velofunc(coordm[1], coordm[2])
     (vxr, vyr) = velofunc(coordr[1], coordr[2])
@@ -356,7 +366,7 @@ function integrate(::Type{<:Cylindrical2D}, coordl, coordr, hnormal, velofunc; k
     wl = 1.0 / 6.0
     wm = 2.0 / 3.0
     wr = 1.0 / 6.0
-    coordm=( 0.5*(coordl[1]+coordr[1]), 0.5*(coordl[2]+coordr[2]) )
+    coordm = (0.5 * (coordl[1] + coordr[1]), 0.5 * (coordl[2] + coordr[2]))
 
     rl = coordl[1]
     rm = coordm[1]
@@ -384,7 +394,7 @@ Project velocity onto grid edges.
 That is, we compute the path integrals of the given `velofunc` along the 
 Voronoi cell edges as provided by [`integrate`](@ref).
 """
-function edgevelocities(grid, velofunc::F ; kwargs...) where F
+function edgevelocities(grid, velofunc::F; kwargs...) where {F}
     @assert dim_space(grid) < 3
 
     cn = grid[CellNodes]
@@ -395,7 +405,7 @@ function edgevelocities(grid, velofunc::F ; kwargs...) where F
 
     velovec = zeros(Float64, num_edges(grid))
     if dim_space(grid) == 1
-        for iedge = 1:num_edges(grid)
+        for iedge in 1:num_edges(grid)
             K = en[1, iedge]
             L = en[2, iedge]
             elen = coord[1, L] - coord[1, K]
@@ -403,25 +413,29 @@ function edgevelocities(grid, velofunc::F ; kwargs...) where F
             velovec[iedge] = -elen * vx
         end
     else
-        hnormal=zeros(2)
+        hnormal = zeros(2)
         p1 = zeros(2)
         p2 = zeros(2)
-        for iedge = 1:num_edges(grid)
+        for iedge in 1:num_edges(grid)
             K = en[1, iedge]
             L = en[2, iedge]
-            @views tricircumcenter!(p1,
-                                    coord[:, cn[1, ec[1, iedge]]],
-                                    coord[:, cn[2, ec[1, iedge]]],
-                                    coord[:, cn[3, ec[1, iedge]]])
+            @views tricircumcenter!(
+                p1,
+                coord[:, cn[1, ec[1, iedge]]],
+                coord[:, cn[2, ec[1, iedge]]],
+                coord[:, cn[3, ec[1, iedge]]]
+            )
             if ec[2, iedge] > 0
-                @views tricircumcenter!(p2,
-                                        coord[:, cn[1, ec[2, iedge]]],
-                                        coord[:, cn[2, ec[2, iedge]]],
-                                        coord[:, cn[3, ec[2, iedge]]])
+                @views tricircumcenter!(
+                    p2,
+                    coord[:, cn[1, ec[2, iedge]]],
+                    coord[:, cn[2, ec[2, iedge]]],
+                    coord[:, cn[3, ec[2, iedge]]]
+                )
             else
                 @views @. p2 = 0.5 * (coord[:, K] + coord[:, L])
             end
-            @views @. hnormal.= coord[:, K] - coord[:, L]
+            @views @. hnormal .= coord[:, K] - coord[:, L]
             velovec[iedge] = integrate(coord_system, p1, p2, hnormal, velofunc; kwargs...)
         end
     end
@@ -433,7 +447,7 @@ $(SIGNATURES)
 
 Similar to [`edgevelocities`](@ref), but for boundary faces.
 """
-function bfacevelocities(grid::ExtendableGrid{Tc,Ti}, velofunc::F ; kwargs...) where {Tc, Ti, F}
+function bfacevelocities(grid::ExtendableGrid{Tc, Ti}, velofunc::F; kwargs...) where {Tc, Ti, F}
     @assert dim_space(grid) < 3
     bfacenodes = grid[BFaceNodes]
     coord = grid[Coordinates]
@@ -443,15 +457,15 @@ function bfacevelocities(grid::ExtendableGrid{Tc,Ti}, velofunc::F ; kwargs...) w
     bfr = grid[BFaceRegions]
     velovec = zeros(Float64, 2, num_bfaces(grid))
     if dim_space(grid) == 1
-        for ibface = 1:num_bfaces(grid)
+        for ibface in 1:num_bfaces(grid)
             vx, vy = velofunc(coord[1, bfacenodes[1, ibface]])
             velovec[ibface] = vx * bfacenormals[1, ibface]
         end
     else
-        p1=zeros(2)
-        p2=zeros(2)
-        pm=zeros(2)
-        for ibface = 1:num_bfaces(grid)
+        p1 = zeros(2)
+        p2 = zeros(2)
+        pm = zeros(2)
+        for ibface in 1:num_bfaces(grid)
             @views @. p1 = coord[:, bfacenodes[1, ibface]]
             @views @. p2 = coord[:, bfacenodes[2, ibface]]
             @views @. pm = 0.5 * (p1 + p2)
@@ -504,7 +518,7 @@ function calc_divergences(sys, evelo, bfvelo)
 
     bfacenodes = grid[BFaceNodes]
     boundarynodefactors = boundary_assem_data.nodefactors
-    for ibface = 1:num_bfaces(grid)
+    for ibface in 1:num_bfaces(grid)
         node1 = bfacenodes[1, ibface]
         node2 = bfacenodes[2, ibface]
         div4nodes[node1] += boundarynodefactors[1, ibface] * bfvelo[1, ibface]

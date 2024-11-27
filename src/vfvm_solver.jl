@@ -10,14 +10,16 @@ $(SIGNATURES)
 Solve time step problem. This is the core routine
 for implicit Euler and stationary solve.
 """
-function solve_step!(state,
-                     solution, # old time step solution resp. initial value
-                     oldsol, # old time step solution resp. initial value
-                     control,
-                     time,
-                     tstep,
-                     embedparam,
-                     params)
+function solve_step!(
+        state,
+        solution, # old time step solution resp. initial value
+        oldsol, # old time step solution resp. initial value
+        control,
+        time,
+        tstep,
+        embedparam,
+        params
+    )
     nlhistory = NewtonSolverHistory()
     tasm = 0.0
     tlinsolve = 0.0
@@ -26,8 +28,8 @@ function solve_step!(state,
         residual = state.residual
         update = state.update
         _initialize!(solution, state.system; time, λ = embedparam, params)
-        
-        Tv=eltype(solution)
+
+        Tv = eltype(solution)
         method_linear = state.system.matrixtype == :sparse ? control.method_linear : nothing
         if isnothing(method_linear) && state.system.matrixtype == :sparse
             if Tv != Float64
@@ -36,7 +38,7 @@ function solve_step!(state,
                 method_linear = UMFPACKFactorization() # seems to do the best pivoting
             end
         end
-        
+
         oldnorm = 1.0
         converged = false
         damp = 1.0
@@ -47,7 +49,7 @@ function solve_step!(state,
             damp = control.damp_initial
             rnorm = control.rnorm(solution)
         end
-        
+
         nlu_reuse = 0
         nround = 0
         tolx = 0.0
@@ -55,22 +57,24 @@ function solve_step!(state,
         nballoc = 0
         neval = 0
         niter = 1
-        
+
         while niter <= control.maxiters
             # Create Jacobi matrix and RHS for Newton iteration
             try
-                tasm += @elapsed nca, nba, nev = eval_and_assemble(state.system,
-                                                                   solution,
-                                                                   oldsol,
-                                                                   residual,
-                                                                   state.matrix,
-                                                                   state.dudp,
-                                                                   time,
-                                                                   tstep,
-                                                                   embedparam,
-                                                                   state.data,
-                                                                   params;
-                                                                   edge_cutoff = control.edge_cutoff,)
+                tasm += @elapsed nca, nba, nev = eval_and_assemble(
+                    state.system,
+                    solution,
+                    oldsol,
+                    residual,
+                    state.matrix,
+                    state.dudp,
+                    time,
+                    tstep,
+                    embedparam,
+                    state.data,
+                    params;
+                    edge_cutoff = control.edge_cutoff,
+                )
                 ncalloc += nca
                 nballoc += nba
                 neval += nev
@@ -82,22 +86,24 @@ function solve_step!(state,
                     rethrow(err)
                 end
             end
-            
-            tlinsolve += @elapsed _solve_linear!(dofs(update),
-                                                 state,
-                                                 nlhistory,
-                                                 control,
-                                                 method_linear,
-                                                 state.matrix,
-                                                 dofs(residual))
+
+            tlinsolve += @elapsed _solve_linear!(
+                dofs(update),
+                state,
+                nlhistory,
+                control,
+                method_linear,
+                state.matrix,
+                dofs(residual)
+            )
 
             dofs(solution) .-= damp * dofs(update)
-                        
+
             if state.system.is_linear
                 converged = true
                 break
             end
-            
+
             damp = min(damp * control.damp_growth, 1.0)
             norm = control.unorm(update)
             if tolx == 0.0
@@ -108,13 +114,13 @@ function solve_step!(state,
             if rnorm > 1.0e-50
                 dnorm = abs((rnorm - rnorm_new) / rnorm)
             end
-            
+
             if dnorm < control.tol_round
                 nround = nround + 1
             else
                 nround = 0
             end
-            
+
             if control.log
                 push!(nlhistory.l1normdiff, dnorm)
                 push!(nlhistory.updatenorm, norm)
@@ -126,28 +132,30 @@ function solve_step!(state,
                     itstring = @sprintf("it=% 3d", niter)
                 end
                 if control.max_round > 0
-                    @printf("%s %.3e %.3e %.3e % 2d\n",
-                            itstring,
-                            norm,
-                            norm/oldnorm,
-                            dnorm,
-                            nround)
+                    @printf(
+                        "%s %.3e %.3e %.3e % 2d\n",
+                        itstring,
+                        norm,
+                        norm / oldnorm,
+                        dnorm,
+                        nround
+                    )
                 else
-                    @printf("%s %.3e %.3e\n", itstring, norm, norm/oldnorm)
+                    @printf("%s %.3e %.3e\n", itstring, norm, norm / oldnorm)
                 end
             end
             if niter > 1 && norm / oldnorm > 1.0 / control.tol_mono
                 converged = false
                 break
             end
-            
+
             if norm < control.abstol || norm < tolx
                 converged = true
                 break
             end
             oldnorm = norm
             rnorm = rnorm_new
-            
+
             if nround > control.max_round
                 converged = true
                 break
@@ -155,7 +163,7 @@ function solve_step!(state,
             niter = niter + 1
         end
         if !converged
-          throw(ConvergenceError())
+            throw(ConvergenceError())
         end
     end
     if control.log
@@ -166,37 +174,38 @@ function solve_step!(state,
 
     if neval > 0
         if ncalloc ÷ neval + nballoc ÷ neval > 0 && doprint(control, 'a') && !is_precompiling()
-            @warn "[a]llocations in assembly loop: cells: $(ncalloc÷neval), bfaces: $(nballoc÷neval)"
+            @warn "[a]llocations in assembly loop: cells: $(ncalloc ÷ neval), bfaces: $(nballoc ÷ neval)"
         end
     end
 
     if doprint(control, 'n') && !state.system.is_linear
-        println("  [n]ewton: $(round(t,sigdigits=3)) seconds asm: $(round(100*tasm/t,sigdigits=3))%, linsolve: $(round(100*tlinsolve/t,sigdigits=3))%")
+        println("  [n]ewton: $(round(t, sigdigits = 3)) seconds asm: $(round(100 * tasm / t, sigdigits = 3))%, linsolve: $(round(100 * tlinsolve / t, sigdigits = 3))%")
     end
 
     if doprint(control, 'l') && state.system.is_linear
-        println("  [l]inear($(nameof(typeof(method_linear)))): $(round(t,sigdigits=3)) seconds")
+        println("  [l]inear($(nameof(typeof(method_linear)))): $(round(t, sigdigits = 3)) seconds")
     end
 
-    solution.history=nlhistory
-    solution
+    solution.history = nlhistory
+    return solution
 end
 
-function evaluate_residual_and_jacobian!(state,u; params=Float64[], t = 0.0, tstep = Inf, embed = 0.0)
+function evaluate_residual_and_jacobian!(state, u; params = Float64[], t = 0.0, tstep = Inf, embed = 0.0)
     _initialize_dirichlet!(u, state.system)
-    eval_and_assemble(state.system,
-                      u,
-                      u,
-                      state.residual,
-                      state.matrix,
-                      state.dudp,
-                      t,
-                      tstep,
-                      embed,
-                      state.data,
-                      params
-                      )
-    flush!(state.matrix)
+    eval_and_assemble(
+        state.system,
+        u,
+        u,
+        state.residual,
+        state.matrix,
+        state.dudp,
+        t,
+        tstep,
+        embed,
+        state.data,
+        params
+    )
+    return flush!(state.matrix)
 end
 
 
@@ -210,9 +219,9 @@ containing a copy of the linearization at u.
 
 """
 function evaluate_residual_and_jacobian(sys, u; kwargs...)
-    state=SystemState(sys)
+    state = SystemState(sys)
     eval_and_linearize!(state, u; kwargs...)
-    copy(state.residual), copy(state.matrix)
+    return copy(state.residual), copy(state.matrix)
 end
 
 
@@ -220,14 +229,16 @@ end
         solve_transient(inival, system, times; kwargs...)
 Solve transient or embedding problem.
 """
-function solve_transient!(state,
-                          inival,
-                          lambdas;
-                          control = SolverControl(),
-                          transient = true, # choose between transient and stationary (embedding) case
-                          time = 0.0,
-                          params = zeros(0),
-                          kwargs...,)
+function solve_transient!(
+        state,
+        inival,
+        lambdas;
+        control = SolverControl(),
+        transient = true, # choose between transient and stationary (embedding) case
+        time = 0.0,
+        params = zeros(0),
+        kwargs...,
+    )
 
     # rounding in output
     rd(x) = round(x; sigdigits = 5)
@@ -266,17 +277,19 @@ function solve_transient!(state,
         # If not transient, solve for first embedding lambdas[1]
         _initialize_dirichlet!(solution, state.system; time, λ = Float64(lambdas[1]), params)
         control.pre(solution, Float64(lambdas[1]))
-        t0 = @elapsed solution = solve_step!(state,
-                                             solution,
-                                             oldsolution,
-                                             control,
-                                             time,
-                                             Inf,
-                                             Float64(lambdas[1]),
-                                             params)
-        
+        t0 = @elapsed solution = solve_step!(
+            state,
+            solution,
+            oldsolution,
+            control,
+            time,
+            Inf,
+            Float64(lambdas[1]),
+            params
+        )
+
         control.post(solution, oldsolution, lambdas[1], 0)
-        
+
         if control.log
             push!(allhistory, solution.history)
             push!(allhistory.times, lambdas[1])
@@ -297,7 +310,7 @@ function solve_transient!(state,
     istep = 0
     solved = false
     # Outer loop over embedding params/ time values
-    t1 = @elapsed for i = 1:(length(lambdas) - 1)
+    t1 = @elapsed for i in 1:(length(lambdas) - 1)
         Δλ = max(Δλ, Δλ_min)
         λstart = lambdas[i]
         λend = lambdas[i + 1]
@@ -327,16 +340,18 @@ function solve_transient!(state,
                         _tstep = Inf
                         _embedparam = λ
                     end
-                    solution = solve_step!(state,
-                                           solution,
-                                           oldsolution,
-                                           control,
-                                           _time,
-                                           _tstep,
-                                           _embedparam,
-                                           params)
+                    solution = solve_step!(
+                        state,
+                        solution,
+                        oldsolution,
+                        control,
+                        _time,
+                        _tstep,
+                        _embedparam,
+                        params
+                    )
                 catch err
-                    err = "Problem at $(λstr)=$(λ|>rd), Δ$(λstr)=$(Δλ|>rd):\n$(err)"
+                    err = "Problem at $(λstr)=$(λ |> rd), Δ$(λstr)=$(Δλ |> rd):\n$(err)"
                     if (control.handle_exceptions)
                         _print_error(err, stacktrace(catch_backtrace()))
                     else
@@ -355,9 +370,9 @@ function solve_transient!(state,
                     if Δλ ≈ Δλ_min
                         if !(control.force_first_step && istep == 0)
                             err = """
-    At $(λstr)=$(λ|>rd): Δ$(λstr)_min=$(Δλ_min|>rd) reached while Δu/Δu_opt=$(Δu/Δu_opt|>rd).
-    Returning prematurely before $(λstr)[end]=$(lambdas[end]|>rd) 
-    """
+                            At $(λstr)=$(λ |> rd): Δ$(λstr)_min=$(Δλ_min |> rd) reached while Δu/Δu_opt=$(Δu / Δu_opt |> rd).
+                            Returning prematurely before $(λstr)[end]=$(lambdas[end] |> rd) 
+                            """
                             if control.handle_exceptions
                                 @warn err
                             else
@@ -366,7 +381,7 @@ function solve_transient!(state,
                             break # give up lowering stepsize, break out if "while !solved" loop
                         elseif !errored
                             if doprint(control, 'e')
-                                println("[e]volution:  forced first timestep: Δu/Δu_opt=$(Δu/Δu_opt|>rd)")
+                                println("[e]volution:  forced first timestep: Δu/Δu_opt=$(Δu / Δu_opt |> rd)")
                             end
                             forced = true
                             solved = true
@@ -381,10 +396,10 @@ function solve_transient!(state,
                             break
                         end
                     else
-                        # reduce time step 
+                        # reduce time step
                         Δλ = max(Δλ_min, Δλ * Δλ_decrease)
                         if doprint(control, 'e')
-                            @printf("[e]volution:  Δu/Δu_opt=%.3e => retry: Δ%s=%.3e\n", Δu/Δu_opt, λstr, Δλ)
+                            @printf("[e]volution:  Δu/Δu_opt=%.3e => retry: Δ%s=%.3e\n", Δu / Δu_opt, λstr, Δλ)
                         end
                     end
                 end
@@ -394,13 +409,15 @@ function solve_transient!(state,
             if solved
                 istep = istep + 1
                 if doprint(control, 'e')
-                    @printf("[e]volution: step=%d %s=%.3e Δ%s=%.3e Δu=%.3e\n",
-                            istep,
-                            λstr,
-                            λ,
-                            λstr,
-                            Δλ,
-                            Δu)
+                    @printf(
+                        "[e]volution: step=%d %s=%.3e Δ%s=%.3e Δu=%.3e\n",
+                        istep,
+                        λstr,
+                        λ,
+                        λstr,
+                        Δλ,
+                        Δu
+                    )
                 end
                 if control.log
                     push!(allhistory, solution.history)
@@ -428,21 +445,23 @@ function solve_transient!(state,
 
                 if λ < λend
                     #  ### account for close last timestep
-                    Δλ = min(Δλ_max,
-                             Δλ * Δλ_grow,
-                             Δλ * Δu_opt / (Δu + 1.0e-14),
-                             λ_predict,
-                             λend - λ)
+                    Δλ = min(
+                        Δλ_max,
+                        Δλ * Δλ_grow,
+                        Δλ * Δu_opt / (Δu + 1.0e-14),
+                        λ_predict,
+                        λend - λ
+                    )
 
                     # adjust for roundoff error, so there will be no accidental
                     # very tiny timestep
-                    if isapprox(λ+Δλ, λend; atol=1.0e-15, rtol=1.0e-15)
-                        Δλ=λend-λ
+                    if isapprox(λ + Δλ, λend; atol = 1.0e-15, rtol = 1.0e-15)
+                        Δλ = λend - λ
                     end
                 end
             else
                 break # break out of inner loop over timestep
-            end # if solved            
+            end # if solved
         end # while λ<λ_end
 
         if !control.store_all # store last solution obtained
@@ -453,7 +472,7 @@ function solve_transient!(state,
 
         if solved
             if !(λ ≈ lambdas[i + 1]) # check end of interval has been reached in inner loop
-                @warn "λ=$(λ), lambdas[i+1]=$(lambdas[i+1])"
+                @warn "λ=$(λ), lambdas[i+1]=$(lambdas[i + 1])"
             end
         else
             break # emergency exit
@@ -461,13 +480,12 @@ function solve_transient!(state,
     end # for i = 1:(length(lambdas)-1), end outer loop
 
     if doprint(control, 'e')
-        println("[e]volution:  $(round(t0+t1,sigdigits=3)) seconds")
+        println("[e]volution:  $(round(t0 + t1, sigdigits = 3)) seconds")
     end
 
     tsol.history = allhistory
     return tsol
 end
-
 
 
 #####################################################################
@@ -481,62 +499,70 @@ Mutates the state and returns the solution.
 
 For the keyword argumentsm see [`VoronoiFVM.solve`](@ref).
 """
-function CommonSolve.solve!(state::VoronoiFVM.SystemState;
-                            inival = 0,
-                            data = nothing,
-                            params = zeros(0),
-                            control = VoronoiFVM.SolverControl(),
-                            time = 0.0,
-                            tstep = Inf,
-                            kwargs...,)
+function CommonSolve.solve!(
+        state::VoronoiFVM.SystemState;
+        inival = 0,
+        data = nothing,
+        params = zeros(0),
+        control = VoronoiFVM.SolverControl(),
+        time = 0.0,
+        tstep = Inf,
+        kwargs...,
+    )
     fix_deprecations!(control)
-    if isa(inival, Number) || isa(inival, Matrix) 
+    if isa(inival, Number) || isa(inival, Matrix)
         inival = unknowns(state.system; inival = inival)
     elseif !isdensesystem(state.system) && isa(inival, SparseMatrixCSC)
         inival = SparseSolutionArray(inival)
     elseif !VoronoiFVM.isunknownsof(inival, state.system)
         @error "wrong type of inival: $(typeof(inival))"
     end
-    
+
     for pair in kwargs
         if first(pair) != :times &&
-           first(pair) != :embed &&
-           hasfield(SolverControl, first(pair))
+                first(pair) != :embed &&
+                hasfield(SolverControl, first(pair))
             setproperty!(control, first(pair), last(pair))
         end
     end
 
     if !isnothing(data)
-        state.data=data
+        state.data = data
     end
-    state.params.=params
-    
+    state.params .= params
 
-    if haskey(kwargs, :times) && !isnothing(kwargs[:times])
-        solve_transient!(state,
-                        inival,
-                        kwargs[:times];
-                        control,
-                        transient = true,
-                        params,
-                        time = kwargs[:times][1])
+
+    return if haskey(kwargs, :times) && !isnothing(kwargs[:times])
+        solve_transient!(
+            state,
+            inival,
+            kwargs[:times];
+            control,
+            transient = true,
+            params,
+            time = kwargs[:times][1]
+        )
     elseif haskey(kwargs, :embed) && !isnothing(kwargs[:embed])
-        solve_transient!(state,
-                         inival,
-                         kwargs[:embed];
-                         transient = false,
-                         control,
-                         params,
-                         time,)
+        solve_transient!(
+            state,
+            inival,
+            kwargs[:embed];
+            transient = false,
+            control,
+            params,
+            time,
+        )
     else
-        solve_step!(state,
-                    unknowns(state.system),
-                    inival,
-                    control,
-                    time,
-                    tstep,
-                    0.0,
-                    params)
+        solve_step!(
+            state,
+            unknowns(state.system),
+            inival,
+            control,
+            time,
+            tstep,
+            0.0,
+            params
+        )
     end
 end
 
@@ -584,7 +610,7 @@ Keyword arguments:
   - `tstep`: time step
   Returns a [`DenseSolutionArray`](@ref) or [`SparseSolutionArray`](@ref)
 """
-function CommonSolve.solve(sys::VoronoiFVM.AbstractSystem; data=sys.physics.data, kwargs...)
-    state=SystemState(sys;data)
-    solve!(state; kwargs...)
+function CommonSolve.solve(sys::VoronoiFVM.AbstractSystem; data = sys.physics.data, kwargs...)
+    state = SystemState(sys; data)
+    return solve!(state; kwargs...)
 end

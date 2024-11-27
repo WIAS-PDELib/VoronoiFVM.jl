@@ -13,7 +13,7 @@ Type parameters:
 Type fields:
 $(TYPEDFIELDS)
 """
-mutable struct SystemState{Tv, Tp, TMatrix<:AbstractMatrix{Tv}, TSolArray<:AbstractMatrix{Tv}, TData}
+mutable struct SystemState{Tv, Tp, TMatrix <: AbstractMatrix{Tv}, TSolArray <: AbstractMatrix{Tv}, TData}
 
     """
     Related finite volume system
@@ -39,7 +39,7 @@ mutable struct SystemState{Tv, Tp, TMatrix<:AbstractMatrix{Tv}, TSolArray<:Abstr
     Parameter derivative (vector of solution arrays)
     """
     dudp::Vector{TSolArray}
-    
+
     """
     Vector holding Newton update
     """
@@ -59,7 +59,7 @@ mutable struct SystemState{Tv, Tp, TMatrix<:AbstractMatrix{Tv}, TSolArray<:Abstr
     Parameter vector
     """
     params::Vector{Tp}
-    
+
     """
     Hash value of latest unknowns vector the assembly was called with
     (used by differential equation interface)
@@ -88,23 +88,25 @@ Keyword arguments:
 - `data`: User data. Default: `data(system)`
 - `matrixtype`. Default: `system.matrixtype`
 """
-function SystemState(::Type{Tu}, system::AbstractSystem{Tv, Tc, Ti, Tm};
-                     data=system.physics.data,
-                     params=zeros(system.num_parameters),
-                     matrixtype=system.matrixtype) where {Tu,Tv,Tc, Ti, Tm}
+function SystemState(
+        ::Type{Tu}, system::AbstractSystem{Tv, Tc, Ti, Tm};
+        data = system.physics.data,
+        params = zeros(system.num_parameters),
+        matrixtype = system.matrixtype
+    ) where {Tu, Tv, Tc, Ti, Tm}
     _complete!(system)
-    
-    if (length(params)!=system.num_parameters)
+
+    if (length(params) != system.num_parameters)
         error("length(params)!=system.num_parameters")
     end
-    
+
     nspec = size(system.node_dof, 1)
     n = num_dof(system)
 
     matrixtype = system.matrixtype
 
     if matrixtype == :auto
-        if !isdensesystem(system) || dim_grid(system.grid)>1
+        if !isdensesystem(system) || dim_grid(system.grid) > 1
             matrixtype = :sparse
         else
             if nspec == 1
@@ -132,8 +134,8 @@ function SystemState(::Type{Tu}, system::AbstractSystem{Tv, Tc, Ti, Tm};
     solution = unknowns(Tu, system)
     residual = unknowns(Tu, system)
     update = unknowns(Tu, system)
-    dudp = [unknowns(Tu, system) for i = 1:(system.num_parameters)]
-    SystemState(system, data, solution, matrix, dudp, residual, update, nothing, params, zero(UInt64),  nothing)
+    dudp = [unknowns(Tu, system) for i in 1:(system.num_parameters)]
+    return SystemState(system, data, solution, matrix, dudp, residual, update, nothing, params, zero(UInt64), nothing)
 end
 
 
@@ -142,7 +144,7 @@ end
 
 Shortcut for creating state with value type defined by `Tv` type parameter of system
 """
-SystemState(system::AbstractSystem{Tv,Tc,Ti,Tm}; kwargs...) where {Tv,Tc,Ti,Tm} =SystemState(Tv, system; kwargs...) 
+SystemState(system::AbstractSystem{Tv, Tc, Ti, Tm}; kwargs...) where {Tv, Tc, Ti, Tm} = SystemState(Tv, system; kwargs...)
 
 """
     similar(state; data=state.data)
@@ -150,22 +152,22 @@ SystemState(system::AbstractSystem{Tv,Tc,Ti,Tm}; kwargs...) where {Tv,Tc,Ti,Tm} 
 Create a new state of with the same system, different work arrays, and possibly different data.
 The matrix of the new state initially shares the sparsity structure with `state`.
 """
-function Base.similar(state::SystemState; data=state.data)
-    system=state.system
-    solution=similar(state.solution)
+function Base.similar(state::SystemState; data = state.data)
+    system = state.system
+    solution = similar(state.solution)
     if issparse(state.matrix)
-        csc=SparseMatrixCSC(state.matrix)
-        cscnew=SparseMatrixCSC(csc.m, csc.n, csc.colptr, csc.rowval, similar(csc.nzval))
-        matrix=ExtendableSparseMatrix(cscnew)
+        csc = SparseMatrixCSC(state.matrix)
+        cscnew = SparseMatrixCSC(csc.m, csc.n, csc.colptr, csc.rowval, similar(csc.nzval))
+        matrix = ExtendableSparseMatrix(cscnew)
     else
-        matrix=similar(state.matrix)
+        matrix = similar(state.matrix)
     end
-    dudp=similar(state.dudp)
-    residual=similar(state.residual)
-    update=similar(state.update)
-    linear_cache=nothing
-    params=similar(state.params)
-    uhash=zero(UInt64)
-    history=nothing
-    SystemState(system, data, solution, matrix, dudp, residual, update, linear_cache, params, uhash, history)
+    dudp = similar(state.dudp)
+    residual = similar(state.residual)
+    update = similar(state.update)
+    linear_cache = nothing
+    params = similar(state.params)
+    uhash = zero(UInt64)
+    history = nothing
+    return SystemState(system, data, solution, matrix, dudp, residual, update, linear_cache, params, uhash, history)
 end

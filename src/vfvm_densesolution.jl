@@ -8,8 +8,8 @@ Fields:
 
 $(TYPEDFIELDS)
 """
-mutable struct DenseSolutionArray{T, N}  <: AbstractSolutionArray{T,N}
-    u::Array{T,N}
+mutable struct DenseSolutionArray{T, N} <: AbstractSolutionArray{T, N}
+    u::Array{T, N}
     history::Union{NewtonSolverHistory, Nothing}
 end
 
@@ -19,27 +19,27 @@ end
     
 `DenseSolutionArray` constructor.
 """
-DenseSolutionArray(u::Matrix{T}) where {T} =DenseSolutionArray{T,2}(u,nothing)
+DenseSolutionArray(u::Matrix{T}) where {T} = DenseSolutionArray{T, 2}(u, nothing)
 
 """
     solutionarray(a::Matrix)
 """
-solutionarray(u::Matrix{T}) where {T} =DenseSolutionArray{T,2}(u,nothing)
+solutionarray(u::Matrix{T}) where {T} = DenseSolutionArray{T, 2}(u, nothing)
 
 """
  $(TYPEDSIGNATURES)
     
 `DenseSolutionArray` constructor.
 """
-DenseSolutionArray{T,2}(nspec::Int, nnodes::Int) where {T} =DenseSolutionArray{T,2}(Matrix{T}(nspec,nnodes),nothing)
+DenseSolutionArray{T, 2}(nspec::Int, nnodes::Int) where {T} = DenseSolutionArray{T, 2}(Matrix{T}(nspec, nnodes), nothing)
 
 """
  $(TYPEDSIGNATURES)
     
 `DenseSolutionArray` constructor.
 """
-DenseSolutionArray{T,2}(::UndefInitializer,nspec::Int, nnodes::Int) where {T} =DenseSolutionArray{T,2}(Matrix{T}(undef,nspec,nnodes),nothing)
-                                                                                    
+DenseSolutionArray{T, 2}(::UndefInitializer, nspec::Int, nnodes::Int) where {T} = DenseSolutionArray{T, 2}(Matrix{T}(undef, nspec, nnodes), nothing)
+
 
 """
  $(SIGNATURES)
@@ -66,7 +66,7 @@ $(SIGNATURES)
 Vector of degrees of freedom in solution array.
 """
 dofs(a::DenseSolutionArray) = vec(a.u)
-dofs(a::Array)=vec(a)
+dofs(a::Array) = vec(a)
 
 """
 $(TYPEDSIGNATURES)

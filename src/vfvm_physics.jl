@@ -24,8 +24,9 @@ function _showstruct(io::IO, this::AbstractData)
     myround(b::Bool; kwargs...) = b
     println(typeof(this))
     for name in fieldnames(typeof(this))
-        println(io, "$(lpad(name,20)) = $(myround.(getfield(this,name),sigdigits=5))")
+        println(io, "$(lpad(name, 20)) = $(myround.(getfield(this, name), sigdigits = 5))")
     end
+    return
 end
 
 """
@@ -39,7 +40,7 @@ function Base.copy!(vdata::AbstractData{Tv}, udata::AbstractData{Tu}) where {Tv,
     for name in fieldnames(typeof(udata))
         setproperty!(vdata, name, vval(getproperty(udata, name)))
     end
-    vdata
+    return vdata
 end
 
 """
@@ -63,7 +64,7 @@ function nofunc(args...) end
 
 
 function default_storage(f, u, node, data)
-    f .= u
+    return f .= u
 end
 
 
@@ -77,19 +78,21 @@ Physics data record with the following fields:
 
 $(TYPEDFIELDS)
 """
-mutable struct Physics{Flux <: Function,
-                       Reaction <: Function,
-                       EdgeReaction <: Function,
-                       Storage <: Function,
-                       Source <: Function,
-                       BFlux <: Function,
-                       BReaction <: Function,
-                       BSource <: Function,
-                       BStorage <: Function,
-                       BOutflow <: Function,
-                       GenericOperator <: Function,
-                       GenericOperatorSparsity <: Function,
-                       Data} <: AbstractPhysics
+mutable struct Physics{
+        Flux <: Function,
+        Reaction <: Function,
+        EdgeReaction <: Function,
+        Storage <: Function,
+        Source <: Function,
+        BFlux <: Function,
+        BReaction <: Function,
+        BSource <: Function,
+        BStorage <: Function,
+        BOutflow <: Function,
+        GenericOperator <: Function,
+        GenericOperatorSparsity <: Function,
+        Data,
+    } <: AbstractPhysics
     """
     Flux between neighboring control volumes: `flux(f,u,edge,data)`
     should return in `f[i]` the flux of species i along the edge joining circumcenters
@@ -221,55 +224,61 @@ Physics(;num_species=0,
 
 Constructor for physics data. For the meaning of the optional keyword arguments, see [`VoronoiFVM.System(grid::ExtendableGrid; kwargs...)`](@ref).
 """
-function Physics(; num_species = 0,
-                 data = nothing,
-                 flux::Function = nofunc,
-                 reaction::Function = nofunc,
-                 edgereaction::Function = nofunc,
-                 storage::Function = default_storage,
-                 source::Function = nofunc,
-                 bflux::Function = nofunc,
-                 breaction::Function = nofunc,
-                 bsource::Function = nofunc,
-                 bstorage::Function = nofunc,
-                 boutflow::Function = nofunc,
-                 outflowboundaries::Vector{Int} = Int[],
-                 generic::Function = nofunc,
-                 generic_sparsity::Function = nofunc,
-                 kwargs...)
-    return Physics(flux,
-                   storage,
-                   reaction,
-                   edgereaction,
-                   source,
-                   bflux,
-                   breaction,
-                   bsource,
-                   bstorage,
-                   boutflow,
-                   outflowboundaries,
-                   generic,
-                   generic_sparsity,
-                   data,
-                   Int8(num_species))
+function Physics(;
+        num_species = 0,
+        data = nothing,
+        flux::Function = nofunc,
+        reaction::Function = nofunc,
+        edgereaction::Function = nofunc,
+        storage::Function = default_storage,
+        source::Function = nofunc,
+        bflux::Function = nofunc,
+        breaction::Function = nofunc,
+        bsource::Function = nofunc,
+        bstorage::Function = nofunc,
+        boutflow::Function = nofunc,
+        outflowboundaries::Vector{Int} = Int[],
+        generic::Function = nofunc,
+        generic_sparsity::Function = nofunc,
+        kwargs...
+    )
+    return Physics(
+        flux,
+        storage,
+        reaction,
+        edgereaction,
+        source,
+        bflux,
+        breaction,
+        bsource,
+        bstorage,
+        boutflow,
+        outflowboundaries,
+        generic,
+        generic_sparsity,
+        data,
+        Int8(num_species)
+    )
 end
 
 function Physics(physics::Physics, data)
-    Physics(physics.flux,
-            physics.storage,
-            physics.reaction,
-            physics.edgereaction,
-            physics.source,
-            physics.bflux,
-            physics.breaction,
-            physics.bsource,
-            physics.bstorage,
-            physics.boutflow,
-            physics.outflowboundaries,
-            physics.generic,
-            physics.generic_sparsity,
-            data,
-            physics.num_species)
+    return Physics(
+        physics.flux,
+        physics.storage,
+        physics.reaction,
+        physics.edgereaction,
+        physics.source,
+        physics.bflux,
+        physics.breaction,
+        physics.bsource,
+        physics.bstorage,
+        physics.boutflow,
+        physics.outflowboundaries,
+        physics.generic,
+        physics.generic_sparsity,
+        data,
+        physics.num_species
+    )
 end
 
 """
@@ -291,23 +300,23 @@ function Base.show(io::IO, physics::AbstractPhysics)
     if isdata(physics.data)
         str = str * "data=$(typeof(physics.data)), "
     end
-        
+
     # function addfunc(func, name)
     #     if func != nofunc
     #         str = str * ", $(name)=$(nameof(func))"
     #     end
     # end
-        
+
     for name in fieldnames(typeof(physics))
         if (name != :num_species) && (name != :data)  && (name != :outflowboundaries)  && getfield(physics, name) != nofunc
-            str = str * "$(name)=$(nameof(getfield(physics,name))), "
+            str = str * "$(name)=$(nameof(getfield(physics, name))), "
         end
     end
-    if length(physics.outflowboundaries)>0
-        str=str * "outflowboundaries=$(physics.outflowboundaries)"
+    if length(physics.outflowboundaries) > 0
+        str = str * "outflowboundaries=$(physics.outflowboundaries)"
     end
     str = str * ")"
-    print(io, str)
+    return print(io, str)
 end
 
 """
@@ -357,20 +366,20 @@ function ResEvaluator(physics, data, symb::Symbol, uproto::Vector{Tv}, geom, nsp
         fwrap = function (y)
             y .= 0
             func(rhs(geom, y), geom, data)
-            nothing
+            return nothing
         end
-    else   # Normal functions wihth u as parameter     
+    else   # Normal functions wihth u as parameter
         fwrap = function (y, u)
             y .= 0
             ## for ii in ..  uu[geom.speclist[ii]]=u[ii]
             func(rhs(geom, y), unknowns(geom, u), geom, data)
             ## for ii in .. y[ii]=y[geom.speclist[ii]]
-            nothing
+            return nothing
         end
     end
     isnontrivial = (func != nofunc)
     y = zeros(Tv, nspec)
-    ResEvaluator(fwrap, y, geom, nspec, isnontrivial)
+    return ResEvaluator(fwrap, y, geom, nspec, isnontrivial)
 end
 
 """
@@ -380,7 +389,7 @@ Call function in evaluator, store result in predefined memory.
 """
 function evaluate!(e::ResEvaluator, u)
     e.isnontrivial ? e.fwrap(e.y, u) : nothing
-    nothing
+    return nothing
 end
 
 """
@@ -390,7 +399,7 @@ Call function in evaluator, store result in predefined memory.
 """
 function evaluate!(e::ResEvaluator)
     e.isnontrivial ? e.fwrap(e.y) : nothing
-    nothing
+    return nothing
 end
 
 """
@@ -443,7 +452,7 @@ function ResJacEvaluator(physics, data, symb::Symbol, uproto::Vector{Tv}, geom, 
         ## for ii in ..  uu[geom.speclist[ii]]=u[ii]
         func(rhs(geom, y), unknowns(geom, u), geom, data)
         ## for ii in .. y[ii]=y[geom.speclist[ii]]
-        nothing
+        return nothing
     end
 
     isnontrivial = (func != nofunc)
@@ -453,7 +462,7 @@ function ResJacEvaluator(physics, data, symb::Symbol, uproto::Vector{Tv}, geom, 
     jac = zeros(Tv, nspec, length(u))
     result = DiffResults.DiffResult(u, jac)
     config = ForwardDiff.JacobianConfig(fwrap, y, u, ForwardDiff.Chunk(u, length(u)))
-    ResJacEvaluator(fwrap, config, result, y, geom, nspec, isnontrivial)
+    return ResJacEvaluator(fwrap, config, result, y, geom, nspec, isnontrivial)
 end
 
 """
@@ -463,7 +472,7 @@ Call function in evaluator, store result and jacobian in predefined memory.
 """
 function evaluate!(e::ResJacEvaluator, u)
     e.isnontrivial ? ForwardDiff.jacobian!(e.result, e.fwrap, e.y, u, e.config) : nothing
-    nothing
+    return nothing
 end
 
 """
@@ -491,7 +500,7 @@ isnontrivial(e::AbstractEvaluator) = e.isnontrivial
 
 # "Generate" a flux function
 function diffusion_flux(D::T) where {T}
-    (y, u, args...) -> y[1] = D(u[1, 1] + u[1, 2]) * (u[1, 1] - u[1, 2])
+    return (y, u, args...) -> y[1] = D(u[1, 1] + u[1, 2]) * (u[1, 1] - u[1, 2])
 end
 
 """
@@ -505,7 +514,7 @@ function boundary_dirichlet!(y, u, bnode::AbstractGeometryItem, ispec, ireg, val
         # just for call during initialization, so we can convert from dual number
         bnode.dirichlet_value[ispec] = value(val)
     end
-    nothing
+    return nothing
 end
 
 """
@@ -517,7 +526,7 @@ Keyword argument version:
 - `value`: value 
 """
 function boundary_dirichlet!(y, u, bnode::AbstractGeometryItem; species = 1, region = bnode.region, value = 0, penalty = bnode.Dirichlet)
-    boundary_dirichlet!(y, u, bnode, species, region, value; penalty)
+    return boundary_dirichlet!(y, u, bnode, species, region, value; penalty)
 end
 
 """
@@ -555,7 +564,7 @@ Keyword argument version:
 - `value`: value
 """
 function boundary_neumann!(y, u, bnode::AbstractGeometryItem; species = 1, region = bnode.region, value = 0)
-    boundary_neumann!(y, u, bnode, species, region, value)
+    return boundary_neumann!(y, u, bnode, species, region, value)
 end
 
 
@@ -575,5 +584,5 @@ Keyword argument version:
 - `value`: value
 """
 function boundary_robin!(y, u, bnode::AbstractGeometryItem; species = 1, region = bnode.region, factor = 0, value = 0)
-    boundary_robin!(y, u, bnode, species, region, factor, value)
+    return boundary_robin!(y, u, bnode, species, region, factor, value)
 end

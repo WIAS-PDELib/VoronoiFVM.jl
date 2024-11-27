@@ -1,7 +1,7 @@
 """
     VoronoiFVM
 
-$(read(joinpath(@__DIR__,"..","README.md"),String))
+$(read(joinpath(@__DIR__, "..", "README.md"), String))
 """
 module VoronoiFVM
 
@@ -10,28 +10,28 @@ import Colors
 using CommonSolve: CommonSolve, solve, solve!
 using DiffResults: DiffResults
 using DocStringExtensions: DocStringExtensions, SIGNATURES, TYPEDEF,
-                           TYPEDFIELDS, TYPEDSIGNATURES
+    TYPEDFIELDS, TYPEDSIGNATURES
 using ExtendableGrids: ExtendableGrids, BEdgeNodes, BFaceCells, BFaceEdges,
-                       BFaceGeometries, BFaceNodes, BFaceNormals, BFaceRegions,
-                       Cartesian1D, Cartesian2D, Cartesian3D, CellEdges,
-                       CellGeometries, CellNodes, CellRegions,
-                       CoordinateSystem, Coordinates, Cylindrical2D, Edge1D,
-                       EdgeCells, EdgeNodes, ExtendableGrid,
-                       Polar1D, Spherical1D, Tetrahedron3D,
-                       Triangle2D, Vertex0D, VoronoiFaceCenters, coord_type,
-                       dim_space, index_type, local_celledgenodes, num_bfaces,
-                       num_cells, num_edges, num_nodes, num_cellregions, num_bfaceregions, num_targets,
-                       simplexgrid, subgrid, tricircumcenter!,
-                       num_partitions, pcolor_partitions, pcolors, num_pcolors,
-                       PColorPartitions, PartitionCells, PartitionBFaces, PartitionNodes, PartitionEdges
+    BFaceGeometries, BFaceNodes, BFaceNormals, BFaceRegions,
+    Cartesian1D, Cartesian2D, Cartesian3D, CellEdges,
+    CellGeometries, CellNodes, CellRegions,
+    CoordinateSystem, Coordinates, Cylindrical2D, Edge1D,
+    EdgeCells, EdgeNodes, ExtendableGrid,
+    Polar1D, Spherical1D, Tetrahedron3D,
+    Triangle2D, Vertex0D, VoronoiFaceCenters, coord_type,
+    dim_space, index_type, local_celledgenodes, num_bfaces,
+    num_cells, num_edges, num_nodes, num_cellregions, num_bfaceregions, num_targets,
+    simplexgrid, subgrid, tricircumcenter!,
+    num_partitions, pcolor_partitions, pcolors, num_pcolors,
+    PColorPartitions, PartitionCells, PartitionBFaces, PartitionNodes, PartitionEdges
 
 using ExtendableSparse: ExtendableSparse, BlockPreconditioner,
-                        ExtendableSparseMatrix,
-                        ExtendableSparseMatrixCSC,
-                        MTExtendableSparseMatrixCSC,
-                        AbstractExtendableSparseMatrixCSC,
-                        PointBlockILUZeroPreconditioner, factorize!, flush!,
-                        nnz, rawupdateindex!, sparse, updateindex!, nnznew
+    ExtendableSparseMatrix,
+    ExtendableSparseMatrixCSC,
+    MTExtendableSparseMatrixCSC,
+    AbstractExtendableSparseMatrixCSC,
+    PointBlockILUZeroPreconditioner, factorize!, flush!,
+    nnz, rawupdateindex!, sparse, updateindex!, nnznew
 
 using ForwardDiff: ForwardDiff, value
 using GridVisualize: GridVisualize, GridVisualizer
@@ -39,17 +39,17 @@ using InteractiveUtils: InteractiveUtils
 using JLD2: JLD2, jldopen
 using LinearAlgebra: LinearAlgebra, Diagonal, I, Tridiagonal, isdiag, ldiv!, norm
 using LinearSolve: LinearSolve, KrylovJL_BICGSTAB,
-                   KrylovJL_CG, KrylovJL_GMRES, LinearProblem,
-                   SparspakFactorization, UMFPACKFactorization, init, reinit!
+    KrylovJL_CG, KrylovJL_GMRES, LinearProblem,
+    SparspakFactorization, UMFPACKFactorization, init, reinit!
 using Printf: Printf, @printf, @sprintf
 using Random: Random, AbstractRNG
 using RecursiveArrayTools: RecursiveArrayTools, AbstractDiffEqArray
 import RecursiveFactorization
 using SciMLBase: SciMLBase
 using SparseArrays: SparseArrays, SparseMatrixCSC, dropzeros!, nonzeros,
-                    nzrange, spzeros, issparse
+    nzrange, spzeros, issparse
 using SparseDiffTools: SparseDiffTools, forwarddiff_color_jacobian!,
-                       matrix_colors
+    matrix_colors
 using StaticArrays: StaticArrays, @MVector, @SArray, @SMatrix
 using Statistics: Statistics, mean
 using Symbolics: Symbolics
@@ -68,11 +68,11 @@ export AbstractGeometryItem
 
 Abstract type for stationary solution. Subtype of `AbstractArray`.
 """
-abstract type AbstractSolutionArray{T,N} <: AbstractArray{T,N} end
-Base.getindex(a::AbstractSolutionArray, i::Int, j::Int)= getindex(a.u,i,j )
-Base.setindex!(a::AbstractSolutionArray,v, i::Int, j::Int) = setindex!(a.u,v,i,j)
-Base.size(a::AbstractSolutionArray)=size(a.u)
-solutionarray(a::AbstractSolutionArray)=a
+abstract type AbstractSolutionArray{T, N} <: AbstractArray{T, N} end
+Base.getindex(a::AbstractSolutionArray, i::Int, j::Int) = getindex(a.u, i, j)
+Base.setindex!(a::AbstractSolutionArray, v, i::Int, j::Int) = setindex!(a.u, v, i, j)
+Base.size(a::AbstractSolutionArray) = size(a.u)
+solutionarray(a::AbstractSolutionArray) = a
 
 export AbstractSolutionArray
 
@@ -95,7 +95,7 @@ export num_dof
 export dof
 export getdof
 export setdof!
-export unknown_indices,  SparseSolutionIndices
+export unknown_indices, SparseSolutionIndices
 
 include("vfvm_transientsolution.jl")
 export TransientSolution

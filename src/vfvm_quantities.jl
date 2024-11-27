@@ -50,7 +50,7 @@ function ContinuousQuantity(sys::AbstractSystem{Tv, Tc, Ti, Tm}, regions; ispec 
         id = sys.num_quantities
     end
     enable_species!(sys, nspec, regions)
-    ContinuousQuantity{Ti}(nspec, id)
+    return ContinuousQuantity{Ti}(nspec, id)
 end
 
 ##########################################################
@@ -102,7 +102,7 @@ function InterfaceQuantity(sys::AbstractSystem{Tv, Tc, Ti, Tm}, bregions::Abstra
     if id == 0
         id = sys.num_quantities
     end
-    InterfaceQuantity{Ti}(nspec, bregions, id)
+    return InterfaceQuantity{Ti}(nspec, bregions, id)
 end
 
 ###########################################################
@@ -138,18 +138,20 @@ are generated automatically.
 
 Unless specified by `id`, the quantity ID is generated automatically.
 """
-function DiscontinuousQuantity(sys::AbstractSystem{Tv, Tc, Ti, Tm}, regions::AbstractVector; regionspec = nothing,
-                               id = 0) where {Tv, Tc, Ti, Tm}
+function DiscontinuousQuantity(
+        sys::AbstractSystem{Tv, Tc, Ti, Tm}, regions::AbstractVector; regionspec = nothing,
+        id = 0
+    ) where {Tv, Tc, Ti, Tm}
     rspec = zeros(Ti, num_cellregions(sys.grid))
     if regionspec == nothing
         nspec = num_species(sys)
-        for ireg ∈ regions
+        for ireg in regions
             nspec = nspec + 1
             enable_species!(sys, nspec, [ireg])
             rspec[ireg] = nspec
         end
     else
-        for ireg ∈ regions
+        for ireg in regions
             enable_species!(sys, regionspec[ireg], [ireg])
             rspec[ireg] = regionspec[ireg]
         end
@@ -159,7 +161,7 @@ function DiscontinuousQuantity(sys::AbstractSystem{Tv, Tc, Ti, Tm}, regions::Abs
         id = sys.num_quantities
     end
     quantity = DiscontinuousQuantity{Ti}(rspec, id)
-    quantity
+    return quantity
 end
 
 """
@@ -178,13 +180,13 @@ region where discontinuous quantity is defined.
 function subgrids(quantity::DiscontinuousQuantity, sys)
     grid = sys.grid
     subgrids = Vector{typeof(sys.grid)}(undef, 0)
-    for ireg = 1:num_cellregions(grid)
+    for ireg in 1:num_cellregions(grid)
         ispec = quantity.regionspec[ireg]
         if ispec > 0
             push!(subgrids, subgrid(grid, [ireg]))
         end
     end
-    subgrids
+    return subgrids
 end
 
 """
@@ -194,7 +196,7 @@ Return the subgrid where interface quantity is defined.
 """
 function subgrids(quantity::InterfaceQuantity, sys)
     grid = sys.grid
-    bgrid = subgrid(grid, quantity.bregspec; boundary = true)
+    return bgrid = subgrid(grid, quantity.bregspec; boundary = true)
 end
 
 """
@@ -207,29 +209,29 @@ function views(U, quantity::DiscontinuousQuantity, subgrids, sys)
     grid = sys.grid
     projections = Vector[]
     j = 1
-    for ireg = 1:num_cellregions(grid)
+    for ireg in 1:num_cellregions(grid)
         ispec = quantity.regionspec[ireg]
         if ispec > 0
             push!(projections, view(U[ispec, :], subgrids[j]))
             j = j + 1
         end
     end
-    projections
+    return projections
 end
 
 function views(U, quantity::ContinuousQuantity, subgrids, sys)
     grid = sys.grid
     projections = Vector[]
     j = 1
-    for ireg = 1:num_cellregions(grid)
+    for ireg in 1:num_cellregions(grid)
         push!(projections, view(U[quantity.ispec, :], subgrids[j]))
         j = j + 1
     end
-    projections
+    return projections
 end
 
 function views(U, quantity::InterfaceQuantity, bgrid, sys)
-    view(U[quantity.ispec, :], bgrid)
+    return view(U[quantity.ispec, :], bgrid)
 end
 
 # just return the first which comes into mind.
@@ -239,7 +241,7 @@ function get_cellregion(sys, ibc)
     grid = sys.grid
     bfregions = grid[BFaceRegions]
     cregions = grid[CellRegions]
-    for ibface = 1:num_bfaces(sys.grid)
+    for ibface in 1:num_bfaces(sys.grid)
         if bfregions[ibface] == ibc
             bfcells = grid[BFaceCells]
             return cregions[bfcells[ibface, 1]]
@@ -254,47 +256,59 @@ end
 Set Dirichlet boundary `value` for `quantity` at boundary `ibc`.
 """
 function boundary_dirichlet!(sys::AbstractSystem, q::DiscontinuousQuantity, ibc, v)
-    boundary_dirichlet!(sys,
-                        q.regionspec[get_cellregion(sys, ibc)],
-                        ibc,
-                        v)
+    return boundary_dirichlet!(
+        sys,
+        q.regionspec[get_cellregion(sys, ibc)],
+        ibc,
+        v
+    )
 end
 
 function boundary_dirichlet!(sys::AbstractSystem, q::ContinuousQuantity, ibc, v)
-    boundary_dirichlet!(sys,
-                        q.ispec,
-                        ibc,
-                        v)
+    return boundary_dirichlet!(
+        sys,
+        q.ispec,
+        ibc,
+        v
+    )
 end
 
 function boundary_neumann!(sys::AbstractSystem, q::DiscontinuousQuantity, ibc, v)
-    boundary_neumann!(sys,
-                      q.regionspec[get_cellregion(sys, ibc)],
-                      ibc,
-                      v)
+    return boundary_neumann!(
+        sys,
+        q.regionspec[get_cellregion(sys, ibc)],
+        ibc,
+        v
+    )
 end
 
 function boundary_neumann!(sys::AbstractSystem, q::ContinuousQuantity, ibc, v)
-    boundary_neumann!(sys,
-                      q.ispec,
-                      ibc,
-                      v)
+    return boundary_neumann!(
+        sys,
+        q.ispec,
+        ibc,
+        v
+    )
 end
 
 function boundary_robin!(sys::AbstractSystem, q::DiscontinuousQuantity, ibc, α, v)
-    boundary_robin!(sys,
-                    q.regionspec[get_cellregion(sys, ibc)],
-                    ibc,
-                    α,
-                    v)
+    return boundary_robin!(
+        sys,
+        q.regionspec[get_cellregion(sys, ibc)],
+        ibc,
+        α,
+        v
+    )
 end
 
 function boundary_robin!(sys::AbstractSystem, q::ContinuousQuantity, ibc, α, v)
-    boundary_robin!(sys,
-                    q.ispec,
-                    ibc,
-                    α,
-                    v)
+    return boundary_robin!(
+        sys,
+        q.ispec,
+        ibc,
+        α,
+        v
+    )
 end
 
 """
@@ -390,5 +404,5 @@ Base.setindex!(A::AbstractArray, v, q::AbstractQuantity) = A[q.id] = v
 Base.getindex(I::SolutionIntegral, cspec::ContinuousQuantity, ireg) = I[cspec.id, ireg]
 Base.getindex(I::SolutionIntegral, dspec::DiscontinuousQuantity, ireg) = I[dspec.regionspec[ireg], ireg]
 function Base.getindex(I::SolutionIntegral, dspec::DiscontinuousQuantity, ::Colon)
-    [I[dspec.regionspec[ireg], ireg] for ireg = 1:size(I, 2)]
+    return [I[dspec.regionspec[ireg], ireg] for ireg in 1:size(I, 2)]
 end

@@ -91,7 +91,7 @@ mutable struct System{Tv, Tc, Ti, Tm, TSpecMat <: AbstractMatrix} <: AbstractSys
     Is the system linear ?
     """
     is_linear::Bool
-    
+
     """
     Outflow nodes with their region numbers.
     """
@@ -208,17 +208,19 @@ Physics keyword arguments:
     solution storage depending on space dimension and number of species.
 
 """
-function System(grid::ExtendableGrid;
-                valuetype = coord_type(grid),
-                indextype = index_type(grid),
-                species = Int[],
-                assembly = :cellwise,
-                unknown_storage = :dense,
-                matrixindextype = Int64,
-                matrixtype = :sparse,
-                is_linear = false,
-                nparams = 0,
-                kwargs...)
+function System(
+        grid::ExtendableGrid;
+        valuetype = coord_type(grid),
+        indextype = index_type(grid),
+        species = Int[],
+        assembly = :cellwise,
+        unknown_storage = :dense,
+        matrixindextype = Int64,
+        matrixtype = :sparse,
+        is_linear = false,
+        nparams = 0,
+        kwargs...
+    )
     Tv = valuetype
     Tc = coord_type(grid)
     Ti = indextype
@@ -284,7 +286,7 @@ Replace System's physics data
 """
 function physics!(system, physics)
     system.physics = physics
-    system
+    return system
 end
 
 """
@@ -312,18 +314,18 @@ function physics!(system; kwargs...)
         end
     end
 
-    physics!(system, Physics(; kwdict...))
+    return physics!(system, Physics(; kwdict...))
 end
 
 ##################################################################
 
-# Constant to be used as boundary condition factor 
-# to mark Dirichlet boundary conditions.    
-Dirichlet(::Type{Tv}) where  {Tv} = 1.0e30
+# Constant to be used as boundary condition factor
+# to mark Dirichlet boundary conditions.
+Dirichlet(::Type{Tv}) where {Tv} = 1.0e30
 
-Dirichlet(::Type{Rational{Ti}}) where Ti = 1//10000
+Dirichlet(::Type{Rational{Ti}}) where {Ti} = 1 // 10000
 
-Dirichlet(::Type{Rational{BigInt}}) = 1//10000000000
+Dirichlet(::Type{Rational{BigInt}}) = 1 // 10000000000
 
 #################################################################
 
@@ -339,12 +341,12 @@ function addzrows(matrix::Matrix, maxrow)
         return matrix
     end
     newmatrix = zeros(eltype(matrix), maxrow, ncol)
-    for icol = 1:ncol
-        for irow = 1:nrow
+    for icol in 1:ncol
+        for irow in 1:nrow
             newmatrix[irow, icol] = matrix[irow, icol]
         end
     end
-    newmatrix
+    return newmatrix
 end
 
 function addzrows(matrix::SparseMatrixCSC, maxrow)
@@ -352,7 +354,7 @@ function addzrows(matrix::SparseMatrixCSC, maxrow)
     if maxrow <= nrow
         return matrix
     end
-    SparseMatrixCSC(maxrow, matrix.n, matrix.colptr, matrix.rowval, matrix.nzval)
+    return SparseMatrixCSC(maxrow, matrix.n, matrix.colptr, matrix.rowval, matrix.nzval)
 end
 
 """
@@ -374,7 +376,7 @@ function increase_num_species!(system, maxspec)
     system.bregion_species = addzrows(system.bregion_species, maxspec)
     system.node_dof = addzrows(system.node_dof, maxspec)
     system.boundary_values = addzrows(system.boundary_values, maxspec)
-    system.boundary_factors = addzrows(system.boundary_factors, maxspec)
+    return system.boundary_factors = addzrows(system.boundary_factors, maxspec)
 end
 
 ##################################################################
@@ -387,7 +389,7 @@ Check if species number corresponds to a boundary species.
 """
 function is_boundary_species(system::AbstractSystem, ispec)
     isbspec = false
-    for ibreg = 1:num_bfaceregions(system.grid)
+    for ibreg in 1:num_bfaceregions(system.grid)
         if system.bregion_species[ispec, ibreg] > 0
             isbspec = true
         end
@@ -405,7 +407,7 @@ Check if species number corresponds to a bulk species.
 """
 function is_bulk_species(system::AbstractSystem, ispec)
     isrspec = false
-    for ixreg = 1:num_cellregions(system.grid)
+    for ixreg in 1:num_cellregions(system.grid)
         if system.region_species[ispec, ixreg] > 0
             isrspec = true
         end
@@ -434,15 +436,16 @@ function enable_species!(system::AbstractSystem, ispec::Integer, regions::Abstra
     for i in eachindex(regions)
         ireg = regions[i]
         system.region_species[ispec, ireg] = ispec
-        for icell = 1:num_cells(system.grid)
+        for icell in 1:num_cells(system.grid)
             if _cellregions[icell] == ireg
-                for iloc = 1:num_targets(_cellnodes, icell)
+                for iloc in 1:num_targets(_cellnodes, icell)
                     iglob = _cellnodes[iloc, icell]
                     system.node_dof[ispec, iglob] = ispec
                 end
             end
         end
     end
+    return
 end
 
 """
@@ -464,10 +467,10 @@ function enable_species!(sys::AbstractSystem; species = nothing, regions = nothi
         species = [species]
     end
 
-    for ispec ∈ species
+    for ispec in species
         enable_species!(sys, ispec, regions)
     end
-    sys
+    return sys
 end
 
 ##################################################################
@@ -492,15 +495,16 @@ function enable_boundary_species!(system::AbstractSystem, ispec::Integer, bregio
     for i in eachindex(bregions)
         ireg = bregions[i]
         system.bregion_species[ispec, ireg] = ispec
-        for ibface = 1:num_bfaces(system.grid)
+        for ibface in 1:num_bfaces(system.grid)
             if _bfaceregions[ibface] == ireg
-                for iloc = 1:size(_bfacenodes, 1)
+                for iloc in 1:size(_bfacenodes, 1)
                     iglob = _bfacenodes[iloc, ibface]
                     system.node_dof[ispec, iglob] = ispec
                 end
             end
         end
     end
+    return
 end
 
 """
@@ -508,7 +512,7 @@ end
 
 Reentrant lock to safeguard mutating methods [`_complete!`](@ref) and [`update_grid!`](@ref).
 """
-const sysmutatelock=ReentrantLock()
+const sysmutatelock = ReentrantLock()
 
 """
     _complete!(system)
@@ -527,8 +531,8 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
     try
         system.species_homogeneous = true
         species_added = false
-        for inode = 1:size(system.node_dof, 2)
-            for ispec = 1:size(system.node_dof, 1)
+        for inode in 1:size(system.node_dof, 2)
+            for ispec in 1:size(system.node_dof, 1)
                 if system.node_dof[ispec, inode] == ispec
                     species_added = true
                 else
@@ -536,14 +540,14 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
                 end
             end
         end
-        
+
         if (!species_added)
             error("No species enabled.\n Call enable_species(system,species_number, list_of_regions) at least once.")
         end
-        
+
         nspec = size(system.node_dof, 1)
         n = num_dof(system)
-                
+
         if has_generic_operator(system)
             if has_generic_operator_sparsity(system)
                 system.generic_matrix = system.physics.generic_operator_sparsity(system)
@@ -568,7 +572,7 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
     finally
         unlock(sysmutatelock)
     end
-    system.is_complete=true
+    return system.is_complete = true
 end
 
 """
@@ -577,7 +581,7 @@ Set generic operator sparsity, in the case where a generic operator has been
 defined in physics.
 """
 function generic_operator_sparsity!(system::AbstractSystem, sparsematrix::SparseMatrixCSC)
-    system.generic_matrix = sparsematrix
+    return system.generic_matrix = sparsematrix
 end
 
 """
@@ -590,16 +594,18 @@ Uses a lock to ensure parallel access.
 """
 function update_grid!(system::AbstractSystem; grid = system.grid)
     lock(sysmutatelock)
-    try 
+    return try
         system.assembly_type == :cellwise ? update_grid_cellwise!(system, grid) : update_grid_edgewise!(system, grid)
-        
+
         if length(system.physics.outflowboundaries) > 0
             bfacenodes = system.grid[BFaceNodes]
             bfaceregions = system.grid[BFaceRegions]
-            outflownoderegions = ExtendableSparseMatrix{Bool, Int}(num_bfaceregions(system.grid),
-                                                                   num_nodes(system.grid))
-            for ibface = 1:num_bfaces(system.grid)
-                for ibn = 1:dim_space(system.grid)
+            outflownoderegions = ExtendableSparseMatrix{Bool, Int}(
+                num_bfaceregions(system.grid),
+                num_nodes(system.grid)
+            )
+            for ibface in 1:num_bfaces(system.grid)
+                for ibn in 1:dim_space(system.grid)
                     if bfaceregions[ibface] ∈ system.physics.outflowboundaries
                         outflownoderegions[bfaceregions[ibface], bfacenodes[ibn, ibface]] = true
                     end
@@ -634,27 +640,35 @@ function update_grid_cellwise!(system::AbstractSystem{Tv, Tc, Ti, Tm}, grid) whe
     bfaceedgefactors = zeros(Tv, num_edges(bgeom), nbfaces)
 
     function cellwise_factors!(csys::Type{T}) where {T}
-        nalloc = @allocations for icell = 1:ncells
-            @views cellfactors!(geom, csys, coord, cellnodes, icell,
-                                cellnodefactors[:, icell], celledgefactors[:, icell])
+        nalloc = @allocations for icell in 1:ncells
+            @views cellfactors!(
+                geom, csys, coord, cellnodes, icell,
+                cellnodefactors[:, icell], celledgefactors[:, icell]
+            )
         end
         nalloc > 0 && @warn "$nalloc allocations in cell factor calculation"
 
-        nalloc = @allocations for ibface = 1:nbfaces
-            @views bfacefactors!(bgeom, csys, coord, bfacenodes, ibface,
-                                 bfacenodefactors[:, ibface], bfaceedgefactors[:, ibface])
+        nalloc = @allocations for ibface in 1:nbfaces
+            @views bfacefactors!(
+                bgeom, csys, coord, bfacenodes, ibface,
+                bfacenodefactors[:, ibface], bfaceedgefactors[:, ibface]
+            )
         end
-        nalloc > 0 && @warn "$nalloc allocations in bface factor calculation"
+        return nalloc > 0 && @warn "$nalloc allocations in bface factor calculation"
     end
 
     cellwise_factors!(csys)
 
-    system.assembly_data = CellwiseAssemblyData{Tc, Ti}(cellnodefactors,
-                                                        celledgefactors,
-                                                        grid[PColorPartitions],
-                                                        grid[PartitionCells])
-    system.boundary_assembly_data = CellwiseAssemblyData{Tc, Ti}(bfacenodefactors, bfaceedgefactors, grid[PColorPartitions],
-                                                                 grid[PartitionBFaces])
+    system.assembly_data = CellwiseAssemblyData{Tc, Ti}(
+        cellnodefactors,
+        celledgefactors,
+        grid[PColorPartitions],
+        grid[PartitionCells]
+    )
+    return system.boundary_assembly_data = CellwiseAssemblyData{Tc, Ti}(
+        bfacenodefactors, bfaceedgefactors, grid[PColorPartitions],
+        grid[PartitionBFaces]
+    )
 end
 
 """
@@ -688,39 +702,45 @@ function update_grid_edgewise!(system::AbstractSystem{Tv, Tc, Ti, Tm}, grid) whe
         cellnodefactors = zeros(Tv, nn)
         celledgefactors = zeros(Tv, ne)
 
-        for icell = 1:ncells
+        for icell in 1:ncells
             @views cellfactors!(geom, csys, coord, cellnodes, icell, cellnodefactors, celledgefactors)
             ireg = cellregions[icell]
-            for inode = 1:nn
+            for inode in 1:nn
                 cnf[ireg, cellnodes[inode, icell]] += cellnodefactors[inode]
             end
 
-            for iedge = 1:ne
+            for iedge in 1:ne
                 cef[ireg, celledges[iedge, icell]] += celledgefactors[iedge]
             end
         end
 
         #        nalloc > 0 && @warn "$nalloc allocations in cell factor calculation"
 
-        nalloc = @allocations for ibface = 1:nbfaces
-            @views bfacefactors!(bgeom, csys, coord, bfacenodes, ibface,
-                                 bfacenodefactors[:, ibface], bfaceedgefactors[:, ibface])
+        nalloc = @allocations for ibface in 1:nbfaces
+            @views bfacefactors!(
+                bgeom, csys, coord, bfacenodes, ibface,
+                bfacenodefactors[:, ibface], bfaceedgefactors[:, ibface]
+            )
         end
-        nalloc > 0 && @warn "$nalloc allocations in bface factor calculation"
+        return nalloc > 0 && @warn "$nalloc allocations in bface factor calculation"
     end
 
     edgewise_factors!(csys)
 
     partition_nodes = grid[PartitionNodes]
     partition_edges = grid[PartitionEdges]
-    system.assembly_data = EdgewiseAssemblyData{Tc, Ti}(SparseMatrixCSC(cnf),
-                                                        SparseMatrixCSC(cef),
-                                                        grid[PColorPartitions],
-                                                        partition_nodes,
-                                                        partition_edges)
+    system.assembly_data = EdgewiseAssemblyData{Tc, Ti}(
+        SparseMatrixCSC(cnf),
+        SparseMatrixCSC(cef),
+        grid[PColorPartitions],
+        partition_nodes,
+        partition_edges
+    )
 
-    system.boundary_assembly_data = CellwiseAssemblyData{Tc, Ti}(bfacenodefactors, bfaceedgefactors, [1, 2],
-                                                                 [1, num_bfaces(grid) + 1])
+    return system.boundary_assembly_data = CellwiseAssemblyData{Tc, Ti}(
+        bfacenodefactors, bfaceedgefactors, [1, 2],
+        [1, num_bfaces(grid) + 1]
+    )
 end
 
 ################################################################################################
@@ -823,7 +843,7 @@ Set Dirichlet boundary condition for species ispec at boundary ibc:
 function boundary_dirichlet!(system::AbstractSystem{Tv}, ispec, ibc, v) where {Tv}
     increase_num_species!(system, ispec)
     system.boundary_factors[ispec, ibc] = Dirichlet(Tv)
-    system.boundary_values[ispec, ibc] = v
+    return system.boundary_values[ispec, ibc] = v
 end
 
 """
@@ -838,7 +858,7 @@ Keyword argument version:
     Starting with version 0.14, it is preferable to define boundary conditions within the `bcondition` physics callback
 """
 function boundary_dirichlet!(system::AbstractSystem; species = 1, region = 1, value = 0)
-    boundary_dirichlet!(system, species, region, value)
+    return boundary_dirichlet!(system, species, region, value)
 end
 
 
@@ -855,7 +875,7 @@ Set Neumann boundary condition for species ispec at boundary ibc:
 function boundary_neumann!(system::AbstractSystem, ispec, ibc, v)
     increase_num_species!(system, ispec)
     system.boundary_factors[ispec, ibc] = 0.0
-    system.boundary_values[ispec, ibc] = v
+    return system.boundary_values[ispec, ibc] = v
 end
 
 """
@@ -884,7 +904,7 @@ Set Robin boundary condition for species ispec at boundary ibc:
 function boundary_robin!(system::AbstractSystem, ispec, ibc, α, v)
     increase_num_species!(system, ispec)
     system.boundary_factors[ispec, ibc] = α
-    system.boundary_values[ispec, ibc] = v
+    return system.boundary_values[ispec, ibc] = v
 end
 
 """
@@ -898,7 +918,7 @@ Keyword argument version:
     Starting with version 0.14, it is preferable to define boundary conditions within the `bcondition` physics callback
 """
 function boundary_robin!(system::AbstractSystem; species = 0, region = 0, factor = 0, value = 0)
-    boundary_robin!(system, species, region, factor, value)
+    return boundary_robin!(system, species, region, factor, value)
 end
 
 
@@ -913,8 +933,10 @@ num_species(a::AbstractArray) = size(a, 1)
 #
 # Initialize Dirichlet BC
 #
-function _initialize_dirichlet!(U::AbstractMatrix, system::AbstractSystem{Tv, Tc, Ti, Tm}; time = 0.0, λ = 0.0,
-                                params::Vector{Tp} = Float64[]) where {Tv, Tp, Tc, Ti, Tm}
+function _initialize_dirichlet!(
+        U::AbstractMatrix, system::AbstractSystem{Tv, Tc, Ti, Tm}; time = 0.0, λ = 0.0,
+        params::Vector{Tp} = Float64[]
+    ) where {Tv, Tp, Tc, Ti, Tm}
     _complete!(system)
     nspecies = num_species(system)
 
@@ -924,7 +946,7 @@ function _initialize_dirichlet!(U::AbstractMatrix, system::AbstractSystem{Tv, Tc
 
     # setup unknowns to be passed
     UK = zeros(Tv, num_species(system) + length(params))
-    for iparm = 1:length(params)
+    for iparm in 1:length(params)
         UK[nspecies + iparm] = params[iparm]
     end
     u = unknowns(bnode, UK)
@@ -943,7 +965,7 @@ function _initialize_dirichlet!(U::AbstractMatrix, system::AbstractSystem{Tv, Tc
             system.physics.breaction(y, u, bnode, data)
 
             # Check for Dirichlet bc
-            for ispec = 1:nspecies
+            for ispec in 1:nspecies
                 # Dirichlet bc given in breaction
                 if !isinf(bnode.dirichlet_value[ispec])
                     U[ispec, bnode.index] = bnode.dirichlet_value[ispec]
@@ -956,11 +978,12 @@ function _initialize_dirichlet!(U::AbstractMatrix, system::AbstractSystem{Tv, Tc
             end
         end
     end
+    return
 end
 
 function _initialize!(U::AbstractMatrix, system::AbstractSystem; time = 0.0, λ = 0.0, params = Number[])
     _initialize_dirichlet!(U, system; time, λ, params)
-    _initialize_inactive_dof!(U, system)
+    return _initialize_inactive_dof!(U, system)
 end
 
 function _eval_and_assemble_inactive_species(system::AbstractSystem, matrix, U, Uold, F) end
@@ -969,8 +992,8 @@ function _eval_and_assemble_inactive_species(system::DenseSystem, matrix, U, Uol
     if system.species_homogeneous
         return
     end
-    for inode = 1:size(system.node_dof, 2)
-        for ispec = 1:size(system.node_dof, 1)
+    for inode in 1:size(system.node_dof, 2)
+        for ispec in 1:size(system.node_dof, 1)
             if !isnodespecies(system, ispec, inode)
                 F[ispec, inode] += U[ispec, inode] - Uold[ispec, inode]
                 idof = dof(F, ispec, inode)
@@ -978,6 +1001,7 @@ function _eval_and_assemble_inactive_species(system::DenseSystem, matrix, U, Uol
             end
         end
     end
+    return
 end
 
 function _initialize_inactive_dof!(U::AbstractMatrix, system::AbstractSystem) end
@@ -986,19 +1010,20 @@ function _initialize_inactive_dof!(U::DenseSolutionArray, system::DenseSystem)
     if system.species_homogeneous
         return
     end
-    for inode = 1:size(system.node_dof, 2)
-        for ispec = 1:size(system.node_dof, 1)
+    for inode in 1:size(system.node_dof, 2)
+        for ispec in 1:size(system.node_dof, 1)
             if !isnodespecies(system, ispec, inode)
                 U[ispec, inode] = 0
             end
         end
     end
+    return
 end
 
 function Base.show(io::IO, sys::AbstractSystem)
     str = "$(typeof(sys))(\n grid = $(sys.grid),\n  physics = $(sys.physics),\n  num_species = $(num_species(sys)))"
-    sz=displaysize(io)
-    print_wrapped(io, str; replace_whitespace=false, subsequent_indent="  ", width=sz[2])
+    sz = displaysize(io)
+    return print_wrapped(io, str; replace_whitespace = false, subsequent_indent = "  ", width = sz[2])
 end
 
 #####################################################
@@ -1051,15 +1076,19 @@ function unknowns(Tu::Type, system::SparseSystem; inival = undef, inifunc = noth
     if inival != undef
         fill!(a0, inival)
     end
-    Ti=eltype(system.node_dof.colptr)
+    Ti = eltype(system.node_dof.colptr)
 
-    u = SparseSolutionArray(SparseMatrixCSC(system.node_dof.m,
-                                            system.node_dof.n,
-                                            system.node_dof.colptr,
-                                            system.node_dof.rowval,
-                                            a0))
+    u = SparseSolutionArray(
+        SparseMatrixCSC(
+            system.node_dof.m,
+            system.node_dof.n,
+            system.node_dof.colptr,
+            system.node_dof.rowval,
+            a0
+        )
+    )
     isa(inifunc, Function) && map!(inifunc, u, system)
-    u
+    return u
 end
 
 
@@ -1080,7 +1109,7 @@ Possible modes:
 function partitioning(system::DenseSystem, ::Equationwise)
     len = length(system.node_dof)
     nspec = size(system.node_dof, 1)
-    [i:nspec:len for i = 1:nspec]
+    return [i:nspec:len for i in 1:nspec]
 end
 
 function partitioning(system::SparseSystem, ::Equationwise)
@@ -1094,8 +1123,8 @@ function partitioning(system::SparseSystem, ::Equationwise)
 
     # how many unknowns are there for each species ?
     # to make things fast we want to avoid push!
-    for i = 1:nnodes
-        for j = colptr[i]:(colptr[i + 1] - 1)
+    for i in 1:nnodes
+        for j in colptr[i]:(colptr[i + 1] - 1)
             ispec = rowval[j]
             @assert ispec == nzval[j]
             if ispec == nzval[j]
@@ -1114,8 +1143,8 @@ function partitioning(system::SparseSystem, ::Equationwise)
     #
     # Sort unknown numbers into partitions
     #
-    for i = 1:nnodes
-        for j = colptr[i]:(colptr[i + 1] - 1)
+    for i in 1:nnodes
+        for j in colptr[i]:(colptr[i + 1] - 1)
             ispec = rowval[j]
             @assert ispec == nzval[j]
             if ispec == nzval[j]
@@ -1124,15 +1153,15 @@ function partitioning(system::SparseSystem, ::Equationwise)
             end
         end
     end
-    parts
+    return parts
 end
 
 function unknowns(Tu::Type, system::DenseSystem; inival = undef, inifunc = nothing)
-    a = DenseSolutionArray(Array{Tu,2}(undef, size(system.node_dof)...))
+    a = DenseSolutionArray(Array{Tu, 2}(undef, size(system.node_dof)...))
     if isa(inival, Number)
         fill!(a, inival)
     elseif isa(inival, Matrix)
-        a.=inival
+        a .= inival
     end
     isa(inifunc, Function) && map!(inifunc, a, system)
     return a
@@ -1144,8 +1173,8 @@ $(SIGNATURES)
 Create a solution vector for system using the callback `inifunc` which has the same
 signature as a source term.
 """
-function Base.map(inifunc::TF,sys::System) where {TF <: Function}
-    unknowns(sys; inifunc)
+function Base.map(inifunc::TF, sys::System) where {TF <: Function}
+    return unknowns(sys; inifunc)
 end
 
 """
@@ -1154,7 +1183,7 @@ $(SIGNATURES)
 Create a solution vector for system using a constant initial value
 """
 function Base.map(inival::TI, sys::System) where {TI <: Number}
-    unknowns(sys; inival)
+    return unknowns(sys; inival)
 end
 
 """
@@ -1162,9 +1191,11 @@ $(SIGNATURES)
 
 Map `inifunc` onto solution array `U`
 """
-function Base.map!(inifunc::TF,
-                   U::AbstractMatrix{Tu},
-                   system::System{Tv, Tc, Ti, Tm, TSpecMat}) where {Tu, Tv, Tc, Ti, Tm, TSpecMat, TF}
+function Base.map!(
+        inifunc::TF,
+        U::AbstractMatrix{Tu},
+        system::System{Tv, Tc, Ti, Tm, TSpecMat}
+    ) where {Tu, Tv, Tc, Ti, Tm, TSpecMat, TF}
     isunknownsof(U, system) || error("U is not unknowns of system")
     _complete!(system)
     grid = system.grid
@@ -1179,7 +1210,7 @@ function Base.map!(inifunc::TF,
             inifunc(unknowns(node, UK), node)
             K = node.index
             ireg = node.region
-            for idof = firstnodedof(system, K):lastnodedof(system, K)
+            for idof in firstnodedof(system, K):lastnodedof(system, K)
                 ispec = getspecies(system, idof)
                 if isregionspecies(system, ispec, ireg)
                     _set(U, idof, UK[ispec])
@@ -1187,7 +1218,7 @@ function Base.map!(inifunc::TF,
             end
         end
     end
-    U
+    return U
 end
 
 """
@@ -1204,16 +1235,20 @@ Base.reshape(v::SparseSolutionArray, sys::SparseSystem) = v
 function Base.reshape(v::AbstractVector, sys::DenseSystem)
     @assert length(v) == num_dof(sys)
     nspec = num_species(sys)
-    DenseSolutionArray(reshape(v, Int64(nspec), Int64(length(v) / nspec)))
+    return DenseSolutionArray(reshape(v, Int64(nspec), Int64(length(v) / nspec)))
 end
 
 function Base.reshape(v::AbstractVector, system::SparseSystem)
     @assert length(v) == num_dof(system)
-    SparseSolutionArray(SparseMatrixCSC(system.node_dof.m,
-                                        system.node_dof.n,
-                                        system.node_dof.colptr,
-                                        system.node_dof.rowval,
-                                        Vector(v)))
+    return SparseSolutionArray(
+        SparseMatrixCSC(
+            system.node_dof.m,
+            system.node_dof.n,
+            system.node_dof.colptr,
+            system.node_dof.rowval,
+            Vector(v)
+        )
+    )
 end
 
 
@@ -1228,14 +1263,16 @@ Create system with physics record.
 !!! info  
     Starting with version 0.14, all physics data can be passed directly to the system constructor
 """
-function System(grid::ExtendableGrid, physics::Physics;
-                valuetype = coord_type(grid),
-                indextype = index_type(grid),
-                unknown_storage = :dense,
-                matrixindextype = Int64,
-                kwargs...)
+function System(
+        grid::ExtendableGrid, physics::Physics;
+        valuetype = coord_type(grid),
+        indextype = index_type(grid),
+        unknown_storage = :dense,
+        matrixindextype = Int64,
+        kwargs...
+    )
     system = System(grid; valuetype, indextype, unknown_storage, matrixindextype, kwargs...)
-    physics!(system, physics)
+    return physics!(system, physics)
 end
 
 """
@@ -1246,7 +1283,7 @@ Constructor for DenseSystem.
     Will be removed in future versions
 """
 function DenseSystem(grid, physics::Physics; matrixindextype = Int64)
-    System(grid, physics; matrixindextype = matrixindextype, unknown_storage = :dense)
+    return System(grid, physics; matrixindextype = matrixindextype, unknown_storage = :dense)
 end
 
 """
@@ -1257,5 +1294,5 @@ Constructor for SparseSystem.
     Will be removed in future versions
 """
 function SparseSystem(grid, physics::Physics; matrixindextype = Int64)
-    System(grid, physics; matrixindextype = matrixindextype, unknown_storage = :sparse)
+    return System(grid, physics; matrixindextype = matrixindextype, unknown_storage = :sparse)
 end

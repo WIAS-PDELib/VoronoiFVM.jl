@@ -21,18 +21,42 @@ using PrecompileTools
                 boundary_dirichlet!(args...; region = 3, value = 1)
             end
 
-            solve(VoronoiFVM.System(simplexgrid(X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
-                                    assembly = :cellwise); verbose = "")
-            solve(VoronoiFVM.System(simplexgrid(X, X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
-                                    assembly = :cellwise); verbose = "")
-            solve(VoronoiFVM.System(simplexgrid(X, X, X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
-                                    assembly = :cellwise); verbose = "")
-            solve(VoronoiFVM.System(simplexgrid(X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
-                                    assembly = :edgewise); verbose = "")
-            solve(VoronoiFVM.System(simplexgrid(X, X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
-                                    assembly = :edgewise); verbose = "")
-            solve(VoronoiFVM.System(simplexgrid(X, X, X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
-                                    assembly = :edgewise); verbose = "")
+            solve(
+                VoronoiFVM.System(
+                    simplexgrid(X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
+                    assembly = :cellwise
+                ); verbose = ""
+            )
+            solve(
+                VoronoiFVM.System(
+                    simplexgrid(X, X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
+                    assembly = :cellwise
+                ); verbose = ""
+            )
+            solve(
+                VoronoiFVM.System(
+                    simplexgrid(X, X, X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
+                    assembly = :cellwise
+                ); verbose = ""
+            )
+            solve(
+                VoronoiFVM.System(
+                    simplexgrid(X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
+                    assembly = :edgewise
+                ); verbose = ""
+            )
+            solve(
+                VoronoiFVM.System(
+                    simplexgrid(X, X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
+                    assembly = :edgewise
+                ); verbose = ""
+            )
+            solve(
+                VoronoiFVM.System(
+                    simplexgrid(X, X, X); species = 1, flux = flux!, reaction = reaction!, breaction = bc!,
+                    assembly = :edgewise
+                ); verbose = ""
+            )
         end
         lin1()
     end

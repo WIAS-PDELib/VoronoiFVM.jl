@@ -1,7 +1,8 @@
-
 # Deprecated. TODO: remove with v3.0
-const FactorizationStrategy = Union{Nothing, Function, Type, ExtendableSparse.AbstractFactorization,
-                                    LinearSolve.AbstractFactorization, LinearSolve.SciMLLinearSolveAlgorithm}
+const FactorizationStrategy = Union{
+    Nothing, Function, Type, ExtendableSparse.AbstractFactorization,
+    LinearSolve.AbstractFactorization, LinearSolve.SciMLLinearSolveAlgorithm,
+}
 
 ## Deprecated. TODO: remove with v3.0
 struct Identity end
@@ -286,19 +287,21 @@ const false_verbosity = "da"
 doprint(b::Bool, a::Char) = b ? doprint(true_verbosity, a) : doprint(false_verbosity, a)
 doprint(c::SolverControl, a::Char) = doprint(c.verbose, a)
 
-const key_replacements = Dict(:tol_absolute => :abstol,
-                              :tol_relative => :reltol,
-                              :damp => :damp_initial,
-                              :damp_grow => :damp_growth,
-                              :max_iterations => :maxiters,
-                              :tol_linear => :reltol_linear,
-                              :mynorm => :unorm,
-                              :myrnorm => :rnorm,
-                              :max_lureuse => nothing)
+const key_replacements = Dict(
+    :tol_absolute => :abstol,
+    :tol_relative => :reltol,
+    :damp => :damp_initial,
+    :damp_grow => :damp_growth,
+    :max_iterations => :maxiters,
+    :tol_linear => :reltol_linear,
+    :mynorm => :unorm,
+    :myrnorm => :rnorm,
+    :max_lureuse => nothing
+)
 
 function fix_deprecations!(control)
     # compatibility to names in SolverControl which cannot be deprecated.
-    for key ∈ keys(key_replacements)
+    for key in keys(key_replacements)
         value = getproperty(control, key)
         if !isnothing(value)
             if !isnothing(key_replacements[key])
@@ -314,6 +317,7 @@ function fix_deprecations!(control)
             setproperty!(control, key, nothing)
         end
     end
+    return
 end
 
 """
@@ -330,7 +334,7 @@ function fixed_timesteps!(control, Δt; grow = 1.0)
     control.Δt_min = Δt
     control.Δt_grow = grow
     control.Δu_opt = floatmax()
-    control
+    return control
 end
 
 # function Base.show(io::IO, this::SolverControl)

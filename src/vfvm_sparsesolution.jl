@@ -1,4 +1,3 @@
-
 #################################################################
 """
 $(TYPEDEF)
@@ -12,13 +11,13 @@ Fields:
 
 $(TYPEDFIELDS)
 """
-mutable struct SparseSolutionArray{T, N, Ti} <: AbstractSolutionArray{T,N}
+mutable struct SparseSolutionArray{T, N, Ti} <: AbstractSolutionArray{T, N}
     """
     Sparse matrix holding actual data.
     """
     u::SparseMatrixCSC{T, Ti}
 
-    history::Union{NewtonSolverHistory,Nothing}
+    history::Union{NewtonSolverHistory, Nothing}
 end
 
 """
@@ -26,12 +25,12 @@ end
 
 `SparseSolutionArray` constructor
 """
-SparseSolutionArray(a::SparseMatrixCSC{Tv,Ti}) where {Tv,Ti}=SparseSolutionArray{Tv,2,Ti}(a,nothing)
+SparseSolutionArray(a::SparseMatrixCSC{Tv, Ti}) where {Tv, Ti} = SparseSolutionArray{Tv, 2, Ti}(a, nothing)
 
 """
     solutionarray(a::SparseMatrixCSC)
 """
-solutionarray(a::SparseMatrixCSC{Tv,Ti}) where {Tv,Ti}=SparseSolutionArray{Tv,2,Ti}(a,nothing)
+solutionarray(a::SparseMatrixCSC{Tv, Ti}) where {Tv, Ti} = SparseSolutionArray{Tv, 2, Ti}(a, nothing)
 
 """
 $(TYPEDEF)
@@ -60,19 +59,23 @@ Vector of degrees of freedom in sparse solution array.
 dofs(a::SparseSolutionArray) = a.u.nzval
 dofs(a::SparseMatrixCSC) = a.nzval
 
-Base.size(a::SparseSolutionArray)=size(a.u)
+Base.size(a::SparseSolutionArray) = size(a.u)
 ##################################################################
 """
 $(SIGNATURES)
     
 Create a copy of sparse solution array
 """
-function Base.copy(this::SparseSolutionArray{T,N, Ti}) where {T,N, Ti}
-    SparseSolutionArray{T,N,Ti}(SparseMatrixCSC(this.u.m,
-                                                this.u.n,
-                                                this.u.colptr,
-                                                this.u.rowval,
-                                                Base.copy(this.u.nzval)),this.history)
+function Base.copy(this::SparseSolutionArray{T, N, Ti}) where {T, N, Ti}
+    return SparseSolutionArray{T, N, Ti}(
+        SparseMatrixCSC(
+            this.u.m,
+            this.u.n,
+            this.u.colptr,
+            this.u.rowval,
+            Base.copy(this.u.nzval)
+        ), this.history
+    )
 end
 
 
@@ -81,12 +84,16 @@ $(SIGNATURES)
     
 Create a similar uninitialized sparse solution array
 """
-function Base.similar(this::SparseSolutionArray{T,N, Ti}) where {T,N, Ti}
-    SparseSolutionArray{T,N, Ti}(SparseMatrixCSC(this.u.m,
-                                                this.u.n,
-                                                this.u.colptr,
-                                                this.u.rowval,
-                                                Base.similar(this.u.nzval)),nothing)
+function Base.similar(this::SparseSolutionArray{T, N, Ti}) where {T, N, Ti}
+    return SparseSolutionArray{T, N, Ti}(
+        SparseMatrixCSC(
+            this.u.m,
+            this.u.n,
+            this.u.colptr,
+            this.u.rowval,
+            Base.similar(this.u.nzval)
+        ), nothing
+    )
 end
 ##################################################################
 """
@@ -94,7 +101,7 @@ $(SIGNATURES)
 
 Get number of degree of freedom. Return 0 if species is not defined in node.
 """
-function dof(a::SparseSolutionArray, i,j)
+function dof(a::SparseSolutionArray, i, j)
     A = a.u
     coljfirstk = Int(A.colptr[j])
     coljlastk = Int(A.colptr[j + 1] - 1)
@@ -112,7 +119,7 @@ $(SIGNATURES)
 Set value for degree of freedom.
 """
 function setdof!(a::SparseSolutionArray, v, i::Integer)
-    a.u.nzval[i] = v
+    return a.u.nzval[i] = v
 end
 
 ##################################################################

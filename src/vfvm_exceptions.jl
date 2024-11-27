@@ -36,7 +36,7 @@ function _print_error(err, st)
     println(io)
     println(io, err)
     nlines = 5
-    for i = 1:min(nlines, length(st))
+    for i in 1:min(nlines, length(st))
         line = @sprintf("%s", st[i])
         L = length(line)
         if L < 80
@@ -51,5 +51,5 @@ function _print_error(err, st)
         println(io, "...")
     end
     println(io)
-    @warn String(take!(io))
+    return @warn String(take!(io))
 end
