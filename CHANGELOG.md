@@ -6,6 +6,11 @@
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
+## v2.6.1 November 27, 2024
+  - Allow to calculate node flux reconstruction from general function
+  - Runic formatting 
+  - pre-commit checks
+  
 ## v2.5.0 November 17, 2024
   - update show methods for physics, grid
   
