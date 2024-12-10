@@ -9,7 +9,7 @@ flux(y, u, edge, data) = y[1] = u[1, 1] - u[1, 2]
 
 function bcondition(y, u, bnode, data)
     boundary_robin!(y, u, bnode, region = 1, value = 0.0, factor = 0.1)
-    boundary_robin!(y, u, bnode, region = 2, value = 1.0, factor = 0.1)
+    boundary_dirichlet!(y, u, bnode, region = 2, value = 1.0)
     return nothing
 end
 
