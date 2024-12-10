@@ -77,7 +77,7 @@ function testfunction(factory::TestFunctionFactory{Tv}, bc0, bc1) where {Tv}
 
     eval_and_assemble(factory.state.system, u, u, f, factory.state.matrix, factory.state.dudp, Inf, Inf, 0.0, nothing, zeros(0))
 
-    _initialize!(u, factory.state.system)
+    _initialize!(u, factory.state.system, nothing)
 
     method_linear = factory.control.method_linear
     if isnothing(method_linear)
@@ -104,7 +104,6 @@ function integrate(
     nspecies = num_species(system)
     integral = zeros(Tv, nspecies)
     tstepinv = 1.0 / tstep
-
     nparams = system.num_parameters
     @assert nparams == length(params)
 

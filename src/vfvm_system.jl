@@ -934,15 +934,18 @@ num_species(a::AbstractArray) = size(a, 1)
 # Initialize Dirichlet BC
 #
 function _initialize_dirichlet!(
-        U::AbstractMatrix, system::AbstractSystem{Tv, Tc, Ti, Tm}; time = 0.0, λ = 0.0,
+        U::AbstractMatrix,
+        system::AbstractSystem{Tv, Tc, Ti, Tm},
+        data;
+        time = 0.0, λ = 0.0,
         params::Vector{Tp} = Float64[]
     ) where {Tv, Tp, Tc, Ti, Tm}
+
     _complete!(system)
     nspecies = num_species(system)
 
     # set up bnode
     bnode = BNode(system, time, λ, params)
-    data = system.physics.data
 
     # setup unknowns to be passed
     UK = zeros(Tv, num_species(system) + length(params))
@@ -981,8 +984,8 @@ function _initialize_dirichlet!(
     return
 end
 
-function _initialize!(U::AbstractMatrix, system::AbstractSystem; time = 0.0, λ = 0.0, params = Number[])
-    _initialize_dirichlet!(U, system; time, λ, params)
+function _initialize!(U::AbstractMatrix, system::AbstractSystem, data; time = 0.0, λ = 0.0, params = Number[])
+    _initialize_dirichlet!(U, system, data; time, λ, params)
     return _initialize_inactive_dof!(U, system)
 end
 

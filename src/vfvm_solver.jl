@@ -27,7 +27,7 @@ function solve_step!(
         solution .= oldsol
         residual = state.residual
         update = state.update
-        _initialize!(solution, state.system; time, λ = embedparam, params)
+        _initialize!(solution, state.system, state.data; time, λ = embedparam, params)
 
         Tv = eltype(solution)
         method_linear = state.system.matrixtype == :sparse ? control.method_linear : nothing
@@ -191,7 +191,7 @@ function solve_step!(
 end
 
 function evaluate_residual_and_jacobian!(state, u; params = Float64[], t = 0.0, tstep = Inf, embed = 0.0)
-    _initialize_dirichlet!(u, state.system)
+    _initialize_dirichlet!(u, state.system, state.data)
     eval_and_assemble(
         state.system,
         u,
@@ -272,10 +272,10 @@ function solve_transient!(
         # Initialize transient solution struct
         tsol = TransientSolution(Float64(lambdas[1]), copy(solution); in_memory = control.in_memory)
         # Initialize Dirichlet boundary values
-        _initialize_dirichlet!(solution, state.system; time, λ = Float64(lambdas[1]), params)
+        _initialize_dirichlet!(solution, state.system, state.data; time, λ = Float64(lambdas[1]), params)
     else
         # If not transient, solve for first embedding lambdas[1]
-        _initialize_dirichlet!(solution, state.system; time, λ = Float64(lambdas[1]), params)
+        _initialize_dirichlet!(solution, state.system, state.data; time, λ = Float64(lambdas[1]), params)
         control.pre(solution, Float64(lambdas[1]))
         t0 = @elapsed solution = solve_step!(
             state,
