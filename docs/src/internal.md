@@ -7,7 +7,7 @@ these are not exported and therefore should not be used outside of the package
 
 ## Wrapping evaluators for physics callbacks
 ```@docs 
-VoronoiFVM.hasdata
+VoronoiFVM.hasoutflow
 VoronoiFVM.AbstractEvaluator
 VoronoiFVM.ResEvaluator
 VoronoiFVM.ResEvaluator(physics::Any, data::Any, symb::Symbol,uproto::Vector{Tv},geom::Any,nspec::Int) where Tv

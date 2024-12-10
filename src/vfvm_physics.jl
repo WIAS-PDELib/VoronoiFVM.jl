@@ -201,9 +201,6 @@ end
 
 ##########################################################
 
-isdata(::Nothing) = false
-isdata(::Any) = true
-
 """
 ````
 Physics(;num_species=0,
@@ -281,13 +278,12 @@ function Physics(physics::Physics, data)
     )
 end
 
+
 """
 $(SIGNATURES)
 
-Check if physics object has data
+Check if physics object has outflow callback
 """
-hasdata(physics::Physics) = isdata(physics.data)
-
 hasoutflow(physics::Physics) = physics.boutflow != nofunc
 
 """
@@ -297,7 +293,7 @@ Show physics object
 """
 function Base.show(io::IO, physics::AbstractPhysics)
     str = "Physics("
-    if isdata(physics.data)
+    if !isnothing(physics.data)
         str = str * "data=$(typeof(physics.data)), "
     end
 
