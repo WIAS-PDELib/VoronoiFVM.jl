@@ -170,8 +170,13 @@ function runtests()
     @test m2 == 0
     m3 = @allocated inplacelu_piv_marray(10, Dual64)
     @test m3 == 0
+
     m4 = @allocated inplacelu_piv_stridearray(10, Dual64)
-    @test m4 == 0
+    if VERSION<v"1.11.999"
+        @test m4 == 0
+    else
+        @test_broken m4 == 0
+    end
     return true
 end
 
