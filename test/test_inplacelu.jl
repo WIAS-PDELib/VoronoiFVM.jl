@@ -143,7 +143,7 @@ const Dual64 = ForwardDiff.Dual{Float64, Float64, 1}
 function runtests()
     # Check if Dual64 is fully parametrized
     @test isbitstype(Dual64)
-    
+
     # first precompile to avoid allocations during precompilation
     inplacelu_nopiv_marray(10, Float64)
     inplacelu_nopiv_stridearray(10, Float64)
@@ -172,7 +172,7 @@ function runtests()
     @test m3 == 0
 
     m4 = @allocated inplacelu_piv_stridearray(10, Dual64)
-    if VERSION<v"1.11.999"
+    if VERSION < v"1.11.999"
         @test m4 == 0
     else
         @test_broken m4 == 0
