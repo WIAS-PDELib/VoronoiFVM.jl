@@ -1,4 +1,4 @@
-module test_linsolve
+module test_inplacelu
 using VoronoiFVM
 using Test
 using StrideArraysCore: StrideArray, @gc_preserve, StaticInt
