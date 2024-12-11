@@ -6,9 +6,13 @@ using StaticArrays
 using Random, LinearAlgebra
 using ForwardDiff
 
-const Dual64 = ForwardDiff.Dual{Float64, Float64, 1}
-
-function checklux0(::Type{Val{N}}, ::Type{T}) where {N, T}
+"""
+    Test inplace linear system solution via non-pivoting inplace_linsolve!
+    which implements Doolittle's method in VoronoiFVM. 
+    Uses StrideArraysCore.StrideArray.
+    This must not allocate.
+"""
+function inplacelu_nopiv_stridearray(::Type{Val{N}}, ::Type{T}) where {N, T}
     A = StrideArray{T}(undef, StaticInt(N), StaticInt(N))
     x = StrideArray{T}(undef, StaticInt(N))
     b = StrideArray{T}(undef, StaticInt(N))
@@ -32,9 +36,15 @@ function checklux0(::Type{Val{N}}, ::Type{T}) where {N, T}
     return nothing
 end
 
-checklux(n, T) = checklux0(Val{n}, T)
+inplacelu_nopiv_stridearray(n, T) = inplacelu_nopiv_stridearray(Val{n}, T)
 
-function checklum0(::Type{Val{N}}, ::Type{T}) where {N, T}
+"""
+    Test inplace linear system solution via non-pivoting inplace_linsolve!
+    which implements Doolittle's method in VoronoiFVM. 
+    Uses StaticArrays.MArray.
+    This must not allocate.
+"""
+function inplacelu_nopiv_marray(::Type{Val{N}}, ::Type{T}) where {N, T}
     A = MMatrix{N, N, Float64}(undef)
     x = MVector{N, Float64}(undef)
     b = MVector{N, Float64}(undef)
@@ -59,10 +69,16 @@ function checklum0(::Type{Val{N}}, ::Type{T}) where {N, T}
     return nothing
 end
 
-checklum(n, T) = checklum0(Val{n}, T)
+inplacelu_nopiv_marray(n, T) = inplacelu_nopiv_marray(Val{n}, T)
 
 
-function checklurx0(::Type{Val{N}}, ::Type{T}) where {N, T}
+"""
+    Test inplace linear system solution via pivoting inplace_linsolve!
+    which is implemented using RecursiveFactorization.lu
+    Uses StrideArraysCore.StrideArray.
+    This must not allocate.
+"""
+function inplacelu_piv_stridearray(::Type{Val{N}}, ::Type{T}) where {N, T}
     A = StrideArray{T}(undef, StaticInt(N), StaticInt(N))
     x = StrideArray{T}(undef, StaticInt(N))
     b = StrideArray{T}(undef, StaticInt(N))
@@ -86,9 +102,15 @@ function checklurx0(::Type{Val{N}}, ::Type{T}) where {N, T}
     return nothing
 end
 
-checklurx(n, T) = checklurx0(Val{n}, T)
+inplacelu_piv_stridearray(n, T) = inplacelu_piv_stridearray(Val{n}, T)
 
-function checklurm0(::Type{Val{N}}, ::Type{T}) where {N, T}
+"""
+    Test inplace linear system solution via pivoting inplace_linsolve!
+    which is implemented using RecursiveFactorization.lu
+    Uses StaticArrays.MArray.
+    This must not allocate.
+"""
+function inplacelu_piv_marray(::Type{Val{N}}, ::Type{T}) where {N, T}
     A = MMatrix{N, N, Float64}(undef)
     x = MVector{N, Float64}(undef)
     b = MVector{N, Float64}(undef)
@@ -112,40 +134,44 @@ function checklurm0(::Type{Val{N}}, ::Type{T}) where {N, T}
     return nothing
 end
 
-checklurm(n, T) = checklurm0(Val{n}, T)
+inplacelu_piv_marray(n, T) = inplacelu_piv_marray(Val{n}, T)
+
+# Define dual number type
+const Dual64 = ForwardDiff.Dual{Float64, Float64, 1}
+
 
 function runtests()
-    checklum(10, Float64)
-    checklum(10, Dual64)
+    # Check if Dual64 is fully parametrized
+    @test isbitstype(Dual64)
+    
+    # first precompile to avoid allocations during precompilation
+    inplacelu_nopiv_marray(10, Float64)
+    inplacelu_nopiv_stridearray(10, Float64)
+    inplacelu_nopiv_marray(10, Dual64)
+    inplacelu_nopiv_stridearray(10, Dual64)
 
-    n4 = @allocated checklum(10, Dual64)
+    n1 = @allocated inplacelu_nopiv_stridearray(10, Float64)
+    @test n1 == 0
+    n2 = @allocated inplacelu_nopiv_marray(10, Float64)
+    @test n2 == 0
+    n3 = @allocated inplacelu_nopiv_marray(10, Dual64)
+    @test n3 == 0
+    n4 = @allocated inplacelu_nopiv_stridearray(10, Dual64)
     @test n4 == 0
 
-    n2 = @allocated checklum(10, Float64)
-    @test n2 == 0
+    inplacelu_piv_stridearray(10, Float64)
+    inplacelu_piv_marray(10, Float64)
+    inplacelu_piv_stridearray(10, Dual64)
+    inplacelu_piv_marray(10, Dual64)
 
-    checklux(10, Float64)
-    checklux(10, Dual64)
-
-    n1 = @allocated checklux(10, Float64)
-    @test n1 == 0
-
-    n3 = @allocated checklux(10, Dual64)
-    @test n3 == 0
-
-    checklurx(10, Float64)
-    checklurm(10, Float64)
-    checklurx(10, Dual64)
-    checklurm(10, Dual64)
-
-    rn1 = @allocated checklurx(10, Float64)
-    @test rn1 == 0
-    rn2 = @allocated checklurm(10, Float64)
-    @test rn2 == 0
-    rn3 = @allocated checklurx(10, Dual64)
-    @test rn3 == 0
-    rn4 = @allocated checklurm(10, Dual64)
-    @test rn4 == 0
+    m1 = @allocated inplacelu_piv_stridearray(10, Float64)
+    @test m1 == 0
+    m2 = @allocated inplacelu_piv_marray(10, Float64)
+    @test m2 == 0
+    m3 = @allocated inplacelu_piv_marray(10, Dual64)
+    @test m3 == 0
+    m4 = @allocated inplacelu_piv_stridearray(10, Dual64)
+    @test m4 == 0
     return true
 end
 
