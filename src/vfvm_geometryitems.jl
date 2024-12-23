@@ -37,7 +37,7 @@ Abstract type for data on nodes.
 `u[ispec]` accesses value of species at this node.
 """
 abstract type AbstractNodeData{Tv <: Number} <: AbstractVector{Tv} end
-Base.size(u::AbstractNodeData) = (u.nspec, 1)
+Base.size(u::AbstractNodeData) = (u.nspec,)
 Base.getindex(u::AbstractNodeData, i) = @inbounds u.val[i]
 Base.setindex!(f::AbstractNodeData, v, i) = @inbounds f.val[i] = v
 
