@@ -44,6 +44,39 @@ function main(;n=3)
     @test typeof(copy(u)[1])==eltype(u)
     @test length(u)==2*n
     @test size(u)==(n,2)
+
+
+
+    ftest=zeros(Dual64,2*n)
+    node = VoronoiFVM.Node(sys, time, λ, params)
+    f=VoronoiFVM.rhs(node,ftest)
+    @test typeof(f[1])==eltype(f)
+    @test typeof(copy(f)[1])==eltype(f)
+    @test length(f)==n
+    @test size(f)==(n,)
+
+    bnode = VoronoiFVM.BNode(sys, time, λ, params)
+    f=VoronoiFVM.rhs(bnode,ftest)
+    @test typeof(f[1])==eltype(f)
+    @test typeof(copy(f)[1])==eltype(f)
+    @test length(f)==n
+    @test size(f)==(n,)
+
+    edge = VoronoiFVM.Edge(sys, time, λ, params)
+    f=VoronoiFVM.rhs(edge,ftest)
+    @test typeof(f[1])==eltype(f)
+    @test typeof(copy(f)[1])==eltype(f)
+    @test length(f)==n
+    @test size(f)==(n,)
+
+    bedge = VoronoiFVM.BEdge(sys, time, λ, params)
+    f=VoronoiFVM.rhs(bedge,ftest)
+    @test typeof(f[1])==eltype(f)
+    @test typeof(copy(f)[1])==eltype(f)
+    @test length(f)==n
+    @test size(f)==(n,)
+
+
 end
 
 function runtests()
