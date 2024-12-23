@@ -207,7 +207,7 @@ Structure holding local boundary  node information.
 
 $(TYPEDFIELDS)
 """
-mutable struct BNode{Td,  Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
+mutable struct BNode{Td, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     """
     Index in grid
     """
@@ -272,7 +272,7 @@ mutable struct BNode{Td,  Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     function BNode{Td, Tc, Tp, Ti}(
             sys::Ts, time, embedparam,
             params::Vector{Tp}
-        ) where {Td, Tc, Tp, Ti, Ts<:AbstractSystem}
+        ) where {Td, Tc, Tp, Ti, Ts <: AbstractSystem}
         return new(
             0, 0, 0, 0, zeros(Ti, 2),
             num_species(sys),
@@ -290,7 +290,7 @@ end
 # JF: We need to be able to distinguish bwetween dirichlet type and value type.
 # So far we will use Tp for the dirichlet type instead of the valuetype.
 # Maybe this even allows derivatives wrt. Dirichlet data.
-function BNode(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv,Tc, Tp, Ti, Tm}
+function BNode(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
     return BNode{Tp, Tc, Tp, Ti}(sys, time, embedparam, params)
 end
 BNode(sys) = BNode(sys, 0, 0, zeros(0))
