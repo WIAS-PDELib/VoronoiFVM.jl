@@ -207,7 +207,7 @@ Structure holding local boundary  node information.
 
 $(TYPEDFIELDS)
 """
-mutable struct BNode{Tv, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
+mutable struct BNode{Td,  Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     """
     Index in grid
     """
@@ -248,7 +248,7 @@ mutable struct BNode{Tv, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
 
     bfacecells::ExtendableGrids.Adjacency{Ti}
 
-    Dirichlet::Tv
+    Dirichlet::Td
 
     """
     System time
@@ -265,14 +265,14 @@ mutable struct BNode{Tv, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     """
     params::Vector{Tp}
 
-    dirichlet_value::Vector{Tv}
+    dirichlet_value::Vector{Td}
 
     fac::Float64
 
-    function BNode{Tv, Tc, Tp, Ti}(
-            sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam,
+    function BNode{Td, Tc, Tp, Ti}(
+            sys::Ts, time, embedparam,
             params::Vector{Tp}
-        ) where {Tv, Tc, Tp, Ti, Tm}
+        ) where {Td, Tc, Tp, Ti, Ts<:AbstractSystem}
         return new(
             0, 0, 0, 0, zeros(Ti, 2),
             num_species(sys),
@@ -281,34 +281,38 @@ mutable struct BNode{Tv, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
             sys.grid[BFaceRegions],
             sys.grid[CellRegions],
             sys.grid[BFaceCells],
-            Dirichlet(Tv), time, embedparam, params,
-            zeros(Tv, num_species(sys)), 0.0
+            Dirichlet(Td), time, embedparam, params,
+            zeros(Td, num_species(sys)), 0.0
         )
     end
 end
-function BNode(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
-    return BNode{Tv, Tc, Tp, Ti}(sys, time, embedparam, params)
+
+# JF: We need to be able to distinguish bwetween dirichlet type and value type.
+# So far we will use Tp for the dirichlet type instead of the valuetype.
+# Maybe this even allows derivatives wrt. Dirichlet data.
+function BNode(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv,Tc, Tp, Ti, Tm}
+    return BNode{Tp, Tc, Tp, Ti}(sys, time, embedparam, params)
 end
 BNode(sys) = BNode(sys, 0, 0, zeros(0))
 
-struct BNodeUnknowns{Tval, Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
-    val::Vector{Tval}
+struct BNodeUnknowns{Tv, Td, Tc, Tp, Ti} <: AbstractNodeData{Tv}
+    val::Vector{Tv}
     nspec::Ti
-    geom::BNode{Tv, Tc, Tp, Ti}
+    geom::BNode{Td, Tc, Tp, Ti}
 end
 
-@inline function unknowns(bnode::BNode{Tv, Tc, Tp, Ti}, u::AbstractVector{Tval}) where {Tval, Tv, Tc, Tp, Ti}
-    return BNodeUnknowns{Tval, Tv, Tc, Tp, Ti}(u, bnode.nspec, bnode)
+@inline function unknowns(bnode::BNode{Td, Tc, Tp, Ti}, u::AbstractVector{Tv}) where {Tv, Td, Tc, Tp, Ti}
+    return BNodeUnknowns{Tv, Td, Tc, Tp, Ti}(u, bnode.nspec, bnode)
 end
 
-struct BNodeRHS{Tval, Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
-    val::Vector{Tval}
+struct BNodeRHS{Tv, Td, Tc, Tp, Ti} <: AbstractNodeData{Tv}
+    val::Vector{Tv}
     nspec::Ti
-    geom::BNode{Tv, Tc, Tp, Ti}
+    geom::BNode{Td, Tc, Tp, Ti}
 end
 
-@inline function rhs(bnode::BNode{Tv, Tc, Tp, Ti}, f::AbstractVector{Tval}) where {Tval, Tv, Tc, Tp, Ti}
-    return BNodeRHS{Tval, Tv, Tc, Tp, Ti}(f, bnode.nspec, bnode)
+@inline function rhs(bnode::BNode{Td, Tc, Tp, Ti}, f::AbstractVector{Tv}) where {Tv, Td, Tc, Tp, Ti}
+    return BNodeRHS{Tv, Td, Tc, Tp, Ti}(f, bnode.nspec, bnode)
 end
 
 ##################################################################
