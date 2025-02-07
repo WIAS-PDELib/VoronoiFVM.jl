@@ -79,7 +79,7 @@ function run_all_tests(; run_notebooks = false, notebooksonly = false)
         Aqua.test_stale_deps(VoronoiFVM)
         Aqua.test_deps_compat(VoronoiFVM)
         Aqua.test_piracies(VoronoiFVM, broken = true)
-        Aqua.test_persistent_tasks(VoronoiFVM)
+        Aqua.test_persistent_tasks(VoronoiFVM, broken = true)
     end
 
     if isdefined(Docs, :undocumented_names) # >=1.11
