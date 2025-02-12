@@ -79,7 +79,12 @@ function run_all_tests(; run_notebooks = false, notebooksonly = false)
         Aqua.test_stale_deps(VoronoiFVM)
         Aqua.test_deps_compat(VoronoiFVM)
         Aqua.test_piracies(VoronoiFVM, broken = true)
-        Aqua.test_persistent_tasks(VoronoiFVM)
+        if VERSION >= v"1.11.0"
+            # Avoid running into https://github.com/SciML/LinearSolve.jl/issues/573
+            Aqua.test_persistent_tasks(VoronoiFVM)
+        else
+            @info "skipping   Aqua.test_persistent_tasks(VoronoiFVM) on Julia 1.10"
+        end
     end
 
     if isdefined(Docs, :undocumented_names) # >=1.11
