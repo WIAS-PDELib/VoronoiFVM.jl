@@ -44,7 +44,7 @@ function solve_step!(
         damp = 1.0
         if !state.system.is_linear
             if doprint(control, 'n')
-                println("\n  [n]ewton: #it(lin)  |update| cont3tion   |round| #rd")
+                infoout("  [n]ewton: #it(lin)  |update| cont3tion   |round| #rd")
             end
             damp = control.damp_initial
             rnorm = control.rnorm(solution)
@@ -132,16 +132,18 @@ function solve_step!(
                     itstring = @sprintf("it=% 3d", niter)
                 end
                 if control.max_round > 0
-                    @printf(
-                        "%s %.3e %.3e %.3e % 2d\n",
+                   out=@sprintf(
+                        "%s %.3e %.3e %.3e % 2d",
                         itstring,
                         norm,
                         norm / oldnorm,
                         dnorm,
                         nround
                     )
+                    infoout(out)
                 else
-                    @printf("%s %.3e %.3e\n", itstring, norm, norm / oldnorm)
+                    out= @sprintf("%s %.3e %.3e", itstring, norm, norm / oldnorm)
+                    infoout(out)
                 end
             end
             if niter > 1 && norm / oldnorm > 1.0 / control.tol_mono
@@ -174,16 +176,16 @@ function solve_step!(
 
     if neval > 0
         if ncalloc ÷ neval + nballoc ÷ neval > 0 && doprint(control, 'a') && !is_precompiling()
-            @warn "[a]llocations in assembly loop: cells: $(ncalloc ÷ neval), bfaces: $(nballoc ÷ neval)"
+            warnout("[a]llocations in assembly loop: cells: $(ncalloc ÷ neval), bfaces: $(nballoc ÷ neval)")
         end
     end
 
     if doprint(control, 'n') && !state.system.is_linear
-        println("  [n]ewton: $(round(t, sigdigits = 3)) seconds asm: $(round(100 * tasm / t, sigdigits = 3))%, linsolve: $(round(100 * tlinsolve / t, sigdigits = 3))%")
+       infoout("  [n]ewton: $(round(t, sigdigits = 3)) seconds asm: $(round(100 * tasm / t, sigdigits = 3))%, linsolve: $(round(100 * tlinsolve / t, sigdigits = 3))%")
     end
 
     if doprint(control, 'l') && state.system.is_linear
-        println("  [l]inear($(nameof(typeof(method_linear)))): $(round(t, sigdigits = 3)) seconds")
+       infoout("  [l]inear($(nameof(typeof(method_linear)))): $(round(t, sigdigits = 3)) seconds")
     end
 
     solution.history = nlhistory
@@ -303,7 +305,7 @@ function solve_transient!(
 
 
     if doprint(control, 'e')
-        println("[e]volution: start in $(extrema(lambdas))")
+        infoout("[e]volution: start in $(extrema(lambdas))")
     end
 
     λ0 = 0
@@ -374,21 +376,21 @@ function solve_transient!(
                             Returning prematurely before $(λstr)[end]=$(lambdas[end] |> rd) 
                             """
                             if control.handle_exceptions
-                                @warn err
+                                warnout(err)
                             else
                                 throw(ErrorException(err))
                             end
                             break # give up lowering stepsize, break out if "while !solved" loop
                         elseif !errored
                             if doprint(control, 'e')
-                                println("[e]volution:  forced first timestep: Δu/Δu_opt=$(Δu / Δu_opt |> rd)")
+                                infoout("[e]volution:  forced first timestep: Δu/Δu_opt=$(Δu / Δu_opt |> rd)")
                             end
                             forced = true
                             solved = true
                         else
                             err = "Convergence problem in first timestep"
                             if control.handle_exceptions
-                                @warn err
+                                warnout(err)
                             else
                                 throw(ErrorException(err))
                             end
@@ -399,7 +401,8 @@ function solve_transient!(
                         # reduce time step
                         Δλ = max(Δλ_min, Δλ * Δλ_decrease)
                         if doprint(control, 'e')
-                            @printf("[e]volution:  Δu/Δu_opt=%.3e => retry: Δ%s=%.3e\n", Δu / Δu_opt, λstr, Δλ)
+                            out=@sprintf("[e]volution:  Δu/Δu_opt=%.3e => retry: Δ%s=%.3e\n", Δu / Δu_opt, λstr, Δλ)
+                            infoout(out)
                         end
                     end
                 end
@@ -409,7 +412,7 @@ function solve_transient!(
             if solved
                 istep = istep + 1
                 if doprint(control, 'e')
-                    @printf(
+                    out= @sprintf(
                         "[e]volution: step=%d %s=%.3e Δ%s=%.3e Δu=%.3e\n",
                         istep,
                         λstr,
@@ -418,6 +421,7 @@ function solve_transient!(
                         Δλ,
                         Δu
                     )
+                    infoout(out)
                 end
                 if control.log
                     push!(allhistory, solution.history)
@@ -472,7 +476,7 @@ function solve_transient!(
 
         if solved
             if !(λ ≈ lambdas[i + 1]) # check end of interval has been reached in inner loop
-                @warn "λ=$(λ), lambdas[i+1]=$(lambdas[i + 1])"
+                warnout("λ=$(λ), lambdas[i+1]=$(lambdas[i + 1])")
             end
         else
             break # emergency exit
@@ -480,7 +484,7 @@ function solve_transient!(
     end # for i = 1:(length(lambdas)-1), end outer loop
 
     if doprint(control, 'e')
-        println("[e]volution:  $(round(t0 + t1, sigdigits = 3)) seconds")
+        infoout("[e]volution:  $(round(t0 + t1, sigdigits = 3)) seconds")
     end
 
     tsol.history = allhistory

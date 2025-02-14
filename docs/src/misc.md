@@ -15,6 +15,13 @@ Modules = [VoronoiFVM]
 Pages = ["vfvm_xgrid.jl"]
 ```
 
+
+## Output (re)direction
+```@docs
+VoronoiFVM.log_output!
+VoronoiFVM.print_output!
+```
+
 ## Exception types
 ```@docs
 VoronoiFVM.AssemblyError

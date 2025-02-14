@@ -137,6 +137,9 @@ VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public System, AbstractSystem, 
 # export to be deprecated
 export partitioning, Equationwise
 
+include("vfvm_logging_exceptions.jl")
+VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public print_output!, log_output!"))
+
 include("vfvm_formfactors.jl")
 export meas, project
 export unknown_indices
@@ -150,7 +153,6 @@ include("vfvm_linsolve_deprecated.jl")
 include("vfvm_linsolve.jl")
 export DirectSolver, GMRESIteration, CGIteration, BICGstabIteration, NoBlock, EquationBlock, PointBlock
 
-include("vfvm_exceptions.jl")
 include("vfvm_assembly.jl")
 include("vfvm_solver.jl")
 export solve!, solve

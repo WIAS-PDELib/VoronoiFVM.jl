@@ -36,6 +36,8 @@ Base.@kwdef mutable struct SolverControl
     - false: "da"
     Switch off all output including deprecation warnings via `verbose=""`.
     In the output, corresponding messages are marked e.g. via '[n]', `[a]` etc. (besides of '[l]')
+
+    For switching between printing output and logging output, see [`log_output!`](@ref) and [`print_output!`](@ref) .
     """
     verbose::Union{Bool, String} = false
 
