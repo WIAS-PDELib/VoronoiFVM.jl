@@ -25,7 +25,7 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "7cc6962627f99929bcfa94b3de37ca99cbcccd8bd074f3b8e76b9cdcca4d6410"
+    input_sha = "917597ad5fdd77e7249a8e6102f40be90e2f88c741e94ede533e2214b5856a87"
     julia_version = "1.11.3"
 -->
 <pre class='language-julia'><code class='language-julia'>begin
@@ -35,14 +35,16 @@
     using Test
     using VoronoiFVM
     using GridVisualize
-    using CairoMakie
-    CairoMakie.activate!(; type = "png", visible = false)
-    GridVisualize.default_plotter!(CairoMakie)
     using SimplexGridFactory, Triangulate
     using ExtendableGrids
     using PlutoUI, HypertextLiteral, UUIDs
+    if isdefined(Main, :PlutoRunner)
+        using CairoMakie
+        CairoMakie.activate!(; type = "png", visible = false)
+        GridVisualize.default_plotter!(CairoMakie)
+    end
 end</code></pre>
-
+<pre class="code-output documenter-example-output" id="var-Revise">CairoMakie</pre>
 
 
 <div class="markdown"><h1>Outflow boundary conditions</h1><p><a href="https://github.com/WIAS-PDELib/VoronoiFVM.jl/blob/master/pluto-examples/outflow.jl">Source</a></p></div>
@@ -271,18 +273,18 @@ end</code></pre>
 
 <div class='manifest-versions'>
 <p>Built with Julia 1.11.3 and</p>
-CairoMakie 0.12.18<br>
-ExtendableGrids 1.9.2<br>
-GridVisualize 1.7.0<br>
+CairoMakie 0.13.1<br>
+ExtendableGrids 1.12.0<br>
+GridVisualize 1.10.0<br>
 HypertextLiteral 0.9.5<br>
 Pkg 1.11.0<br>
 PlutoUI 0.7.61<br>
-Revise 3.5.18<br>
-SimplexGridFactory 2.2.1<br>
+Revise 3.7.2<br>
+SimplexGridFactory 2.4.0<br>
 Test 1.11.0<br>
-Triangulate 2.3.4<br>
+Triangulate 2.4.0<br>
 UUIDs 1.11.0<br>
-VoronoiFVM 1.25.1
+VoronoiFVM 2.6.3
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../heterogeneous-catalysis/">« Coupling with Catalyst.jl</a><a class="docs-footer-nextpage" href="../flux-reconstruction/">Obtaining vector fields »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Monday 17 February 2025 10:40">Monday 17 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../heterogeneous-catalysis/">« Coupling with Catalyst.jl</a><a class="docs-footer-nextpage" href="../flux-reconstruction/">Obtaining vector fields »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Tuesday 18 February 2025 10:02">Tuesday 18 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
