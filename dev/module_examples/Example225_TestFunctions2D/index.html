@@ -135,22 +135,18 @@ function main(;
         scalarplot!(vis1[1, 2], grid, sol[2, :]; flimits = (0, 1.5), show = true)
     end
 
-    outflow_rate = Float64[]
-    for i in 2:length(tsol)
-        ofr = integrate(system, T, tsol.u[i], tsol.u[i - 1], tsol.t[i] - tsol.t[i - 1])
-        push!(outflow_rate, ofr[2])
-    end
+    outflow_rate = integrate(system, T, tsol, rate = false)
 
     vis2 = GridVisualizer(;
-        Plotter = Plotter, layout = (1, 1), resolution = (600, 300),
+        Plotter = Plotter, layout = (1, 1), resolution = (600, 300), legend = :lc,
         fignumber = 2
     )
-    scalarplot!(vis2[1, 1], [0, tend], -[I[2], I[2]]; label = &quot;stationary&quot;, clear = true)
-    scalarplot!(vis2[1, 1], tsol.t[2:end], -outflow_rate; label = &quot;transient&quot;, show = true)
+    scalarplot!(vis2[1, 1], [0, tend], -[I[2], I[2]]; label = &quot;stationary&quot;, clear = true, color = :red)
+    scalarplot!(vis2[1, 1], tsol.t[2:end], -outflow_rate[2, :]; label = &quot;transient&quot;, clear = false, show = true, color = :blue)
 
     all_outflow = 0.0
     for i in 1:(length(tsol) - 1)
-        all_outflow -= outflow_rate[i] * (tsol.t[i + 1] - tsol.t[i])
+        all_outflow -= outflow_rate[2, i] * (tsol.t[i + 1] - tsol.t[i])
     end
 
     Uend = integrate(system, storage, tsol.u[end])
@@ -179,4 +175,4 @@ function runtests()
     return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example221_EquationBlockPrecon/">« 221: Equation block preconditioning</a><a class="docs-footer-nextpage" href="../Example226_BoundaryIntegral/">226: Terminal flux calculation via test functions, nD, boundary reaction »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Tuesday 18 February 2025 10:02">Tuesday 18 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example221_EquationBlockPrecon/">« 221: Equation block preconditioning</a><a class="docs-footer-nextpage" href="../Example226_BoundaryIntegral/">226: Terminal flux calculation via test functions, nD, boundary reaction »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Sunday 23 February 2025 21:20">Sunday 23 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

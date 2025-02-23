@@ -218,22 +218,18 @@ function main(;
         scalarplot!(vis1[1, 2], grid, sol[2, :]; flimits = (0, 1.5), show = true)
     end
 
-    outflow_rate = Float64[]
-    for i in 2:length(tsol)
-        ofr = integrate(system, T, tsol.u[i], tsol.u[i - 1], tsol.t[i] - tsol.t[i - 1])
-        push!(outflow_rate, ofr[2])
-    end
+    outflow_rate = integrate(system, T, tsol, rate = false)
 
     vis2 = GridVisualizer(;
-        Plotter = Plotter, layout = (1, 1), resolution = (600, 300),
+        Plotter = Plotter, layout = (1, 1), resolution = (600, 300), legend = :lc,
         fignumber = 2
     )
-    scalarplot!(vis2[1, 1], [0, tend], -[I[2], I[2]]; label = "stationary", clear = true)
-    scalarplot!(vis2[1, 1], tsol.t[2:end], -outflow_rate; label = "transient", show = true)
+    scalarplot!(vis2[1, 1], [0, tend], -[I[2], I[2]]; label = "stationary", clear = true, color = :red)
+    scalarplot!(vis2[1, 1], tsol.t[2:end], -outflow_rate[2, :]; label = "transient", clear = false, show = true, color = :blue)
 
     all_outflow = 0.0
     for i in 1:(length(tsol) - 1)
-        all_outflow -= outflow_rate[i] * (tsol.t[i + 1] - tsol.t[i])
+        all_outflow -= outflow_rate[2, i] * (tsol.t[i + 1] - tsol.t[i])
     end
 
     Uend = integrate(system, storage, tsol.u[end])
