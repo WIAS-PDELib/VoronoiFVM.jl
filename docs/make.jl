@@ -37,8 +37,8 @@ function make(;
             "misc.md",
             "internal.md",
             "allindex.md",
-            "devel.md",
             "extensions.md",
+            "devel.md",
         ],
     ]
 
