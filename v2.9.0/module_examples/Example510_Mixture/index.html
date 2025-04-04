@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>510: Mixture · VoronoiFVM.jl</title><meta name="title" content="510: Mixture · VoronoiFVM.jl"/><meta property="og:title" content="510: Mixture · VoronoiFVM.jl"/><meta property="twitter:title" content="510: Mixture · VoronoiFVM.jl"/><meta name="description" content="Documentation for VoronoiFVM.jl."/><meta property="og:description" content="Documentation for VoronoiFVM.jl."/><meta property="twitter:description" content="Documentation for VoronoiFVM.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">VoronoiFVM.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../changes/">Changelog</a></li><li><a class="tocitem" href="../../method/">The Voronoi finite volume method</a></li><li><span class="tocitem">API Documentation</span><ul><li><a class="tocitem" href="../../system/">System</a></li><li><a class="tocitem" href="../../physics/">Physics &amp; special functions</a></li><li><a class="tocitem" href="../../solutions/">Solution objects</a></li><li><a class="tocitem" href="../../solver/">Solvers</a></li><li><a class="tocitem" href="../../post/">Postprocessing</a></li><li><a class="tocitem" href="../../quantities/">Quantities</a></li><li><a class="tocitem" href="../../misc/">Miscellaneous</a></li><li><a class="tocitem" href="../../internal/">Internal API</a></li><li><a class="tocitem" href="../../allindex/">Index</a></li><li><a class="tocitem" href="../../extensions/"><code>ExtendableFEMBase</code> Extension</a></li><li><a class="tocitem" href="../../devel/">Development hints</a></li></ul></li><li><span class="tocitem">Tutorial Notebooks</span><ul><li><a class="tocitem" href="../../notebooks/">About the notebooks</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/ode-diffusion1d/">OrdinaryDiffEq.jl nonlinear diffusion</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/ode-wave1d/">OrdinaryDiffEq.jl 1D wave equation</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/ode-nlstorage1d/">OrdinaryDiffEq.jl changing mass matrix</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/ode-brusselator/">OrdinaryDiffEq.jl brusselator</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/heterogeneous-catalysis/">Coupling with Catalyst.jl</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/outflow/">Outflow boundary conditions</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/flux-reconstruction/">Obtaining vector fields</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/interfaces1d/">Internal interfaces (1D)</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/problemcase/">A case for caution</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/nonlinear-solvers/">Nonlinear solver control</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/bernoulli/">Bernoulli function test</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/api-update/">API Updates</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../runexamples/">About the examples</a></li><li><a class="tocitem" href="../Example001_Solvers/">001: New linear solver API</a></li><li><a class="tocitem" href="../Example002_EdgeReaction/">002: check edge reaction</a></li><li><a class="tocitem" href="../Example003_Solvers/">003: New linear solver API</a></li><li><a class="tocitem" href="../Example101_Laplace1D/">101: 1D Laplace equation</a></li><li><a class="tocitem" href="../Example102_StationaryConvectionDiffusion1D/">102: 1D Stationary convection-diffusion equation</a></li><li><a class="tocitem" href="../Example103_ConvectionDiffusion1D/">103: 1D Convection-diffusion equation</a></li><li><a class="tocitem" href="../Example105_NonlinearPoisson1D/">105: 1D Nonlinear Poisson equation</a></li><li><a class="tocitem" href="../Example106_NonlinearDiffusion1D/">106: 1D Nonlinear Diffusion equation</a></li><li><a class="tocitem" href="../Example107_NonlinearStorage1D/">107: 1D Nonlinear Storage</a></li><li><a class="tocitem" href="../Example108_OrdinaryDiffEq1D/">108: 1D Nonlinear Diffusion equation with ODE</a></li><li><a class="tocitem" href="../Example110_ReactionDiffusion1D_TwoSpecies/">110: 1D Reaction Diffusion equation with two species</a></li><li><a class="tocitem" href="../Example115_HeterogeneousCatalysis1D/">115: 1D heterogeneous catalysis</a></li><li><a class="tocitem" href="../Example120_ThreeRegions1D/">120: Differing species sets in regions, 1D</a></li><li><a class="tocitem" href="../Example121_PoissonPointCharge1D/">121: 1D Poisson with point charge</a></li><li><a class="tocitem" href="../Example125_TestFunctions1D/">125: Terminal flux calculation via test functions</a></li><li><a class="tocitem" href="../Example150_Impedance1D/">150: Impedance calculation</a></li><li><a class="tocitem" href="../Example151_Impedance1D/">151: Impedance calculation</a></li><li><a class="tocitem" href="../Example160_UnipolarDriftDiffusion1D/">160: Unipolar degenerate drift-diffusion</a></li><li><a class="tocitem" href="../Example201_Laplace2D/">201: 2D Laplace equation</a></li><li><a class="tocitem" href="../Example203_CoordinateSystems/">203: Various coordinate systems</a></li><li><a class="tocitem" href="../Example204_HagenPoiseuille/">204: 2D Convection in Hagen-Poiseuille flow</a></li><li><a class="tocitem" href="../Example205_StagnationPoint/">205: Convection in axisymmetric stagnation point flow</a></li><li><a class="tocitem" href="../Example206_JouleHeat/">206: 2D Joule heating</a></li><li><a class="tocitem" href="../Example207_NonlinearPoisson2D/">207: 2D Nonlinear Poisson equation</a></li><li><a class="tocitem" href="../Example210_NonlinearPoisson2D_Reaction/">210: 2D Nonlinear Poisson with reaction</a></li><li><a class="tocitem" href="../Example215_NonlinearPoisson2D_BoundaryReaction/">215: 2D Nonlinear Poisson with boundary reaction</a></li><li><a class="tocitem" href="../Example220_NonlinearPoisson2D_BoundarySpecies/">220: 2D Nonlinear Poisson with boundary reaction and boundary species</a></li><li><a class="tocitem" href="../Example221_EquationBlockPrecon/">221: Equation block preconditioning</a></li><li><a class="tocitem" href="../Example225_TestFunctions2D/">225: Terminal flux calculation via test functions, nD</a></li><li><a class="tocitem" href="../Example226_BoundaryIntegral/">226: Terminal flux calculation via test functions, nD, boundary reaction</a></li><li><a class="tocitem" href="../Example230_BoundaryFlux/">103: Boundary flux</a></li><li><a class="tocitem" href="../Example240_FiniteElementVelocities/">240: 2D Convection in quadratic stagnation flow velocity field</a></li><li><a class="tocitem" href="../Example301_Laplace3D/">301: 3D Laplace equation</a></li><li><a class="tocitem" href="../Example311_HeatEquation_BoundaryDiffusion/">311: Heat Equation with boundary diffusion</a></li><li><a class="tocitem" href="../Example405_GenericOperator/">405: Generic operator</a></li><li><a class="tocitem" href="../Example406_WeirdReaction/">406: 1D Weird Surface Reaction</a></li><li><a class="tocitem" href="../Example410_ManySpecies/">410: Many Species</a></li><li><a class="tocitem" href="../Example420_DiscontinuousQuantities/">420: Discontinuous Quantities</a></li><li><a class="tocitem" href="../Example421_AbstractQuantities_TestFunctions/">421: Current Calculation for AbstractQuantities</a></li><li><a class="tocitem" href="../Example422_InterfaceQuantities/">422: Drift-Diffusion with Discontinuous and Interface Potentials</a></li><li><a class="tocitem" href="../Example424_AbstractQuantitiesInit/">424: Initialization of Abstract quantities</a></li><li><a class="tocitem" href="../Example430_ParameterDerivativesStationary/">430: Parameter Derivatives (stationary)</a></li><li><a class="tocitem" href="../Example440_ParallelState/">440: Parallel solves</a></li><li class="is-active"><a class="tocitem" href>510: Mixture</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>510: Mixture</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>510: Mixture</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/VoronoiFVM.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="510:-Mixture"><a class="docs-heading-anchor" href="#510:-Mixture">510: Mixture</a><a id="510:-Mixture-1"></a><a class="docs-heading-anchor-permalink" href="#510:-Mixture" title="Permalink"></a></h1><p>(<a href="../Example510_Mixture.jl">source code</a>)</p><p>Test mixture diffusion flux. The problem is here that in the flux function we need to solve a linear system of equations which calculates the fluxes from the gradients.# To do so without (heap) allocations can be achieved using StrideArrays, together with the possibility to have static (compile time) information about the size of the local arrays to be allocated.</p><p><span>$u_i$</span> are the species partial pressures, <span>$\vec N_i$</span> are the species fluxes. <span>$D_i^K$</span> are the Knudsen diffusion coefficients, and <span>$D^B_{ij}$</span> are the binary diffusion coefficients.</p><p class="math-container">\[  -\nabla \cdot \vec N_i =0 \quad (i=1\dots n)\\
+  \frac{\vec N_i}{D^K_i} + \sum_{j\neq i}\frac{u_j \vec N_i - u_i \vec N_j}{D^B_{ij}} = -\vec \nabla u_i \quad (i=1\dots n)\]</p><p>From this representation, we can derive the matrix <span>$M=(m_{ij})$</span> with</p><p class="math-container">\[m_{ii}= \frac{1}{D^K_i} + \sum_{j\neq i} \frac{u_j}{D_ij}\\
+m_{ij}= -\sum_{j\neq i} \frac{u_i}{D_ij}\]</p><p>such that</p><p class="math-container">\[	M\begin{pmatrix}
+\vec N_1\\
+\vdots\\
+\vec N_n
+\end{pmatrix}
+=
+\begin{pmatrix}
+\vec \nabla u_1\\
+\vdots\\
+\vec \nabla u_n
+\end{pmatrix}\]</p><p>In the two point flux finite volume discretization, this results into a corresponding linear system which calculates the discrete edge fluxes from the discrete gradients. Here we demonstrate how to implement this in a fast, (heap) allocation free way.</p><p>For this purpose, intermediate arrays need to be allocated on the stack with via <code>StrideArrays.jl</code> or <code>MArray</code> from <code>StaticArrays.jl</code> They need to have the same element type as the unknowns passed to the flux function (which could be Float64 or some dual number). Size information must be static, e.g. a global constant, or, as demonstrated here, a type parameter. Broadcasting probably should be avoided.</p><p>As <a href="https://docs.juliahub.com/StrideArrays/Eyl7s/0.1.3/stack_allocation/">documented in  StrideArrays.jl</a>, use <code>@gc_preserve</code> when passing a <code>StrideArray</code> as a function parameter.</p><p>Alternatively, we can try to avoid StrideArrays.jl and use MArrays together with inlined code. In this case, one should be aware of <a href="https://github.com/JuliaArrays/StaticArrays.jl/issues/874">this issue</a>, which requires <code>@inbounds</code> e.g. with reverse order loops.</p><p>See also <a href="https://discourse.julialang.org/t/what-is-stridearrays-jl/97146">this Discourse thread</a>.</p><pre><code class="language-julia hljs">module Example510_Mixture
+
+using Printf
+using VoronoiFVM
+
+using ExtendableGrids
+using GridVisualize
+using LinearAlgebra
+using AMGCLWrap
+using Random
+using StrideArraysCore: @gc_preserve, StrideArray, StaticInt, PtrArray
+using LinearSolve, ExtendableSparse
+using ExtendableSparse: ILUZeroPreconBuilder
+using StaticArrays
+using ExtendableSparse
+
+struct MyData{NSPec}
+    DBinary::Symmetric{Float64, Matrix{Float64}}
+    DKnudsen::Vector{Float64}
+    diribc::Vector{Int}
+end
+
+nspec(::MyData{NSpec}) where {NSpec} = NSpec
+
+function flux_strided(f, u, edge, data)
+    T = eltype(u)
+    M = StrideArray{T}(undef, StaticInt(nspec(data)), StaticInt(nspec(data)))
+    au = StrideArray{T}(undef, StaticInt(nspec(data)))
+    du = StrideArray{T}(undef, StaticInt(nspec(data)))
+    ipiv = StrideArray{Int}(undef, StaticInt(nspec(data)))
+
+    for ispec in 1:nspec(data)
+        M[ispec, ispec] = 1.0 / data.DKnudsen[ispec]
+        du[ispec] = u[ispec, 1] - u[ispec, 2]
+        au[ispec] = 0.5 * (u[ispec, 1] + u[ispec, 2])
+    end
+
+    for ispec in 1:nspec(data)
+        for jspec in 1:nspec(data)
+            if ispec != jspec
+                M[ispec, ispec] += au[jspec] / data.DBinary[ispec, jspec]
+                M[ispec, jspec] = -au[ispec] / data.DBinary[ispec, jspec]
+            end
+        end
+    end
+
+    if VERSION &gt;= v&quot;1.9-rc0&quot;
+        # Pivoting linear system solution via RecursiveFactorizations.jl
+        @gc_preserve inplace_linsolve!(M, du, ipiv)
+    else
+        # Non-pivoting implementation currently implemented in vfvm_functions.jl
+        @gc_preserve inplace_linsolve!(M, du)
+    end
+
+    for ispec in 1:nspec(data)
+        f[ispec] = du[ispec]
+    end
+    return
+end
+
+function flux_marray(f, u, edge, data)
+    T = eltype(u)
+    n = nspec(data)
+
+    M = MMatrix{nspec(data), nspec(data), T}(undef)
+    au = MVector{nspec(data), T}(undef)
+    du = MVector{nspec(data), T}(undef)
+    ipiv = MVector{nspec(data), Int}(undef)
+
+    for ispec in 1:nspec(data)
+        M[ispec, ispec] = 1.0 / data.DKnudsen[ispec]
+        du[ispec] = u[ispec, 1] - u[ispec, 2]
+        au[ispec] = 0.5 * (u[ispec, 1] + u[ispec, 2])
+    end
+
+    for ispec in 1:nspec(data)
+        for jspec in 1:nspec(data)
+            if ispec != jspec
+                M[ispec, ispec] += au[jspec] / data.DBinary[ispec, jspec]
+                M[ispec, jspec] = -au[ispec] / data.DBinary[ispec, jspec]
+            end
+        end
+    end
+
+    # Here, we also could use @gc_preserve.
+    # As this function is inlined one can avoid StrideArrays.jl
+    # Starting with Julia 1.8 one also can use callsite @inline.
+    inplace_linsolve!(M, du)
+
+    for ispec in 1:nspec(data)
+        f[ispec] = du[ispec]
+    end
+    return nothing
+end
+
+function bcondition(f, u, node, data)
+    for species in 1:nspec(data)
+        boundary_dirichlet!(
+            f, u, node; species, region = data.diribc[1],
+            value = species % 2
+        )
+        boundary_dirichlet!(
+            f, u, node; species, region = data.diribc[2],
+            value = 1 - species % 2
+        )
+    end
+    return nothing
+end
+
+function main(;
+        n = 11, nspec = 5,
+        dim = 2,
+        Plotter = nothing,
+        verbose = false,
+        unknown_storage = :dense,
+        flux = :flux_strided,
+        strategy = nothing,
+        assembly = :cellwise
+    )
+    h = 1.0 / convert(Float64, n - 1)
+    X = collect(0.0:h:1.0)
+    DBinary = Symmetric(fill(0.1, nspec, nspec))
+    for ispec in 1:nspec
+        DBinary[ispec, ispec] = 0
+    end
+
+    DKnudsen = fill(1.0, nspec)
+
+    if dim == 1
+        grid = simplexgrid(X)
+        diribc = [1, 2]
+    elseif dim == 2
+        grid = simplexgrid(X, X)
+        diribc = [4, 2]
+    else
+        grid = simplexgrid(X, X, X)
+        diribc = [4, 2]
+    end
+
+    function storage(f, u, node, data)
+        f .= u
+        return nothing
+    end
+
+    _flux = flux == :flux_strided ? flux_strided : flux_marray
+
+    data = MyData{nspec}(DBinary, DKnudsen, diribc)
+    sys = VoronoiFVM.System(grid; flux = _flux, storage, bcondition, species = 1:nspec, data, assembly, unknown_storage)
+
+    if verbose
+        @info &quot;Strategy: $(strategy)&quot;
+    end
+    if !isnothing(strategy) &amp;&amp; hasproperty(strategy, :precs)
+        if isa(strategy.precs, BlockPreconBuilder)
+            strategy.precs.partitioning = A -&gt; partitioning(sys, Equationwise())
+        end
+        if isa(strategy.precs, ILUZeroPreconBuilder) &amp;&amp; strategy.precs.blocksize != 1
+            strategy.precs.blocksize = nspec
+        end
+    end
+    control = SolverControl(method_linear = strategy)
+    control.maxiters = 500
+    if verbose
+        @info control.method_linear
+    end
+    u = solve(sys; verbose, control, log = true)
+    if verbose
+        @show norm(u)
+    end
+    return norm(u)
+end
+
+using Test
+function runtests()
+    strategies = [
+        UMFPACKFactorization(),
+        KrylovJL_GMRES(precs = LinearSolvePreconBuilder(UMFPACKFactorization())),
+        KrylovJL_GMRES(precs = BlockPreconBuilder(precs = LinearSolvePreconBuilder(UMFPACKFactorization()))),
+        KrylovJL_GMRES(precs = BlockPreconBuilder(precs = AMGPreconBuilder())),
+        KrylovJL_BICGSTAB(precs = BlockPreconBuilder(precs = AMGPreconBuilder())),
+        KrylovJL_GMRES(precs = ILUZeroPreconBuilder()),
+        KrylovJL_GMRES(precs = BlockPreconBuilder(precs = ILUZeroPreconBuilder())),
+        KrylovJL_GMRES(precs = ILUZeroPreconBuilder(blocksize = 5)),
+    ]
+
+    val1D = 4.788926530387466
+    val2D = 15.883072449873742
+    val3D = 52.67819183426213
+
+
+    @test main(; dim = 1, assembly = :cellwise) ≈ val1D
+    @test main(; dim = 2, assembly = :cellwise) ≈ val2D
+    @test main(; dim = 3, assembly = :cellwise) ≈ val3D
+    @test main(; dim = 1, flux = :flux_marray, assembly = :cellwise) ≈ val1D
+    @test main(; dim = 2, flux = :flux_marray, assembly = :cellwise) ≈ val2D
+    @test main(; dim = 3, flux = :flux_marray, assembly = :cellwise) ≈ val3D
+    @test all(map(strategy -&gt; main(; dim = 2, flux = :flux_marray, strategy) ≈ val2D, strategies))
+    return nothing
+end
+
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example440_ParallelState/">« 440: Parallel solves</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Friday 4 April 2025 21:13">Friday 4 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
