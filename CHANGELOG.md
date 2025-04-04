@@ -6,6 +6,9 @@
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
+## v2.9.1 April 4, 2025
+  - bugfix with bstorage contribution to mass matrix calculation
+  
 ## v2.9 April 3, 2025
   - Fixed bug in `evaluate_residual_and_jacobian`
   - Added `init_dirichlet` flag to `evaluate_residual_and_jacobian!` to suppress initialization of Dirichlet values in argument vector `u`
