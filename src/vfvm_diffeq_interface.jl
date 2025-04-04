@@ -3,15 +3,19 @@
 
 Evaluate functiaon and Jacobian at u if they have not been evaluated before at u.
 See https://github.com/SciML/DifferentialEquations.jl/issues/521 for discussion of another way to do this.
+
+Evaluation needs to be done with tstep=Inf, like for a stationary problem, because the ODE solvers
+handle the time derivative. 
 """
 function _eval_res_jac!(state, u, t)
     uhash = hash(u)
-    return if uhash != state.uhash
+    if uhash != state.uhash
         ur = reshape(u, state.system)
         eval_and_assemble(state.system, ur, ur, state.residual, state.matrix, state.dudp, value(t), Inf, 0.0, state.system.physics.data, state.params)
         state.uhash = uhash
         state.history.nd += 1
     end
+    return nothing
 end
 
 """
@@ -57,7 +61,7 @@ function mass_matrix(state::SystemState{Tv, TMatrix, TSolArray, TData}) where {T
     data = state.system.physics.data
 
     stor_eval = ResJacEvaluator(physics, data, :storage, zeros(Tv, nspecies), node, nspecies)
-    bstor_eval = ResJacEvaluator(physics, data, :bstorage, zeros(Tv, nspecies), node, nspecies)
+    bstor_eval = ResJacEvaluator(physics, data, :bstorage, zeros(Tv, nspecies), bnode, nspecies)
 
     U = unknowns(state.system; inival = 0)
     M = similar(state.matrix)
@@ -83,7 +87,7 @@ function mass_matrix(state::SystemState{Tv, TMatrix, TSolArray, TData}) where {T
                 @views evaluate!(bstor_eval, U[:, K])
                 jac_bstor = jac(bstor_eval)
                 asm_jac(idof, jdof, ispec, jspec) = _addnz(M, idof, jdof, jac_bstor[ispec, jspec], bnode.fac)
-                assemble_res_jac(node, state.system, asm_res, asm_jac, asm_param)
+                assemble_res_jac(bnode, state.system, asm_res, asm_jac, asm_param)
             end
         end
     end
@@ -112,10 +116,13 @@ end
 # API
 
 """
-     ODEFunction(state,inival=unknowns(system,inival=0),t0=0)
+     ODEFunction(state; jacval = unknowns(sys, 0), tjac = 0 )
     
 Create an [ODEFunction](https://diffeq.sciml.ai/stable/basics/overview/#Defining-Problems).
 For more documentation, see [`SciMLBase.ODEFunction(state::VoronoiFVM.SystemState; kwargs...)`](@ref)
+`jacval` and `tjac` are passed to [`prepare_diffeq!`](@ref) and used there to calculate the Jacobian prototype.
+
+Defined in VoronoiFVM.jl.
 """
 function SciMLBase.ODEFunction(state::VoronoiFVM.SystemState; jacval = unknowns(sys, 0), tjac = 0)
     return SciMLBase.ODEFunction(
@@ -127,7 +134,7 @@ function SciMLBase.ODEFunction(state::VoronoiFVM.SystemState; jacval = unknowns(
 end
 
 """
-     ODEFunction(system,inival=unknowns(system,inival=0),t0=0)
+     ODEFunction(system; jacval=unknowns(system,inival=0),tjac=0)
     
 Create an [ODEFunction](https://diffeq.sciml.ai/stable/basics/overview/#Defining-Problems)
 in [mass matrix form](https://diffeq.sciml.ai/stable/solvers/dae_solve/#OrdinaryDiffEq.jl-(Mass-Matrix))
@@ -140,6 +147,8 @@ Parameters:
 
 The `jacval` and `tjac` are passed  for a first evaluation of the Jacobian, allowing to detect
 the sparsity pattern which is passed to the solver.
+
+Defined in VoronoiFVM.jl.
 """
 SciMLBase.ODEFunction(sys::VoronoiFVM.System; kwargs...) = SciMLBase.ODEFunction(SystemState(sys); kwargs...)
 
