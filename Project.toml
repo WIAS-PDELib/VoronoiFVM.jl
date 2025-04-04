@@ -1,7 +1,7 @@
 name = "VoronoiFVM"
 uuid = "82b139dc-5afc-11e9-35da-9b9bdfd336f3"
 authors = ["Jürgen Fuhrmann <juergen.fuhrmann@wias-berlin.de>", "Patrick Jaap", "Daniel Runge", "Dilara Abdel", "Jan Weidner", "Alexander Seiler", "Patricio Farrell", "Matthias Liero"]
-version = "2.8.0"
+version = "2.9.0"
 
 [deps]
 BandedMatrices = "aae01518-5342-5314-be14-df237901396f"

@@ -7,11 +7,17 @@ ExampleJuggler.verbose!(true)
 # Include all Julia files in `testdir` whose name starts with `prefix`,
 # Each file `prefixModName.jl` must contain a module named
 # `prefixModName` which has a method test() returning true
-# or false depending on success.
+# or false depending on success. All files with filenames contained in
+# the `ignore` list will not be included.
 #
-function run_tests_from_directory(testdir, prefix)
+function run_tests_from_directory(testdir, prefix; ignore = [])
     @info "Directory $(testdir):"
-    examples = filter(ex -> length(ex) >= length(prefix) && ex[1:length(prefix)] == prefix, basename.(readdir(testdir)))
+    examples = filter(
+        filename -> length(filename) >= length(prefix) &&
+            filename[1:length(prefix)] == prefix &&
+            filename ∉ ignore,
+        basename.(readdir(testdir))
+    )
     @info examples
     @testmodules(testdir, examples)
     return nothing

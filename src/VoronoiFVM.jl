@@ -77,7 +77,7 @@ solutionarray(a::AbstractSolutionArray) = a
 export AbstractSolutionArray
 
 include("vfvm_physics.jl")
-# see https://discourse.julialang.org/t/is-compat-jl-worth-it-for-the-public-keyword/119041/34m
+# see https://discourse.julialang.org/t/is-compat-jl-worth-it-for-the-public-keyword/119041/34
 VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public Physics, AbstractPhysics, AbstractData"))
 
 include("vfvm_functions.jl")
@@ -91,6 +91,7 @@ export NewtonSolverHistory, TransientSolverHistory, details
 
 include("vfvm_densesolution.jl")
 include("vfvm_sparsesolution.jl")
+VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public dofs"))
 export num_dof
 export dof
 export getdof

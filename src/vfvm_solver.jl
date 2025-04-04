@@ -192,8 +192,10 @@ function solve_step!(
     return solution
 end
 
-function evaluate_residual_and_jacobian!(state, u; params = Float64[], t = 0.0, tstep = Inf, embed = 0.0)
-    _initialize_dirichlet!(u, state.system, state.data)
+function evaluate_residual_and_jacobian!(state, u; params = Float64[], t = 0.0, tstep = Inf, embed = 0.0, init_dirichlet = false)
+    if init_dirichlet
+        _initialize_dirichlet!(u, state.system, state.data)
+    end
     eval_and_assemble(
         state.system,
         u,
@@ -213,16 +215,17 @@ end
 
 """
     evaluate_residual_and_jacobian(system,u;
-                                   t=0.0, tstep=Inf,embed=0.0)
+                                   t=0.0, tstep=Inf, embed=0.0, init_dirichlet=false)
 
 Evaluate residual and jacobian at solution value u.
 Returns a solution vector containing a copy of  residual, and an ExendableSparseMatrix
-containing a copy of the linearization at u.
+containing a copy of the linearization at u. The flag `init_dirichlet` controls whether
+u should be adjusted to satisfy the Dirichlet boundary conditions specified by the system.
 
 """
 function evaluate_residual_and_jacobian(sys, u; kwargs...)
     state = SystemState(sys)
-    eval_and_linearize!(state, u; kwargs...)
+    evaluate_residual_and_jacobian!(state, u; kwargs...)
     return copy(state.residual), copy(state.matrix)
 end
 
