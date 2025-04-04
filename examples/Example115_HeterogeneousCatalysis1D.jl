@@ -23,7 +23,7 @@ In $\Omega$, both $A$ and $B$ are transported through diffusion:
 
 ```math
 \begin{aligned}
-\partial_t u_B - \nabla\cdot D_A \nabla u_A & = f_A\\
+\partial_t u_A - \nabla\cdot D_A \nabla u_A & = f_A\\
 \partial_t u_B - \nabla\cdot D_B \nabla u_B & = 0\\
 \end{aligned}
 ```
@@ -63,14 +63,23 @@ using OrdinaryDiffEqRosenbrock
 using SciMLBase: NoInit
 
 function main(;
-        n = 10, Plotter = nothing, verbose = false, tend = 1,
-        unknown_storage = :sparse, assembly = :edgewise,
-        diffeq = false
+              n = 10, Plotter = nothing, verbose = false, tend = 1,
+              unknown_storage = :sparse, assembly = :edgewise,
+              diffeq = false,
+              switchbc = false
     )
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
     N = length(X)
 
+    iCat=1
+    iBulk=2
+    inodeCat=1
+    if switchbc
+        iCat, iBulk = iBulk, iCat
+        inodeCat=N
+    end
+    
     grid = simplexgrid(X)
     ## By default, \Gamma_1 at X[1] and \Gamma_2 is at X[end]
 
@@ -119,7 +128,7 @@ function main(;
     R_BC(u_B, u_C) = kp_BC * u_B * (1 - u_C) - km_BC * u_C
 
     function breaction!(f, u, node, data)
-        if node.region == 1
+        if node.region == iCat
             f[iA] = S * R_AC(u[iA], u[iC])
             f[iB] = S * R_BC(u[iB], u[iC])
             f[iC] = -R_BC(u[iB], u[iC]) - R_AC(u[iA], u[iC])
@@ -129,7 +138,7 @@ function main(;
 
     ## This is for the term \partial_t u_C at the boundary
     function bstorage!(f, u, node, data)
-        if node.region == 1
+        if node.region == iCat
             f[iC] = u[iC]
         end
         return nothing
@@ -150,10 +159,10 @@ function main(;
     enable_species!(sys, iB, [1])
 
     ## Enable surface species
-    enable_boundary_species!(sys, iC, [1])
+    enable_boundary_species!(sys, iC, [iCat])
 
     ## Set Dirichlet bc for species B on \Gamma_2
-    boundary_dirichlet!(sys, iB, 2, 0.0)
+    boundary_dirichlet!(sys, iB, iBulk, 0.0)
 
     ## Initial values
     inival = unknowns(sys)
@@ -189,27 +198,26 @@ function main(;
             title = @sprintf("[B]: (%.3f,%.3f)", extrema(tsol[iB, :, it])...)
         )
         scalarplot!(
-            p[3, 1], tsol.t[1:it], tsol[iC, 1, 1:it]; title = @sprintf("[C]"),
+            p[3, 1], tsol.t[1:it], tsol[iC, inodeCat, 1:it]; title = @sprintf("[C]"),
             clear = true, show = true
         )
     end
 
-    return tsol[iC, 1, end]
+    return tsol[iC,  inodeCat, end]
 end
 
 using Test
 function runtests()
     testval = 0.87544440641274
-    testvaldiffeq = 0.8891082547874963
-    @test isapprox(main(; unknown_storage = :sparse, assembly = :edgewise), testval; rtol = 1.0e-12)
-    @test isapprox(main(; unknown_storage = :dense, assembly = :edgewise), testval; rtol = 1.0e-12)
-    @test isapprox(main(; unknown_storage = :sparse, assembly = :cellwise), testval; rtol = 1.0e-12)
-    @test isapprox(main(; unknown_storage = :dense, assembly = :cellwise), testval; rtol = 1.0e-12)
-
-    @test isapprox(main(; diffeq = true, unknown_storage = :sparse, assembly = :edgewise), testvaldiffeq; rtol = 1.0e-12)
-    @test isapprox(main(; diffeq = true, unknown_storage = :dense, assembly = :edgewise), testvaldiffeq; rtol = 1.0e-12)
-    @test isapprox(main(; diffeq = true, unknown_storage = :sparse, assembly = :cellwise), testvaldiffeq; rtol = 1.0e-12)
-    @test isapprox(main(; diffeq = true, unknown_storage = :dense, assembly = :cellwise), testvaldiffeq; rtol = 1.0e-12)
+    testvaldiffeq = 0.8757307218639448
+    for unknown_storage in (:sparse, :dense)
+        for assembly in (:edgewise, :cellwise)
+            for switchbc in (false, true)
+                @test isapprox(main(; unknown_storage, assembly, switchbc), testval; rtol = 1.0e-12)
+                @test isapprox(main(; diffeq=true, unknown_storage, assembly, switchbc), testvaldiffeq; rtol = 1.0e-12)
+            end
+        end
+    end
     return nothing
 end
 end
