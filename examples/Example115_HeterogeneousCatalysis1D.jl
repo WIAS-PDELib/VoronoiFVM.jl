@@ -63,23 +63,23 @@ using OrdinaryDiffEqRosenbrock
 using SciMLBase: NoInit
 
 function main(;
-              n = 10, Plotter = nothing, verbose = false, tend = 1,
-              unknown_storage = :sparse, assembly = :edgewise,
-              diffeq = false,
-              switchbc = false
+        n = 10, Plotter = nothing, verbose = false, tend = 1,
+        unknown_storage = :sparse, assembly = :edgewise,
+        diffeq = false,
+        switchbc = false
     )
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
     N = length(X)
 
-    iCat=1
-    iBulk=2
-    inodeCat=1
+    iCat = 1
+    iBulk = 2
+    inodeCat = 1
     if switchbc
         iCat, iBulk = iBulk, iCat
-        inodeCat=N
+        inodeCat = N
     end
-    
+
     grid = simplexgrid(X)
     ## By default, \Gamma_1 at X[1] and \Gamma_2 is at X[end]
 
@@ -203,7 +203,7 @@ function main(;
         )
     end
 
-    return tsol[iC,  inodeCat, end]
+    return tsol[iC, inodeCat, end]
 end
 
 using Test
@@ -214,7 +214,7 @@ function runtests()
         for assembly in (:edgewise, :cellwise)
             for switchbc in (false, true)
                 @test isapprox(main(; unknown_storage, assembly, switchbc), testval; rtol = 1.0e-12)
-                @test isapprox(main(; diffeq=true, unknown_storage, assembly, switchbc), testvaldiffeq; rtol = 1.0e-12)
+                @test isapprox(main(; diffeq = true, unknown_storage, assembly, switchbc), testvaldiffeq; rtol = 1.0e-12)
             end
         end
     end
