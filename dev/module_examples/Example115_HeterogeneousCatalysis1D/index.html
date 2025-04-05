@@ -3,7 +3,7 @@
       A &amp;\leftrightarrow C\\
       C &amp;\leftrightarrow B
 \end{aligned}\]</p><p>with reaction constants <span>$k_{AC}^\pm$</span> and k_{BC}^\pm$.</p><p>In <span>$\Omega$</span>, both <span>$A$</span> and <span>$B$</span> are transported through diffusion:</p><p class="math-container">\[\begin{aligned}
-\partial_t u_B - \nabla\cdot D_A \nabla u_A &amp; = f_A\\
+\partial_t u_A - \nabla\cdot D_A \nabla u_A &amp; = f_A\\
 \partial_t u_B - \nabla\cdot D_B \nabla u_B &amp; = 0\\
 \end{aligned}\]</p><p>Here, <span>$f(x)$</span> is a source term creating <span>$A$</span>. On <span>$\Gamma_2$</span>, we set boundary conditions</p><p class="math-container">\[\begin{aligned}
 D_A \nabla u_A &amp; = 0\\
@@ -26,11 +26,20 @@ using SciMLBase: NoInit
 function main(;
         n = 10, Plotter = nothing, verbose = false, tend = 1,
         unknown_storage = :sparse, assembly = :edgewise,
-        diffeq = false
+        diffeq = false,
+        switchbc = false
     )
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
     N = length(X)
+
+    iCat = 1
+    iBulk = 2
+    inodeCat = 1
+    if switchbc
+        iCat, iBulk = iBulk, iCat
+        inodeCat = N
+    end
 
     grid = simplexgrid(X)
     # By default, \Gamma_1 at X[1] and \Gamma_2 is at X[end]
@@ -80,7 +89,7 @@ function main(;
     R_BC(u_B, u_C) = kp_BC * u_B * (1 - u_C) - km_BC * u_C
 
     function breaction!(f, u, node, data)
-        if node.region == 1
+        if node.region == iCat
             f[iA] = S * R_AC(u[iA], u[iC])
             f[iB] = S * R_BC(u[iB], u[iC])
             f[iC] = -R_BC(u[iB], u[iC]) - R_AC(u[iA], u[iC])
@@ -90,7 +99,7 @@ function main(;
 
     # This is for the term \partial_t u_C at the boundary
     function bstorage!(f, u, node, data)
-        if node.region == 1
+        if node.region == iCat
             f[iC] = u[iC]
         end
         return nothing
@@ -111,10 +120,10 @@ function main(;
     enable_species!(sys, iB, [1])
 
     # Enable surface species
-    enable_boundary_species!(sys, iC, [1])
+    enable_boundary_species!(sys, iC, [iCat])
 
     # Set Dirichlet bc for species B on \Gamma_2
-    boundary_dirichlet!(sys, iB, 2, 0.0)
+    boundary_dirichlet!(sys, iB, iBulk, 0.0)
 
     # Initial values
     inival = unknowns(sys)
@@ -150,27 +159,26 @@ function main(;
             title = @sprintf(&quot;[B]: (%.3f,%.3f)&quot;, extrema(tsol[iB, :, it])...)
         )
         scalarplot!(
-            p[3, 1], tsol.t[1:it], tsol[iC, 1, 1:it]; title = @sprintf(&quot;[C]&quot;),
+            p[3, 1], tsol.t[1:it], tsol[iC, inodeCat, 1:it]; title = @sprintf(&quot;[C]&quot;),
             clear = true, show = true
         )
     end
 
-    return tsol[iC, 1, end]
+    return tsol[iC, inodeCat, end]
 end
 
 using Test
 function runtests()
     testval = 0.87544440641274
-    testvaldiffeq = 0.8891082547874963
-    @test isapprox(main(; unknown_storage = :sparse, assembly = :edgewise), testval; rtol = 1.0e-12)
-    @test isapprox(main(; unknown_storage = :dense, assembly = :edgewise), testval; rtol = 1.0e-12)
-    @test isapprox(main(; unknown_storage = :sparse, assembly = :cellwise), testval; rtol = 1.0e-12)
-    @test isapprox(main(; unknown_storage = :dense, assembly = :cellwise), testval; rtol = 1.0e-12)
-
-    @test isapprox(main(; diffeq = true, unknown_storage = :sparse, assembly = :edgewise), testvaldiffeq; rtol = 1.0e-12)
-    @test isapprox(main(; diffeq = true, unknown_storage = :dense, assembly = :edgewise), testvaldiffeq; rtol = 1.0e-12)
-    @test isapprox(main(; diffeq = true, unknown_storage = :sparse, assembly = :cellwise), testvaldiffeq; rtol = 1.0e-12)
-    @test isapprox(main(; diffeq = true, unknown_storage = :dense, assembly = :cellwise), testvaldiffeq; rtol = 1.0e-12)
+    testvaldiffeq = 0.8757307218639448
+    for unknown_storage in (:sparse, :dense)
+        for assembly in (:edgewise, :cellwise)
+            for switchbc in (false, true)
+                @test isapprox(main(; unknown_storage, assembly, switchbc), testval; rtol = 1.0e-12)
+                @test isapprox(main(; diffeq = true, unknown_storage, assembly, switchbc), testvaldiffeq; rtol = 1.0e-12)
+            end
+        end
+    end
     return nothing
 end
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example110_ReactionDiffusion1D_TwoSpecies/">« 110: 1D Reaction Diffusion equation with two species</a><a class="docs-footer-nextpage" href="../Example120_ThreeRegions1D/">120: Differing species sets in regions, 1D »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Friday 4 April 2025 09:04">Friday 4 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example110_ReactionDiffusion1D_TwoSpecies/">« 110: 1D Reaction Diffusion equation with two species</a><a class="docs-footer-nextpage" href="../Example120_ThreeRegions1D/">120: Differing species sets in regions, 1D »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Saturday 5 April 2025 20:06">Saturday 5 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
