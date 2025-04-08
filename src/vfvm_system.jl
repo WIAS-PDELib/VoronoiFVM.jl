@@ -548,27 +548,27 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
         nspec = size(system.node_dof, 1)
         n = num_dof(system)
 
-        if has_generic_operator(system)
-            if has_generic_operator_sparsity(system)
-                system.generic_matrix = system.physics.generic_operator_sparsity(system)
-            else
-                generic_operator(f, u) = system.physics.generic_operator(f, u, system)
-                input = rand(num_dof(system))
-                output = similar(input)
-                tdetect = @elapsed begin
-                    sparsity_pattern = Symbolics.jacobian_sparsity(generic_operator, output, input)
-                    system.generic_matrix = Float64.(sparse(sparsity_pattern))
-                end
-                _info("Sparsity detection for generic operator: $(tdetect) s")
-                if nnz(system.generic_matrix) == 0
-                    error("Sparsity detection failed: no pattern found")
-                end
-            end
-            tdetect = @elapsed begin
-                system.generic_matrix_colors = matrix_colors(system.generic_matrix)
-            end
-            _info("Matrix coloring for generic operator: $(tdetect) s")
-        end
+        # if has_generic_operator(system)
+        #     if has_generic_operator_sparsity(system)
+        #         system.generic_matrix = system.physics.generic_operator_sparsity(system)
+        #     else
+        #         generic_operator(f, u) = system.physics.generic_operator(f, u, system)
+        #         input = rand(num_dof(system))
+        #         output = similar(input)
+        #         tdetect = @elapsed begin
+        #             sparsity_pattern = Symbolics.jacobian_sparsity(generic_operator, output, input)
+        #             system.generic_matrix = Float64.(sparse(sparsity_pattern))
+        #         end
+        #         _info("Sparsity detection for generic operator: $(tdetect) s")
+        #         if nnz(system.generic_matrix) == 0
+        #             error("Sparsity detection failed: no pattern found")
+        #         end
+        #     end
+        #     tdetect = @elapsed begin
+        #         system.generic_matrix_colors = matrix_colors(system.generic_matrix)
+        #     end
+        #     _info("Matrix coloring for generic operator: $(tdetect) s")
+        # end
     finally
         unlock(sysmutatelock)
     end

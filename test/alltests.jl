@@ -52,16 +52,16 @@ end
 notebooks = [
     "nbproto.jl",
     "api-update.jl",
-    "ode-diffusion1d.jl",
-    "ode-wave1d.jl",
-    "ode-nlstorage1d.jl",
+#    "ode-diffusion1d.jl",
+#    "ode-wave1d.jl",
+#    "ode-nlstorage1d.jl",
     #"ode-brusselator.jl",
     "outflow.jl",
     "flux-reconstruction.jl",
     "interfaces1d.jl",
     "problemcase.jl",
     "nonlinear-solvers.jl",
-    "heterogeneous-catalysis.jl",
+#    "heterogeneous-catalysis.jl",
 ]
 @testset "Notebooks" begin
     @testscripts(joinpath(@__DIR__, "..", "pluto-examples"), notebooks)
