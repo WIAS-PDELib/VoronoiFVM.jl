@@ -23,53 +23,16 @@ RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 RecursiveFactorization = "f2c3362d-daeb-58d1-803e-2bc74f2840b4"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-SparseDiffTools = "47a9eef4-7e08-11e9-0b38-333d64bd3804"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 TextWrap = "b718987f-49a8-5099-9789-dcd902bef87d"
 
-[weakdeps]
-ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
-
-[extensions]
-VoronoiFVMExtendableFEMBaseExt = "ExtendableFEMBase"
-
-[extras]
-AMGCLWrap = "4f76b812-4ba5-496d-b042-d70715554288"
-AlgebraicMultigrid = "2169fc97-5a83-5252-b627-83903c6c433c"
-Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
-Catalyst = "479239e8-5488-4da2-87a7-35f2df7eef83"
-ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
-DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
-ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
-ExtendableFEM = "a722555e-65e0-4074-a036-ca7ce79a4aed"
-ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
-HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
-ILUZero = "88f59080-6952-5380-9ea5-54057fb9a43f"
-Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
-Metis = "2679e427-3c69-5b7f-982b-ece356f1e94b"
-OrdinaryDiffEqBDF = "6ad6398a-0878-4a85-9266-38940aa047c8"
-OrdinaryDiffEqLowOrderRK = "1344f307-1e59-4825-a18e-ace9aa3fa4c6"
-OrdinaryDiffEqRosenbrock = "43230ef6-c299-4910-a778-202eb28ce4ce"
-OrdinaryDiffEqSDIRK = "2d112036-d095-4a1e-ab9a-08536f3ecdbf"
-OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
-Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
-SimplexGridFactory = "57bfcd06-606e-45d6-baf4-4ba06da0efd5"
-StrideArraysCore = "7792a7ef-975c-4747-a70f-980b88e8d1da"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Triangulate = "f7e6ffb2-c36d-4f8f-a77e-16e897189344"
-UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [compat]
 AMGCLWrap = "2.1.0"
 AlgebraicMultigrid = "1.0.0"
 Aqua = "0.8.11"
 BandedMatrices = "0.17,1"
-Catalyst = "14"
 ChunkSplitters = "3.1.1"
 Colors = "0.12, 0.13"
 CommonSolve = "0.2"
@@ -78,11 +41,9 @@ DiffResults = "1"
 DocStringExtensions = "0.8,0.9"
 ExampleJuggler = "2"
 ExplicitImports = "1.11.1"
-ExtendableFEM = "0.9.1"
-ExtendableFEMBase = "0.7,0.8"
 ExtendableGrids = "1.11.0"
 ExtendableSparse = "1.6"
-ForwardDiff = "0.10.35, 1"
+ForwardDiff = "1"
 GridVisualize = "0.5.2,0.6.1,1"
 HypertextLiteral = "0.9.5"
 ILUZero = "0.2.0"
@@ -92,11 +53,6 @@ LinearAlgebra = "1.9"
 LinearSolve = "2.36, 3.3"
 Markdown = "1"
 Metis = "1.5.0"
-OrdinaryDiffEqBDF = "1.3.0"
-OrdinaryDiffEqLowOrderRK = "1.2.0"
-OrdinaryDiffEqRosenbrock = "1.8.0"
-OrdinaryDiffEqSDIRK = "1.3.0"
-OrdinaryDiffEqTsit5 = "1.1.0"
 Pkg = "1"
 PlutoUI = "0.7.23"
 Printf = "1.9"
@@ -107,44 +63,35 @@ Revise = "3.7.3"
 SciMLBase = "2.6"
 SimplexGridFactory = "2.4.0"
 SparseArrays = "1.9"
-SparseDiffTools = "^1.19, 2"
 StaticArrays = "0.12,1"
-StrideArraysCore = "0.5.7"
 Statistics = "1.9"
-Symbolics = "4.2,5,6"
+StrideArraysCore = "0.5.7"
 Test = "1"
 TextWrap = "1.0.2"
 Triangulate = "2.4.0"
 UUIDs = "1"
 julia = "1.9"
 
+[extras]
+AMGCLWrap = "4f76b812-4ba5-496d-b042-d70715554288"
+AlgebraicMultigrid = "2169fc97-5a83-5252-b627-83903c6c433c"
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
+ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
+HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+ILUZero = "88f59080-6952-5380-9ea5-54057fb9a43f"
+Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
+Metis = "2679e427-3c69-5b7f-982b-ece356f1e94b"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+SimplexGridFactory = "57bfcd06-606e-45d6-baf4-4ba06da0efd5"
+StrideArraysCore = "7792a7ef-975c-4747-a70f-980b88e8d1da"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Triangulate = "f7e6ffb2-c36d-4f8f-a77e-16e897189344"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+
 [targets]
-test = [
-    "AMGCLWrap",
-    "AlgebraicMultigrid",
-    "Aqua",
-    "Catalyst",
-    "ChunkSplitters",
-    "DataStructures",
-    "ExampleJuggler",
-    "ExplicitImports",
-    "ExtendableFEM",
-    "ExtendableFEMBase",
-    "HypertextLiteral",
-    "ILUZero",
-    "Markdown",
-    "Metis",
-    "OrdinaryDiffEqBDF",
-    "OrdinaryDiffEqLowOrderRK",
-    "OrdinaryDiffEqRosenbrock",
-    "OrdinaryDiffEqSDIRK",
-    "OrdinaryDiffEqTsit5",
-    "Pkg",
-    "PlutoUI",
-    "Revise",
-    "SimplexGridFactory",
-    "StrideArraysCore",
-    "Test",
-    "Triangulate",
-    "UUIDs",
-]
+test = ["AMGCLWrap", "AlgebraicMultigrid", "Aqua", "ChunkSplitters", "DataStructures", "ExampleJuggler", "ExplicitImports",  "HypertextLiteral", "ILUZero", "Markdown", "Metis", "Pkg", "PlutoUI", "Revise", "SimplexGridFactory", "StrideArraysCore", "Test", "Triangulate", "UUIDs"]
