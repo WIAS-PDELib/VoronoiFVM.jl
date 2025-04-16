@@ -548,18 +548,27 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
         n = num_dof(system)
 
         if has_generic_operator(system)
-            system.generic_matrix_backend = AutoSparse(
-                AutoForwardDiff();
-                sparsity_detector = TracerSparsityDetector(),
-                coloring_algorithm = GreedyColoringAlgorithm()
-            )
+            if has_generic_operator_sparsity(system)
+                sparsity=system.physics.generic_operator_sparsity(system)
+                system.generic_matrix_backend = AutoSparse(
+                    AutoForwardDiff();
+                    sparsity_detector = KnownJacobianSparsityDetector(sparsity) ,
+                    coloring_algorithm = GreedyColoringAlgorithm()
+                )
+            else
+                system.generic_matrix_backend = AutoSparse(
+                    AutoForwardDiff();
+                    sparsity_detector = TracerSparsityDetector(),
+                    coloring_algorithm = GreedyColoringAlgorithm()
+                )
+            end
             generic_operator(f, u) = system.physics.generic_operator(f, u, system)
             input = rand(num_dof(system))
             output = similar(input)
             tdetect = @elapsed begin
                 system.generic_matrix_prep = prepare_jacobian(generic_operator, output, system.generic_matrix_backend, input)
             end
-            _info("Sparsity detection for generic operator: $(tdetect) s")
+            _info("Sparsity preparation for generic operator: $(tdetect) s")
         end
     finally
         unlock(sysmutatelock)
@@ -1015,6 +1024,7 @@ end
 
 #####################################################
 has_generic_operator(sys::AbstractSystem) = sys.physics.generic_operator != nofunc
+has_generic_operator_sparsity(sys::AbstractSystem) = sys.physics.generic_operator_sparsity != nofunc
 
 ##################################################################
 """

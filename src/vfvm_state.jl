@@ -192,7 +192,7 @@ function Base.similar(state::SystemState; data = state.data)
     params = similar(state.params)
     uhash = zero(UInt64)
     history = nothing
-    return SystemState(
+        return SystemState(
         system, data, solution,
         matrix, generic_matrix, dudp,
         residual, update, linear_cache, params, uhash, history

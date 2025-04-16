@@ -6,6 +6,7 @@ $(read(joinpath(@__DIR__, "..", "README.md"), String))
 module VoronoiFVM
 
 using BandedMatrices: BandedMatrices, BandedMatrix, Zeros
+using ADTypes: ADTypes, KnownJacobianSparsityDetector
 import Colors
 using CommonSolve: CommonSolve, solve, solve!
 using DiffResults: DiffResults
@@ -25,7 +26,10 @@ using ExtendableGrids: ExtendableGrids, BEdgeNodes, BFaceCells, BFaceEdges,
     num_partitions, pcolor_partitions, pcolors, num_pcolors,
     PColorPartitions, PartitionCells, PartitionBFaces, PartitionNodes, PartitionEdges
 
-using DifferentiationInterface: DifferentiationInterface, AutoSparse, AutoForwardDiff, prepare_jacobian
+using DifferentiationInterface: DifferentiationInterface,
+    AutoSparse,
+    AutoForwardDiff,
+    prepare_jacobian
 
 using ExtendableSparse: ExtendableSparse, BlockPreconditioner,
     ExtendableSparseMatrix,

@@ -57,6 +57,7 @@ function main(;
         verbose = false,
         tend = 1,
         unknown_storage = :sparse,
+        autodetect_sparsity = true
     )
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
@@ -119,15 +120,37 @@ function main(;
         return nothing
     end
 
+    # If we know the sparsity pattern, we can here create a
+    # sparse matrix with values set to 1 in the nonzero
+    # slots. This allows to circumvent the
+    # autodetection which may takes some time.
+    function generic_operator_sparsity(sys)
+        idx = unknown_indices(unknowns(sys))
+        sparsity = spzeros(num_dof(sys), num_dof(sys))
+        sparsity[idx[iC, 1], idx[iC, 1]] = 1
+        sparsity[idx[iC, 1], idx[iA, 1]] = 1
+        sparsity[idx[iC, 1], idx[iA, 2]] = 1
+        return sparsity
+    end
 
-    physics = VoronoiFVM.Physics(;
-        breaction = breaction!,
-        generic = generic_operator!,
-        flux = flux!,
-        storage = storage!,
-        source = source!
-    )
-
+    if autodetect_sparsity
+        physics = VoronoiFVM.Physics(;
+            breaction = breaction!,
+            generic = generic_operator!,
+            flux = flux!,
+            storage = storage!,
+            source = source!
+        )
+    else
+        physics = VoronoiFVM.Physics(;
+            breaction = breaction!,
+            generic = generic_operator!,
+            generic_sparsity = generic_operator_sparsity,
+            flux = flux!,
+            storage = storage!,
+            source = source!
+        )
+    end
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage)
 
     ## Enable species in bulk resp
@@ -180,7 +203,9 @@ using Test
 function runtests()
     testval = 0.007027597470502758
     @test main(; unknown_storage = :sparse) ≈ testval &&
-        main(; unknown_storage = :dense) ≈ testval
+        main(; unknown_storage = :dense) ≈ testval &&
+        main(; unknown_storage = :sparse, autodetect_sparsity = false) ≈ testval &&
+        main(; unknown_storage = :dense, autodetect_sparsity = false) ≈ testval
     return nothing
 end
 
