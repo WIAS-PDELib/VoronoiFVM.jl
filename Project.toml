@@ -8,6 +8,7 @@ BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
 Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
 CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
 DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
+DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ExtendableGrids = "cfc395e8-590f-11e8-1f13-43a2532b2fa8"
 ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
@@ -23,10 +24,10 @@ RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 RecursiveFactorization = "f2c3362d-daeb-58d1-803e-2bc74f2840b4"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-SparseDiffTools = "47a9eef4-7e08-11e9-0b38-333d64bd3804"
+SparseConnectivityTracer = "9f842d2f-2579-4b1d-911e-f412cf18a3f5"
+SparseMatrixColorings = "0a514795-09f3-496d-8182-132a7b665d35"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 TextWrap = "b718987f-49a8-5099-9789-dcd902bef87d"
 
 [weakdeps]
@@ -34,35 +35,6 @@ ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
 
 [extensions]
 VoronoiFVMExtendableFEMBaseExt = "ExtendableFEMBase"
-
-[extras]
-AMGCLWrap = "4f76b812-4ba5-496d-b042-d70715554288"
-AlgebraicMultigrid = "2169fc97-5a83-5252-b627-83903c6c433c"
-Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
-Catalyst = "479239e8-5488-4da2-87a7-35f2df7eef83"
-ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
-DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
-ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
-ExtendableFEM = "a722555e-65e0-4074-a036-ca7ce79a4aed"
-ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
-HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
-ILUZero = "88f59080-6952-5380-9ea5-54057fb9a43f"
-Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
-Metis = "2679e427-3c69-5b7f-982b-ece356f1e94b"
-OrdinaryDiffEqBDF = "6ad6398a-0878-4a85-9266-38940aa047c8"
-OrdinaryDiffEqLowOrderRK = "1344f307-1e59-4825-a18e-ace9aa3fa4c6"
-OrdinaryDiffEqRosenbrock = "43230ef6-c299-4910-a778-202eb28ce4ce"
-OrdinaryDiffEqSDIRK = "2d112036-d095-4a1e-ab9a-08536f3ecdbf"
-OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
-Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
-SimplexGridFactory = "57bfcd06-606e-45d6-baf4-4ba06da0efd5"
-StrideArraysCore = "7792a7ef-975c-4747-a70f-980b88e8d1da"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Triangulate = "f7e6ffb2-c36d-4f8f-a77e-16e897189344"
-UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [compat]
 AMGCLWrap = "2.1.0"
@@ -75,6 +47,7 @@ Colors = "0.12, 0.13"
 CommonSolve = "0.2"
 DataStructures = "0.18.22"
 DiffResults = "1"
+DifferentiationInterface = "0.6.52"
 DocStringExtensions = "0.8,0.9"
 ExampleJuggler = "2"
 ExplicitImports = "1.11.1"
@@ -107,44 +80,45 @@ Revise = "3.7.3"
 SciMLBase = "2.6"
 SimplexGridFactory = "2.4.0"
 SparseArrays = "1.9"
-SparseDiffTools = "^1.19, 2"
+SparseConnectivityTracer = "0.6.17"
+SparseMatrixColorings = "0.4.18"
 StaticArrays = "0.12,1"
-StrideArraysCore = "0.5.7"
 Statistics = "1.9"
-Symbolics = "4.2,5,6"
+StrideArraysCore = "0.5.7"
 Test = "1"
 TextWrap = "1.0.2"
 Triangulate = "2.4.0"
 UUIDs = "1"
 julia = "1.9"
 
+[extras]
+AMGCLWrap = "4f76b812-4ba5-496d-b042-d70715554288"
+AlgebraicMultigrid = "2169fc97-5a83-5252-b627-83903c6c433c"
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Catalyst = "479239e8-5488-4da2-87a7-35f2df7eef83"
+ChunkSplitters = "ae650224-84b6-46f8-82ea-d812ca08434e"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
+ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
+ExtendableFEM = "a722555e-65e0-4074-a036-ca7ce79a4aed"
+ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
+HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+ILUZero = "88f59080-6952-5380-9ea5-54057fb9a43f"
+Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
+Metis = "2679e427-3c69-5b7f-982b-ece356f1e94b"
+OrdinaryDiffEqBDF = "6ad6398a-0878-4a85-9266-38940aa047c8"
+OrdinaryDiffEqLowOrderRK = "1344f307-1e59-4825-a18e-ace9aa3fa4c6"
+OrdinaryDiffEqRosenbrock = "43230ef6-c299-4910-a778-202eb28ce4ce"
+OrdinaryDiffEqSDIRK = "2d112036-d095-4a1e-ab9a-08536f3ecdbf"
+OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+SimplexGridFactory = "57bfcd06-606e-45d6-baf4-4ba06da0efd5"
+StrideArraysCore = "7792a7ef-975c-4747-a70f-980b88e8d1da"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Triangulate = "f7e6ffb2-c36d-4f8f-a77e-16e897189344"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+
 [targets]
-test = [
-    "AMGCLWrap",
-    "AlgebraicMultigrid",
-    "Aqua",
-    "Catalyst",
-    "ChunkSplitters",
-    "DataStructures",
-    "ExampleJuggler",
-    "ExplicitImports",
-    "ExtendableFEM",
-    "ExtendableFEMBase",
-    "HypertextLiteral",
-    "ILUZero",
-    "Markdown",
-    "Metis",
-    "OrdinaryDiffEqBDF",
-    "OrdinaryDiffEqLowOrderRK",
-    "OrdinaryDiffEqRosenbrock",
-    "OrdinaryDiffEqSDIRK",
-    "OrdinaryDiffEqTsit5",
-    "Pkg",
-    "PlutoUI",
-    "Revise",
-    "SimplexGridFactory",
-    "StrideArraysCore",
-    "Test",
-    "Triangulate",
-    "UUIDs",
-]
+test = ["AMGCLWrap", "AlgebraicMultigrid", "Aqua", "Catalyst", "ChunkSplitters", "DataStructures", "ExampleJuggler", "ExplicitImports", "ExtendableFEM", "ExtendableFEMBase", "HypertextLiteral", "ILUZero", "Markdown", "Metis", "OrdinaryDiffEqBDF", "OrdinaryDiffEqLowOrderRK", "OrdinaryDiffEqRosenbrock", "OrdinaryDiffEqSDIRK", "OrdinaryDiffEqTsit5", "Pkg", "PlutoUI", "Revise", "SimplexGridFactory", "StrideArraysCore", "Test", "Triangulate", "UUIDs"]

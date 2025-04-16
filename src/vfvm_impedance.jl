@@ -236,22 +236,16 @@ Usually, this functional is  a test function integral.  Initially,
 we assume that its value depends on all unknowns of the system.
 """
 function measurement_derivative(system::AbstractSystem, measurement_functional, U0)
-
-    # Create a sparse 1×ndof matrix assuming that the functional
-    # depends on all unknowns in the system
-    ndof = num_dof(system)
-    colptr = [i for i in 1:(ndof + 1)]
-    rowval = [1 for i in 1:ndof]
-    nzval = [1.0 for in in 1:ndof]
-    jac = SparseMatrixCSC(1, ndof, colptr, rowval, nzval)
-
-    # See https://github.com/JuliaDiff/SparseDiffTools.jl
-
-    # Color the matrix for automatic differentiation
-    colors = matrix_colors(jac)
-
-    # Use Julia automatic differentiation for the calculation of the Jacobian
-    forwarddiff_color_jacobian!(jac, measurement_functional, dofs(U0); colorvec = colors)
+    input = dofs(U0)
+    output = similar(input)
+    backend = AutoSparse(
+        AutoForwardDiff();
+        sparsity_detector = TracerSparsityDetector(),
+        coloring_algorithm = GreedyColoringAlgorithm()
+    )
+    jac_prep = prepare_jacobian(measurement_functional, output, backend, input)
+    jac = similar(sparsity_pattern(jac_prep), Float64)
+    DifferentiationInterface.jacobian!(measurement_functional, output, jac, jac_prep, backend, input)
 
     # Drop any zero entries
     dropzeros!(jac)

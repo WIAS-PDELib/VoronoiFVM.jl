@@ -25,13 +25,15 @@ using ExtendableGrids: ExtendableGrids, BEdgeNodes, BFaceCells, BFaceEdges,
     num_partitions, pcolor_partitions, pcolors, num_pcolors,
     PColorPartitions, PartitionCells, PartitionBFaces, PartitionNodes, PartitionEdges
 
+using DifferentiationInterface: DifferentiationInterface, AutoSparse, AutoForwardDiff, prepare_jacobian
+
 using ExtendableSparse: ExtendableSparse, BlockPreconditioner,
     ExtendableSparseMatrix,
     ExtendableSparseMatrixCSC,
     MTExtendableSparseMatrixCSC,
     AbstractExtendableSparseMatrixCSC,
     PointBlockILUZeroPreconditioner, factorize!, flush!,
-    nnz, rawupdateindex!, sparse, updateindex!, nnznew
+    nnz, rawupdateindex!, updateindex!, nnznew
 
 using ForwardDiff: ForwardDiff, value
 using GridVisualize: GridVisualize, GridVisualizer
@@ -48,11 +50,10 @@ import RecursiveFactorization
 using SciMLBase: SciMLBase
 using SparseArrays: SparseArrays, SparseMatrixCSC, dropzeros!, nonzeros,
     nzrange, spzeros, issparse
-using SparseDiffTools: SparseDiffTools, forwarddiff_color_jacobian!,
-    matrix_colors
+using SparseConnectivityTracer: SparseConnectivityTracer, TracerSparsityDetector
+using SparseMatrixColorings: GreedyColoringAlgorithm, sparsity_pattern
 using StaticArrays: StaticArrays, @MVector, @SArray, @SMatrix
 using Statistics: Statistics, mean
-using Symbolics: Symbolics
 using TextWrap: print_wrapped
 
 """

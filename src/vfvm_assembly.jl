@@ -600,11 +600,13 @@ function _eval_and_assemble_generic_operator(system::AbstractSystem, matrix, U, 
     y = similar(vecF)
     generic_operator(y, vecU)
     vecF .+= y
-    forwarddiff_color_jacobian!(
-        system.generic_matrix,
+    DifferentiationInterface.jacobian!(
         generic_operator,
-        vecU;
-        colorvec = system.generic_matrix_colors,
+        y,
+        system.generic_matrix,
+        system.generic_matrix_prep,
+        system.generic_matrix_backend,
+        vecU
     )
     rowval = system.generic_matrix.rowval
     colptr = system.generic_matrix.colptr
