@@ -98,19 +98,14 @@ mutable struct System{Tv, Tc, Ti, Tm, TSpecMat <: AbstractMatrix} <: AbstractSys
     outflownoderegions::Union{SparseMatrixCSC{Bool, Int}, Nothing}
 
     """
-    Sparse matrix for generic operator handling
-    """
-    generic_matrix::SparseMatrixCSC
-
-    """
     Sparse matrix colors etc. for generic operator handling
     """
-    generic_matrix_prep::DifferentiationInterface.SparseJacobianPrep
+    generic_matrix_prep
 
     """
     Sparsity detector backend
     """
-    generic_matrix_backend::DifferentiationInterface.AutoSparse
+    generic_matrix_backend
 
     """
     Has the system been completed (species information compiled)?
@@ -563,12 +558,8 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
             output = similar(input)
             tdetect = @elapsed begin
                 system.generic_matrix_prep = prepare_jacobian(generic_operator, output, system.generic_matrix_backend, input)
-                system.generic_matrix = similar(sparsity_pattern(system.generic_matrix_prep), Tv)
             end
             _info("Sparsity detection for generic operator: $(tdetect) s")
-            if nnz(system.generic_matrix) == 0
-                error("Sparsity detection failed: no pattern found")
-            end
         end
     finally
         unlock(sysmutatelock)

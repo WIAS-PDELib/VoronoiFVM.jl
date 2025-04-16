@@ -478,6 +478,7 @@ function eval_and_assemble(
         UOld::AbstractMatrix{Tv}, # Old timestep solution
         F::AbstractMatrix{Tv}, # Right hand side
         matrix::AbstractMatrix,
+        generic_matrix::Union{AbstractMatrix, Nothing},
         dudp,
         time,
         tstep, # time step size. Inf means stationary solution
@@ -581,7 +582,7 @@ function eval_and_assemble(
             allnballocs = 0
         end
     end
-    _eval_and_assemble_generic_operator(system, matrix, U, F)
+    _eval_and_assemble_generic_operator(system, matrix, generic_matrix, U, F)
     _eval_and_assemble_inactive_species(system, matrix, U, UOld, F)
 
     return allncallocs, allnballocs, neval
@@ -590,7 +591,7 @@ end
 """
 Evaluate and assemble jacobian for generic operator part.
 """
-function _eval_and_assemble_generic_operator(system::AbstractSystem, matrix, U, F)
+function _eval_and_assemble_generic_operator(system::AbstractSystem, matrix, generic_matrix, U, F)
     if !has_generic_operator(system)
         return
     end
@@ -598,19 +599,18 @@ function _eval_and_assemble_generic_operator(system::AbstractSystem, matrix, U, 
     vecF = dofs(F)
     vecU = dofs(U)
     y = similar(vecF)
-    generic_operator(y, vecU)
-    vecF .+= y
-    DifferentiationInterface.jacobian!(
+    DifferentiationInterface.value_and_jacobian!(
         generic_operator,
         y,
-        system.generic_matrix,
+        generic_matrix,
         system.generic_matrix_prep,
         system.generic_matrix_backend,
         vecU
     )
-    rowval = system.generic_matrix.rowval
-    colptr = system.generic_matrix.colptr
-    nzval = system.generic_matrix.nzval
+    vecF .+= y
+    rowval = generic_matrix.rowval
+    colptr = generic_matrix.colptr
+    nzval = generic_matrix.nzval
     for i in 1:(length(colptr) - 1)
         for j in colptr[i]:(colptr[i + 1] - 1)
             updateindex!(matrix, +, nzval[j], rowval[j], i)

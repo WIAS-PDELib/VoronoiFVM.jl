@@ -75,7 +75,11 @@ function testfunction(factory::TestFunctionFactory{Tv}, bc0, bc1) where {Tv}
         factory.state.system.boundary_values[1, bc0[i]] = 0
     end
 
-    eval_and_assemble(factory.state.system, u, u, f, factory.state.matrix, factory.state.dudp, Inf, Inf, 0.0, nothing, zeros(0))
+    eval_and_assemble(
+        factory.state.system, u, u, f,
+        factory.state.matrix, factory.state.generic_matrix, factory.state.dudp,
+        Inf, Inf, 0.0, nothing, zeros(0)
+    )
 
     _initialize!(u, factory.state.system, nothing)
 

@@ -13,7 +13,10 @@ Type parameters:
 Type fields:
 $(TYPEDFIELDS)
 """
-mutable struct SystemState{Tv, Tp, TMatrix <: AbstractMatrix{Tv}, TSolArray <: AbstractMatrix{Tv}, TData}
+mutable struct SystemState{
+        Tv, Tp, TMatrix <: AbstractMatrix{Tv},
+        TGenericMatrix, TSolArray <: AbstractMatrix{Tv}, TData,
+    }
 
     """
     Related finite volume system
@@ -34,6 +37,11 @@ mutable struct SystemState{Tv, Tp, TMatrix <: AbstractMatrix{Tv}, TSolArray <: A
     Jacobi matrix for nonlinear problem
     """
     matrix::TMatrix
+
+    """
+    Sparse matrix for generic operator handling
+    """
+    generic_matrix::TGenericMatrix
 
     """
     Parameter derivative (vector of solution arrays)
@@ -131,11 +139,21 @@ function SystemState(
         end
     end
 
+    if has_generic_operator(system)
+        generic_matrix = similar(sparsity_pattern(system.generic_matrix_prep), Tv)
+    else
+        generic_matrix = nothing
+    end
+
     solution = unknowns(Tu, system)
     residual = unknowns(Tu, system)
     update = unknowns(Tu, system)
     dudp = [unknowns(Tu, system) for i in 1:(system.num_parameters)]
-    return SystemState(system, data, solution, matrix, dudp, residual, update, nothing, params, zero(UInt64), nothing)
+    return SystemState(
+        system, data, solution,
+        matrix, generic_matrix, dudp,
+        residual, update, nothing, params, zero(UInt64), nothing
+    )
 end
 
 
@@ -162,6 +180,11 @@ function Base.similar(state::SystemState; data = state.data)
     else
         matrix = similar(state.matrix)
     end
+    if isnothing(state.generic_matrix)
+        generic_matrix = nothing
+    else
+        generic_matrix = similar(state.generic_matrix)
+    end
     dudp = similar(state.dudp)
     residual = similar(state.residual)
     update = similar(state.update)
@@ -169,5 +192,9 @@ function Base.similar(state::SystemState; data = state.data)
     params = similar(state.params)
     uhash = zero(UInt64)
     history = nothing
-    return SystemState(system, data, solution, matrix, dudp, residual, update, linear_cache, params, uhash, history)
+    return SystemState(
+        system, data, solution,
+        matrix, generic_matrix, dudp,
+        residual, update, linear_cache, params, uhash, history
+    )
 end

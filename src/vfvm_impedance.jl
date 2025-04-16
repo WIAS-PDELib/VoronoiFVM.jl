@@ -63,7 +63,11 @@ function ImpedanceSystem(system::AbstractSystem{Tv, Tc, Ti}, U0::AbstractMatrix;
     # value as the "old  timestep" value.
     # An advantage of this approach is the fact that this way, we get the
     # nonzero pattern for the iω term right (as opposite to passing Inf as time step size)
-    eval_and_assemble(system, U0, U0, residual, state.matrix, state.dudp, 0.0, 1.0e30, 0.0, system.physics.data, params)
+    eval_and_assemble(
+        system, U0, U0, residual,
+        state.matrix, state.generic_matrix, state.dudp,
+        0.0, 1.0e30, 0.0, system.physics.data, params
+    )
 
     impedance_system = ImpedanceSystem{Tv}()
 

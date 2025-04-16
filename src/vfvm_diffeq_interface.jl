@@ -11,7 +11,11 @@ function _eval_res_jac!(state, u, t)
     uhash = hash(u)
     if uhash != state.uhash
         ur = reshape(u, state.system)
-        eval_and_assemble(state.system, ur, ur, state.residual, state.matrix, state.dudp, value(t), Inf, 0.0, state.system.physics.data, state.params)
+        eval_and_assemble(
+            state.system, ur, ur, state.residual,
+            state.matrix, state.generic_matrix,
+            state.dudp, value(t), Inf, 0.0, state.system.physics.data, state.params
+        )
         state.uhash = uhash
         state.history.nd += 1
     end
