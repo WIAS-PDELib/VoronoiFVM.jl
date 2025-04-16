@@ -6,9 +6,9 @@ using GridVisualize
 using ExtendableSparse
 using ExtendableSparse: ILUZeroPreconBuilder
 using ForwardDiff, DiffResults
-using SparseDiffTools, SparseArrays
+using SparseArrays
 using ILUZero, LinearSolve
-
+using DifferentiationInterface, SparseConnectivityTracer, SparseMatrixColorings
 &quot;&quot;&quot;
     f(P)
 
@@ -197,12 +197,17 @@ function runh(; Plotter = nothing, n = 10)
     state = VoronoiFVM.SystemState(sys)
     U0 = solve!(state; inival = 0.5, params = [P[1]])
 
-    ndof = num_dof(sys)
-    colptr = [i for i in 1:(ndof + 1)]
-    rowval = [1 for i in 1:ndof]
-    nzval = [1.0 for in in 1:ndof]
-    ∂m∂u = zeros(1, ndof)
-    colors = matrix_colors(∂m∂u)
+
+    input = VoronoiFVM.dofs(U0)
+    output = zeros(1)
+    backend = AutoSparse(
+        AutoForwardDiff();
+        sparsity_detector = TracerSparsityDetector(),
+        coloring_algorithm = GreedyColoringAlgorithm()
+    )
+    jac_prep = prepare_jacobian(mymeas!, output, backend, input)
+    ∂m∂u = similar(sparsity_pattern(jac_prep), Float64)
+
 
     H = zeros(0)
     DH = zeros(0)
@@ -214,7 +219,7 @@ function runh(; Plotter = nothing, n = 10)
         sol = solve!(state; inival = 0.5, params)
 
         mymeas!(m, sol)
-        push!(H, m[1])</code></pre><p>this one is expensive - we would need to assemble this jacobian via local calls</p><pre><code class="language-julia hljs">        forwarddiff_color_jacobian!(∂m∂u, mymeas!, vec(sol); colorvec = colors)</code></pre><p>need to have the full derivative of m vs p</p><pre><code class="language-julia hljs">        ∂m∂p = ForwardDiff.gradient(p -&gt; measp(p, sol), params)
+        push!(H, m[1])</code></pre><p>this one is expensive - we would need to assemble this jacobian via local calls</p><pre><code class="language-julia hljs">        DifferentiationInterface.jacobian!(mymeas!, output, ∂m∂u, jac_prep, backend, vec(sol))</code></pre><p>need to have the full derivative of m vs p</p><pre><code class="language-julia hljs">        ∂m∂p = ForwardDiff.gradient(p -&gt; measp(p, sol), params)
 
         dudp = state.matrix \ vec(state.dudp[1])
         dmdp = -∂m∂u * dudp + ∂m∂p
@@ -236,4 +241,4 @@ function runtests()
     return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example424_AbstractQuantitiesInit/">« 424: Initialization of Abstract quantities</a><a class="docs-footer-nextpage" href="../Example440_ParallelState/">440: Parallel solves »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Thursday 10 April 2025 18:54">Thursday 10 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example424_AbstractQuantitiesInit/">« 424: Initialization of Abstract quantities</a><a class="docs-footer-nextpage" href="../Example440_ParallelState/">440: Parallel solves »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Wednesday 16 April 2025 21:00">Wednesday 16 April 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
