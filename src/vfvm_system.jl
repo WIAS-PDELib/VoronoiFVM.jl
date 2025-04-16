@@ -549,10 +549,10 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
 
         if has_generic_operator(system)
             if has_generic_operator_sparsity(system)
-                sparsity=system.physics.generic_operator_sparsity(system)
+                sparsity = system.physics.generic_operator_sparsity(system)
                 system.generic_matrix_backend = AutoSparse(
                     AutoForwardDiff();
-                    sparsity_detector = KnownJacobianSparsityDetector(sparsity) ,
+                    sparsity_detector = KnownJacobianSparsityDetector(sparsity),
                     coloring_algorithm = GreedyColoringAlgorithm()
                 )
             else
