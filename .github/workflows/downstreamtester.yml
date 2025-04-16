@@ -46,7 +46,7 @@ jobs:
         run: |
           julia -e '
             using Pkg
-            Pkg.add(url="https://github.com/jpthiele/DownstreamTester.jl")
+            Pkg.add(name="DownstreamTester",version="0.1")
             using DownstreamTester
             DownstreamTester.nightly(;nightlylabels=["julia nightly"])'
 

@@ -1,3 +1,3 @@
 [codespell]
 ignore-words-list = missings,rcall,linke,strat,nd
-skip = CITATIONS.bib
+skip = CITATIONS.bib,.github/workflows/downstreamtester.yml

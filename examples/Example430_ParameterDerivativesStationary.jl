@@ -13,9 +13,9 @@ using GridVisualize
 using ExtendableSparse
 using ExtendableSparse: ILUZeroPreconBuilder
 using ForwardDiff, DiffResults
-using SparseDiffTools, SparseArrays
+using SparseArrays
 using ILUZero, LinearSolve
-
+using DifferentiationInterface, SparseConnectivityTracer, SparseMatrixColorings
 """
     f(P)
 
@@ -208,12 +208,17 @@ function runh(; Plotter = nothing, n = 10)
     state = VoronoiFVM.SystemState(sys)
     U0 = solve!(state; inival = 0.5, params = [P[1]])
 
-    ndof = num_dof(sys)
-    colptr = [i for i in 1:(ndof + 1)]
-    rowval = [1 for i in 1:ndof]
-    nzval = [1.0 for in in 1:ndof]
-    ∂m∂u = zeros(1, ndof)
-    colors = matrix_colors(∂m∂u)
+
+    input = VoronoiFVM.dofs(U0)
+    output = zeros(1)
+    backend = AutoSparse(
+        AutoForwardDiff();
+        sparsity_detector = TracerSparsityDetector(),
+        coloring_algorithm = GreedyColoringAlgorithm()
+    )
+    jac_prep = prepare_jacobian(mymeas!, output, backend, input)
+    ∂m∂u = similar(sparsity_pattern(jac_prep), Float64)
+
 
     H = zeros(0)
     DH = zeros(0)
@@ -228,7 +233,7 @@ function runh(; Plotter = nothing, n = 10)
         push!(H, m[1])
 
         # this one is expensive - we would need to assemble this jacobian via local calls
-        forwarddiff_color_jacobian!(∂m∂u, mymeas!, vec(sol); colorvec = colors)
+        DifferentiationInterface.jacobian!(mymeas!, output, ∂m∂u, jac_prep, backend, vec(sol))
 
         # need to have the full derivative of m vs p
         ∂m∂p = ForwardDiff.gradient(p -> measp(p, sol), params)

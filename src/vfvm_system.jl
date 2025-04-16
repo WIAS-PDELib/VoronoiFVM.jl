@@ -98,15 +98,14 @@ mutable struct System{Tv, Tc, Ti, Tm, TSpecMat <: AbstractMatrix} <: AbstractSys
     outflownoderegions::Union{SparseMatrixCSC{Bool, Int}, Nothing}
 
     """
-    Sparse matrix for generic operator handling
+    Sparse matrix colors etc. for generic operator handling
     """
-    generic_matrix::SparseMatrixCSC
+    generic_matrix_prep
 
     """
-    Sparse matrix colors for generic operator handling
+    Sparsity detector backend
     """
-    generic_matrix_colors::Vector
-
+    generic_matrix_backend
 
     """
     Has the system been completed (species information compiled)?
@@ -550,24 +549,26 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
 
         if has_generic_operator(system)
             if has_generic_operator_sparsity(system)
-                system.generic_matrix = system.physics.generic_operator_sparsity(system)
+                sparsity = system.physics.generic_operator_sparsity(system)
+                system.generic_matrix_backend = AutoSparse(
+                    AutoForwardDiff();
+                    sparsity_detector = KnownJacobianSparsityDetector(sparsity),
+                    coloring_algorithm = GreedyColoringAlgorithm()
+                )
             else
-                generic_operator(f, u) = system.physics.generic_operator(f, u, system)
-                input = rand(num_dof(system))
-                output = similar(input)
-                tdetect = @elapsed begin
-                    sparsity_pattern = Symbolics.jacobian_sparsity(generic_operator, output, input)
-                    system.generic_matrix = Float64.(sparse(sparsity_pattern))
-                end
-                _info("Sparsity detection for generic operator: $(tdetect) s")
-                if nnz(system.generic_matrix) == 0
-                    error("Sparsity detection failed: no pattern found")
-                end
+                system.generic_matrix_backend = AutoSparse(
+                    AutoForwardDiff();
+                    sparsity_detector = TracerSparsityDetector(),
+                    coloring_algorithm = GreedyColoringAlgorithm()
+                )
             end
+            generic_operator(f, u) = system.physics.generic_operator(f, u, system)
+            input = rand(num_dof(system))
+            output = similar(input)
             tdetect = @elapsed begin
-                system.generic_matrix_colors = matrix_colors(system.generic_matrix)
+                system.generic_matrix_prep = prepare_jacobian(generic_operator, output, system.generic_matrix_backend, input)
             end
-            _info("Matrix coloring for generic operator: $(tdetect) s")
+            _info("Sparsity preparation for generic operator: $(tdetect) s")
         end
     finally
         unlock(sysmutatelock)
@@ -575,14 +576,6 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
     return system.is_complete = true
 end
 
-"""
-$(SIGNATURES)
-Set generic operator sparsity, in the case where a generic operator has been
-defined in physics.
-"""
-function generic_operator_sparsity!(system::AbstractSystem, sparsematrix::SparseMatrixCSC)
-    return system.generic_matrix = sparsematrix
-end
 
 """
 ````
