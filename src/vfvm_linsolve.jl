@@ -39,9 +39,9 @@ function _solve_linear!(u, state, nlhistory, control, method_linear, A, b, niter
         )
     else
         if hasproperty(method_linear, :precs) && !isnothing(method_linear.precs)
-            reuse_precs = !control.keepcurrent_linear && niter>1
+            reuse_precs = !control.keepcurrent_linear && niter > 1
             reinit!(state.linear_cache; A = canonical_matrix(A), b, reuse_precs)
-            if !reuse_precs 
+            if !reuse_precs
                 nlhistory.nlu += 1
             end
         else
