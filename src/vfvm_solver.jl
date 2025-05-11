@@ -95,7 +95,8 @@ function solve_step!(
                 control,
                 method_linear,
                 state.matrix,
-                dofs(residual)
+                dofs(residual),
+                niter
             )
 
             dofs(solution) .-= damp * dofs(update)

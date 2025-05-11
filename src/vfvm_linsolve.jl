@@ -13,7 +13,7 @@ end
 canonical_matrix(A) = A
 canonical_matrix(A::AbstractExtendableSparseMatrixCSC) = SparseMatrixCSC(A)
 
-function _solve_linear!(u, state, nlhistory, control, method_linear, A, b)
+function _solve_linear!(u, state, nlhistory, control, method_linear, A, b, niter)
     if isnothing(state.linear_cache)
         if !isa(method_linear, LinearSolve.SciMLLinearSolveAlgorithm)
             @warn "use of $(typeof(method_linear)) is deprecated, use an algorithm from LinearSolve"
@@ -39,8 +39,9 @@ function _solve_linear!(u, state, nlhistory, control, method_linear, A, b)
         )
     else
         if hasproperty(method_linear, :precs) && !isnothing(method_linear.precs)
-            reinit!(state.linear_cache; A = canonical_matrix(A), b, reuse_precs = !control.keepcurrent_linear)
-            if control.keepcurrent_linear
+            reuse_precs = !control.keepcurrent_linear && niter>1
+            reinit!(state.linear_cache; A = canonical_matrix(A), b, reuse_precs)
+            if !reuse_precs 
                 nlhistory.nlu += 1
             end
         else
