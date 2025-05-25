@@ -33,7 +33,7 @@ function assemble_nodes(
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
-    node = Node(system, time, λ, params)
+    node = Node(system, time, λ, params; partition=part)
     UK = Array{Tv, 1}(undef, nspecies + nparams)
     UKOld = Array{Tv, 1}(undef, nspecies + nparams)
 
@@ -112,7 +112,7 @@ function assemble_edges(
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
-    edge = Edge(system, time, λ, params)
+    edge = Edge(system, time, λ, params; partition=part)
     UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
     if nparams > 0
         UKL[(2 * nspecies + 1):end] .= params
@@ -301,7 +301,7 @@ function assemble_bnodes(
         UK[(nspecies + 1):end] .= params
         UKOld[(nspecies + 1):end] .= params
     end
-    bnode = BNode(system, time, λ, params)
+    bnode = BNode(system, time, λ, params; partition=part)
 
     bsrc_evaluator = ResEvaluator(physics, data, :bsource, UK, bnode, nspecies)
     brea_evaluator = ResJacEvaluator(physics, data, :breaction, UK, bnode, nspecies)
@@ -408,7 +408,7 @@ function assemble_bedges(
         F::AbstractMatrix{Tv}
     ) where {Tv}
     physics = system.physics
-    bedge = BEdge(system, time, λ, params)
+    bedge = BEdge(system, time, λ, params; partition=part)
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
     UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)

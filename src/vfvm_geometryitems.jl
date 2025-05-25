@@ -20,6 +20,13 @@ Return region number node or edge is belonging to
 region(item::AbstractGeometryItem) = item.region
 
 """
+   partition(edge_or_node)
+
+Return partition number node or edge is belonging to
+"""
+ExtendableGrids.partition(item::AbstractGeometryItem) = item.partition
+
+"""
    $(TYPEDEF)
 
 Abstract type for nodes. 
@@ -104,6 +111,11 @@ mutable struct Node{Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     region::Ti
 
     """
+    Partition number
+    """
+    partition::Ti
+
+    """
     Number of species defined in node
     """
     nspec::Ti
@@ -153,9 +165,14 @@ mutable struct Node{Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     """
     _idx::Ti
 
-    function Node{Tc, Tp, Ti}(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
+    function Node{Tc, Tp, Ti}(
+            sys::AbstractSystem{Tv, Tc, Ti, Tm},
+            time, embedparam, params::Vector{Tp};
+            partition = 1
+        ) where {Tv, Tc, Tp, Ti, Tm}
         return new(
             zero(Ti), 0,
+            partition,
             num_species(sys), 0,
             coordinates(sys.grid),
             sys.grid[CellNodes],
@@ -165,8 +182,8 @@ mutable struct Node{Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     end
 end
 
-function Node(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
-    return Node{Tc, Tp, Ti}(sys, time, embedparam, params)
+function Node(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}; partition = 1) where {Tv, Tc, Tp, Ti, Tm}
+    return Node{Tc, Tp, Ti}(sys, time, embedparam, params; partition)
 end
 
 Node(sys) = Node(sys, 0, 0, zeros(0))
@@ -228,6 +245,11 @@ mutable struct BNode{Td, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     """
     region::Ti
 
+    """
+    Partition number
+    """
+    partition::Ti
+
     cellregions::Vector{Ti}
 
     """
@@ -271,10 +293,11 @@ mutable struct BNode{Td, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
 
     function BNode{Td, Tc, Tp, Ti}(
             sys::Ts, time, embedparam,
-            params::Vector{Tp}
+            params::Vector{Tp};
+            partition = 1
         ) where {Td, Tc, Tp, Ti, Ts <: AbstractSystem}
         return new(
-            0, 0, 0, 0, zeros(Ti, 2),
+            0, 0, 0, 0, partition, zeros(Ti, 2),
             num_species(sys),
             coordinates(sys.grid),
             sys.grid[BFaceNodes],
@@ -290,8 +313,8 @@ end
 # JF: We need to be able to distinguish bwetween dirichlet type and value type.
 # So far we will use Tp for the dirichlet type instead of the valuetype.
 # Maybe this even allows derivatives wrt. Dirichlet data.
-function BNode(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
-    return BNode{Tp, Tc, Tp, Ti}(sys, time, embedparam, params)
+function BNode(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}; partition = 1) where {Tv, Tc, Tp, Ti, Tm}
+    return BNode{Tp, Tc, Tp, Ti}(sys, time, embedparam, params; partition)
 end
 BNode(sys) = BNode(sys, 0, 0, zeros(0))
 
@@ -338,6 +361,11 @@ mutable struct Edge{Tc, Tp, Ti} <: AbstractEdge{Tc, Tp, Ti}
     Inner region number corresponding to edge
     """
     region::Ti
+
+    """
+    Partition number
+    """
+    partition::Ti
 
     """
     Number of species defined in edge
@@ -396,12 +424,13 @@ end
 
 Edge(sys) = Edge(sys, 0, 0, zeros(0))
 
-function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
+function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}; partition = 1) where {Tv, Tc, Tp, Ti, Tm}
     edge = Edge{Tc, Tp, Ti}(nothing)
 
     edge.index = 0
     edge.node = [0, 0]
     edge.region = 0
+    edge.partition = partition
     edge.nspec = num_species(sys)
     edge.icell = 0
     edge.coord = coordinates(sys.grid)
@@ -507,6 +536,11 @@ mutable struct BEdge{Tc, Tp, Ti} <: AbstractEdge{Tc, Tp, Ti}
     region::Ti
 
     """
+    Partition number
+    """
+    partition::Ti
+
+    """
     Number of species defined in edge
     """
     nspec::Ti
@@ -546,12 +580,13 @@ end
 
 BEdge(sys) = BEdge(sys, 0, 0, zeros(0))
 
-function BEdge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}) where {Tv, Tc, Tp, Ti, Tm}
+function BEdge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}; partition = 1) where {Tv, Tc, Tp, Ti, Tm}
     bedge = BEdge{Tc, Tp, Ti}(nothing)
 
     bedge.index = 0
     bedge.node = [0, 0]
     bedge.region = 0
+    bedge.partition = 1
     bedge.nspec = num_species(sys)
     bedge.icell = 0
     bedge.coord = coordinates(sys.grid)
