@@ -297,15 +297,20 @@ function runtests()
         end
     end
 
-    for dim in [2]
-        for assembly in [:edgewise, :cellwise]
-            for flux in [:flux_marray, :flux_strided, :flux_diffcache]
-                result = main(; dim, n = 100, assembly, flux, npart = 20)
-                @test  result ≈ 141.54097792523987
+    if !Sys.isapple()
+        ## MacOS14 currently crashes here:        
+        ## OMP: Error #13: Assertion failure at kmp_runtime.cpp(8114).
+        ## MacOS13 may crash here:
+        ## OMP: Error #13: Assertion failure at kmp_csupport.cpp(607).
+        for dim in [2]
+            for assembly in [:edgewise, :cellwise]
+                for flux in [:flux_marray, :flux_strided, :flux_diffcache]
+                    result = main(; dim, n = 100, assembly, flux, npart = 20)
+                    @test  result ≈ 141.54097792523987
+                end
             end
         end
     end
-
     return nothing
 end
 
