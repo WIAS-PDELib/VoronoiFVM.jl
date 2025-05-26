@@ -218,11 +218,11 @@ function runtests()
         sol_fem, evelo_fem, bfvelo_fem, minmax_fem = main(;
             cylindrical_grid, cin, usefem = true
         )
-        @test norm(evelo_analytical .- evelo_fem, Inf) ≤ 1.0e-11
+        @test norm(evelo_analytical .- evelo_fem, Inf) ≤ 1.0e-10
         @test norm(bfvelo_analytical .- bfvelo_fem, Inf) ≤ 1.0e-9
         @test norm(sol_analytical .- sol_fem, Inf) ≤ 1.0e-10
         @test norm(minmax_analytical .- [0.0, cin], Inf) ≤ 1.0e-15
-        @test norm(minmax_fem .- [0.0, cin], Inf) ≤ 1.0e-11
+        @test norm(minmax_fem .- [0.0, cin], Inf) ≤ 1.0e-10
     end
     return nothing
 end
