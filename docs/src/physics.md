@@ -53,6 +53,7 @@ VoronoiFVM.Edge
 VoronoiFVM.BEdge
 VoronoiFVM.time
 VoronoiFVM.region
+ExtendableGrids.partition(::AbstractGeometryItem)
 VoronoiFVM.parameters
 VoronoiFVM.embedparam
 VoronoiFVM.project
