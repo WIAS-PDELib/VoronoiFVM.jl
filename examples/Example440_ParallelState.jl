@@ -43,7 +43,7 @@ function main(; nref = 5, Plotter = nothing)
         ## Solve for all data values in chunk
         for iflux in indexes
             data = (influx = influxes[iflux],)
-            sol = solve!(state; data, inival = 0.1, verbose = "ne", abstol=1.0e-15, reltol=1.0e-20)
+            sol = solve!(state; data, inival = 0.1, verbose = "ne", abstol = 1.0e-15, reltol = 1.0e-20)
             masses[iflux] = integrate(sys, sol)[1, 1]
         end
     end
