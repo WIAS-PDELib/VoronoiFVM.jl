@@ -6,6 +6,12 @@
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
+
+## v2.11.0 May 26, 2025
+  - add `partition` field and `parttition(NodeOrEdge)` method to geometry items
+  - test use of PreallocationTools to provide local buffers in flux 
+    functions while multithreading (see Example510).
+  
 ## v2.10.0 April 16, 2025
   - Replace sparsity detection for generic operator
     Use DifferentiationInterface + SparseConnectivity tracer instead of Symbolics + SparseDiffTools
