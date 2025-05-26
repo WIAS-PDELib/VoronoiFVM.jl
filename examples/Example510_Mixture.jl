@@ -61,14 +61,14 @@ using PreallocationTools
 using Metis
 
 ## Userdata structure for passing number of species as parameter known at compile time.
-## Buffers are stack allocated 
+## Buffers are stack allocated
 Base.@kwdef struct MyDataStaticSizeInfo{NSpec}
     DBinary::Symmetric{Float64, Matrix{Float64}} = Symmetric(fill(0.1, NSpec, NSpec))
     DKnudsen::Vector{Float64} = ones(NSpec)
     diribc::Vector{Int} = [1, 2]
 end
 nspec(::MyDataStaticSizeInfo{NSpec}) where {NSpec} = NSpec
-MyDataStaticSizeInfo(nspec;  kwargs...) = MyDataStaticSizeInfo{nspec}(; kwargs...)
+MyDataStaticSizeInfo(nspec; kwargs...) = MyDataStaticSizeInfo{nspec}(; kwargs...)
 
 ## Flux with stack allocated buffers using StrideArray
 function flux_strided(f, u, edge, data)
@@ -136,7 +136,7 @@ function flux_marray(f, u, edge, data)
     return nothing
 end
 
-## Userdata structure for passing number of species as  a field in the structure, with 
+## Userdata structure for passing number of species as  a field in the structure, with
 ## multithreading-aware pre-allocated buffers
 Base.@kwdef struct MyDataPrealloc
     nspec::Int = 5
@@ -149,7 +149,7 @@ Base.@kwdef struct MyDataPrealloc
     du::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec)) for i in 1:npart]
     ipiv::Vector{Vector{Int}} = [zeros(Int, nspec) for i in 1:npart]
 end
-nspec(data::MyDataPrealloc)  = data.nspec
+nspec(data::MyDataPrealloc) = data.nspec
 
 
 ## Flux using pre-allocated buffers
@@ -246,7 +246,7 @@ function main(;
         data = MyDataStaticSizeInfo(nspec; DBinary, DKnudsen, diribc)
     elseif flux == :flux_diffcache
         _flux = flux_diffcache
-        data = MyDataPrealloc(;nspec, npart = num_partitions(grid), DBinary, DKnudsen, diribc)
+        data = MyDataPrealloc(; nspec, npart = num_partitions(grid), DBinary, DKnudsen, diribc)
     else
         _flux = flux_marray
         data = MyDataStaticSizeInfo(nspec; DBinary, DKnudsen, diribc)
@@ -281,7 +281,7 @@ function runtests()
     ]
 
     dimtestvals = [4.788926530387466, 15.883072449873742, 52.67819183426213]
-    for dim in [1,2,3]
+    for dim in [1, 2, 3]
         for assembly in [:edgewise, :cellwise]
             for flux in [:flux_marray, :flux_strided, :flux_diffcache]
                 for strategy in strategies
@@ -300,7 +300,7 @@ function runtests()
     for dim in [2]
         for assembly in [:edgewise, :cellwise]
             for flux in [:flux_marray, :flux_strided, :flux_diffcache]
-                result = main(; dim, n=100, assembly, flux, npart=20)
+                result = main(; dim, n = 100, assembly, flux, npart = 20)
                 @test  result ≈ 141.54097792523987
             end
         end
