@@ -144,9 +144,9 @@ Base.@kwdef struct MyDataPrealloc
     DBinary::Symmetric{Float64, Matrix{Float64}} = Symmetric(fill(0.1, nspec, nspec))
     DKnudsen::Vector{Float64} = ones(nspec)
     diribc::Vector{Int} = [1, 2]
-    M::Vector{DiffCache{Matrix{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec, nspec)) for i in 1:npart]
-    au::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec)) for i in 1:npart]
-    du::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec)) for i in 1:npart]
+    M::Vector{DiffCache{Matrix{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec, nspec), 2*nspec) for i in 1:npart]
+    au::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec), 2*nspec) for i in 1:npart]
+    du::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec), 2*nspec) for i in 1:npart]
     ipiv::Vector{Vector{Int}} = [zeros(Int, nspec) for i in 1:npart]
 end
 nspec(data::MyDataPrealloc) = data.nspec
