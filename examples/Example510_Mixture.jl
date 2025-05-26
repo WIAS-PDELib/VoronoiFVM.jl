@@ -3,10 +3,7 @@
 #=
 
 Test mixture diffusion flux. The problem is here that in the flux function we need to
-solve a linear system of equations which calculates the fluxes from the gradients.#
-To do so without (heap) allocations can be achieved using StrideArrays, together with the
-possibility to have static (compile time) information about the size of the local
-arrays to be allocated.
+solve a linear system of equations which calculates the fluxes from the gradients.
 
 ``u_i`` are the species partial pressures, ``\vec N_i`` are the species fluxes.
 ``D_i^K`` are the Knudsen diffusion coefficients, and ``D^B_{ij}`` are the binary diffusion coefficients.
@@ -33,22 +30,15 @@ such that
 \vec \nabla u_n
 \end{pmatrix}
 ```
-In the two point flux finite volume discretization, this results into a corresponding linear system which calculates the discrete edge fluxes from the discrete gradients. 
-Here we demonstrate how to implement this in a fast, (heap) allocation free way.
+In the two point flux finite volume discretization, this results into a corresponding linear system which calculates the discrete edge fluxes from the discrete gradients.  Here we demonstrate how to implement this in a fast, (heap) allocation free way.
 
-For this purpose, intermediate arrays need to be allocated on the stack with via `StrideArrays.jl` or `MArray` from `StaticArrays.jl`
-They need to have the same element type as the unknowns passed to the flux function
+For this purpose, intermediate arrays have to be used. They need to have the same element type as the unknowns passed to the flux function
 (which could be Float64 or some dual number). 
-Size information must be static, e.g. a global constant, or, as demonstrated here, a type parameter.
-Broadcasting probably should be avoided.
 
-As [documented in  StrideArrays.jl](https://docs.juliahub.com/StrideArrays/Eyl7s/0.1.3/stack_allocation/), use `@gc_preserve` when passing a `StrideArray` as a function parameter.
-
-Alternatively, we can try to avoid StrideArrays.jl and use MArrays together with inlined code.
-In this case, one should be aware of [this issue](https://github.com/JuliaArrays/StaticArrays.jl/issues/874),
-which requires `@inbounds` e.g. with reverse order loops.
-
-See also [this Discourse thread](https://discourse.julialang.org/t/what-is-stridearrays-jl/97146).
+To do so without (heap) allocations can be achieved at least in three ways tested in this example:
+- Stack allocation within the flux function using [`StrideArrays`](https://github.com/JuliaSIMD/StrideArrays.jl)`.StrideArray`, with the need to have static (compile time) information about the size of the local arrays to be allocated via e.g. a global constant, or, as demonstrated here, a type parameter. As [documented in  StrideArrays.jl](https://juliasimd.github.io/StrideArrays.jl/stable/stack_allocation/), use `@gc_preserve` when passing a `StrideArray` as a function parameter. See also [this Discourse thread](https://discourse.julialang.org/t/what-is-stridearrays-jl/97146).
+- Stack allocation within the flux function using [`StaticArrays`](https://github.com/JuliaArrays/StaticArrays.jl)`.MArray`, with the need to have static (compile time) information about the size of the local arrays to be allocated via e.g. a global constant, or, as demonstrated here, a type parameter. However, this may run into  [this issue](https://github.com/JuliaArrays/StaticArrays.jl/issues/874), requiring `@inbounds` e.g. with reverse order loops.
+- Preallocation using [`PreallocationTools`](https://github.com/SciML/PreallocationTools.jl)`.DiffCache`. While this avoids the need to pass the size via a compile time constant, one has to ensure that each running thread has its own cache. Here this is achieved by providing a cache for each partition.
 
 =#
 
@@ -67,15 +57,20 @@ using LinearSolve, ExtendableSparse
 using ExtendableSparse: ILUZeroPreconBuilder
 using StaticArrays
 using ExtendableSparse
+using PreallocationTools
+using Metis
 
-struct MyData{NSPec}
-    DBinary::Symmetric{Float64, Matrix{Float64}}
-    DKnudsen::Vector{Float64}
-    diribc::Vector{Int}
+## Userdata structure for passing number of species as parameter known at compile time.
+## Buffers are stack allocated 
+Base.@kwdef struct MyDataStaticSizeInfo{NSpec}
+    DBinary::Symmetric{Float64, Matrix{Float64}} = Symmetric(fill(0.1, NSpec, NSpec))
+    DKnudsen::Vector{Float64} = ones(NSpec)
+    diribc::Vector{Int} = [1, 2]
 end
+nspec(::MyDataStaticSizeInfo{NSpec}) where {NSpec} = NSpec
+MyDataStaticSizeInfo(nspec;  kwargs...) = MyDataStaticSizeInfo{nspec}(; kwargs...)
 
-nspec(::MyData{NSpec}) where {NSpec} = NSpec
-
+## Flux with stack allocated buffers using StrideArray
 function flux_strided(f, u, edge, data)
     T = eltype(u)
     M = StrideArray{T}(undef, StaticInt(nspec(data)), StaticInt(nspec(data)))
@@ -98,13 +93,8 @@ function flux_strided(f, u, edge, data)
         end
     end
 
-    if VERSION >= v"1.9-rc0"
-        ## Pivoting linear system solution via RecursiveFactorizations.jl
-        @gc_preserve inplace_linsolve!(M, du, ipiv)
-    else
-        ## Non-pivoting implementation currently implemented in vfvm_functions.jl
-        @gc_preserve inplace_linsolve!(M, du)
-    end
+    ## Pivoting linear system solution via RecursiveFactorizations.jl (see vfvm_functions.jl)
+    inplace_linsolve!(M, du, ipiv)
 
     for ispec in 1:nspec(data)
         f[ispec] = du[ispec]
@@ -112,6 +102,7 @@ function flux_strided(f, u, edge, data)
     return
 end
 
+## Flux with stack allocated buffers using MArray
 function flux_marray(f, u, edge, data)
     T = eltype(u)
     n = nspec(data)
@@ -136,16 +127,65 @@ function flux_marray(f, u, edge, data)
         end
     end
 
-    ## Here, we also could use @gc_preserve.
-    ## As this function is inlined one can avoid StrideArrays.jl
-    ## Starting with Julia 1.8 one also can use callsite @inline.
-    inplace_linsolve!(M, du)
+    ## Pivoting linear system solution via RecursiveFactorizations.jl (see vfvm_functions.jl)
+    inplace_linsolve!(M, du, ipiv)
 
     for ispec in 1:nspec(data)
         f[ispec] = du[ispec]
     end
     return nothing
 end
+
+## Userdata structure for passing number of species as  a field in the structure, with 
+## multithreading-aware pre-allocated buffers
+Base.@kwdef struct MyDataPrealloc
+    nspec::Int = 5
+    npart::Int = 1
+    DBinary::Symmetric{Float64, Matrix{Float64}} = Symmetric(fill(0.1, nspec, nspec))
+    DKnudsen::Vector{Float64} = ones(nspec)
+    diribc::Vector{Int} = [1, 2]
+    M::Vector{DiffCache{Matrix{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec, nspec)) for i in 1:npart]
+    au::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec)) for i in 1:npart]
+    du::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec)) for i in 1:npart]
+    ipiv::Vector{Vector{Int}} = [zeros(Int, nspec) for i in 1:npart]
+end
+nspec(data::MyDataPrealloc)  = data.nspec
+
+
+## Flux using pre-allocated buffers
+function flux_diffcache(f, u, edge, data)
+    T = eltype(u)
+    n = data.nspec
+    ipart = partition(edge)
+    M = get_tmp(data.M[ipart], u)
+    au = get_tmp(data.au[ipart], u)
+    du = get_tmp(data.du[ipart], M)
+    ipiv = data.ipiv[ipart]
+
+    for ispec in 1:nspec(data)
+        M[ispec, ispec] = 1.0 / data.DKnudsen[ispec]
+        du[ispec] = u[ispec, 1] - u[ispec, 2]
+        au[ispec] = 0.5 * (u[ispec, 1] + u[ispec, 2])
+    end
+    for ispec in 1:nspec(data)
+        for jspec in 1:nspec(data)
+            if ispec != jspec
+                M[ispec, ispec] += au[jspec] / data.DBinary[ispec, jspec]
+                M[ispec, jspec] = -au[ispec] / data.DBinary[ispec, jspec]
+            end
+        end
+    end
+
+    ## Pivoting linear system solution via RecursiveFactorizations.jl (see vfvm_functions.jl)
+    inplace_linsolve!(M, du, ipiv)
+
+    for ispec in 1:nspec(data)
+        f[ispec] = du[ispec]
+    end
+
+    return nothing
+end
+
 
 function bcondition(f, u, node, data)
     for species in 1:nspec(data)
@@ -165,11 +205,12 @@ function main(;
         n = 11, nspec = 5,
         dim = 2,
         Plotter = nothing,
-        verbose = false,
+        verbose = "",
         unknown_storage = :dense,
         flux = :flux_strided,
         strategy = nothing,
-        assembly = :cellwise
+        assembly = :cellwise,
+        npart = 1
     )
     h = 1.0 / convert(Float64, n - 1)
     X = collect(0.0:h:1.0)
@@ -191,19 +232,28 @@ function main(;
         diribc = [4, 2]
     end
 
+    if npart > 1
+        grid = partition(grid, PlainMetisPartitioning(; npart), nodes = true, edges = true)
+    end
+
     function storage(f, u, node, data)
         f .= u
         return nothing
     end
 
-    _flux = flux == :flux_strided ? flux_strided : flux_marray
+    if flux == :flux_strided
+        _flux = flux_strided
+        data = MyDataStaticSizeInfo(nspec; DBinary, DKnudsen, diribc)
+    elseif flux == :flux_diffcache
+        _flux = flux_diffcache
+        data = MyDataPrealloc(;nspec, npart = num_partitions(grid), DBinary, DKnudsen, diribc)
+    else
+        _flux = flux_marray
+        data = MyDataStaticSizeInfo(nspec; DBinary, DKnudsen, diribc)
+    end
 
-    data = MyData{nspec}(DBinary, DKnudsen, diribc)
     sys = VoronoiFVM.System(grid; flux = _flux, storage, bcondition, species = 1:nspec, data, assembly, unknown_storage)
 
-    if verbose
-        @info "Strategy: $(strategy)"
-    end
     if !isnothing(strategy) && hasproperty(strategy, :precs)
         if isa(strategy.precs, BlockPreconBuilder)
             strategy.precs.partitioning = A -> partitioning(sys, Equationwise())
@@ -214,41 +264,48 @@ function main(;
     end
     control = SolverControl(method_linear = strategy)
     control.maxiters = 500
-    if verbose
-        @info control.method_linear
-    end
     u = solve(sys; verbose, control, log = true)
-    if verbose
-        @show norm(u)
-    end
     return norm(u)
 end
 
 using Test
 function runtests()
     strategies = [
-        UMFPACKFactorization(),
-        KrylovJL_GMRES(precs = LinearSolvePreconBuilder(UMFPACKFactorization())),
-        KrylovJL_GMRES(precs = BlockPreconBuilder(precs = LinearSolvePreconBuilder(UMFPACKFactorization()))),
-        KrylovJL_GMRES(precs = BlockPreconBuilder(precs = AMGPreconBuilder())),
-        KrylovJL_BICGSTAB(precs = BlockPreconBuilder(precs = AMGPreconBuilder())),
-        KrylovJL_GMRES(precs = ILUZeroPreconBuilder()),
-        KrylovJL_GMRES(precs = BlockPreconBuilder(precs = ILUZeroPreconBuilder())),
-        KrylovJL_GMRES(precs = ILUZeroPreconBuilder(blocksize = 5)),
+        (method = UMFPACKFactorization(), dims = (1, 2, 3)),
+        (method = KrylovJL_GMRES(precs = LinearSolvePreconBuilder(UMFPACKFactorization())), dims = (1, 2, 3)),
+        (method = KrylovJL_GMRES(precs = BlockPreconBuilder(precs = LinearSolvePreconBuilder(UMFPACKFactorization()))), dims = (1, 2, 3)),
+        (method = KrylovJL_GMRES(precs = BlockPreconBuilder(precs = AMGPreconBuilder())), dims = (2, 3)),
+        (method = KrylovJL_BICGSTAB(precs = BlockPreconBuilder(precs = AMGPreconBuilder())), dims = (2,)),
+        (method = KrylovJL_GMRES(precs = BlockPreconBuilder(precs = ILUZeroPreconBuilder())), dims = (2, 3)),
+        (method = KrylovJL_GMRES(precs = ILUZeroPreconBuilder(blocksize = 5)), dims = (1, 2)),
     ]
 
-    val1D = 4.788926530387466
-    val2D = 15.883072449873742
-    val3D = 52.67819183426213
+    dimtestvals = [4.788926530387466, 15.883072449873742, 52.67819183426213]
+    for dim in [1,2,3]
+        for assembly in [:edgewise, :cellwise]
+            for flux in [:flux_marray, :flux_strided, :flux_diffcache]
+                for strategy in strategies
+                    if dim in strategy.dims
+                        result = main(; dim, assembly, flux, strategy = strategy.method) ≈ dimtestvals[dim]
+                        if !result
+                            @show dim, assembly, flux, strategy
+                        end
+                        @test result
+                    end
+                end
+            end
+        end
+    end
 
+    for dim in [2]
+        for assembly in [:edgewise, :cellwise]
+            for flux in [:flux_marray, :flux_strided, :flux_diffcache]
+                result = main(; dim, n=100, assembly, flux, npart=20)
+                @test  result ≈ 141.54097792523987
+            end
+        end
+    end
 
-    @test main(; dim = 1, assembly = :cellwise) ≈ val1D
-    @test main(; dim = 2, assembly = :cellwise) ≈ val2D
-    @test main(; dim = 3, assembly = :cellwise) ≈ val3D
-    @test main(; dim = 1, flux = :flux_marray, assembly = :cellwise) ≈ val1D
-    @test main(; dim = 2, flux = :flux_marray, assembly = :cellwise) ≈ val2D
-    @test main(; dim = 3, flux = :flux_marray, assembly = :cellwise) ≈ val3D
-    @test all(map(strategy -> main(; dim = 2, flux = :flux_marray, strategy) ≈ val2D, strategies))
     return nothing
 end
 
