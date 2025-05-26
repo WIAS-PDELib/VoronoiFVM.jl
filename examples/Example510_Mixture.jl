@@ -144,9 +144,9 @@ Base.@kwdef struct MyDataPrealloc
     DBinary::Symmetric{Float64, Matrix{Float64}} = Symmetric(fill(0.1, nspec, nspec))
     DKnudsen::Vector{Float64} = ones(nspec)
     diribc::Vector{Int} = [1, 2]
-    M::Vector{DiffCache{Matrix{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec, nspec), 2*nspec) for i in 1:npart]
-    au::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec), 2*nspec) for i in 1:npart]
-    du::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec), 2*nspec) for i in 1:npart]
+    M::Vector{DiffCache{Matrix{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec, nspec), 2 * nspec) for i in 1:npart]
+    au::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec), 2 * nspec) for i in 1:npart]
+    du::Vector{DiffCache{Vector{Float64}, Vector{Float64}}} = [DiffCache(ones(nspec), 2 * nspec) for i in 1:npart]
     ipiv::Vector{Vector{Int}} = [zeros(Int, nspec) for i in 1:npart]
 end
 nspec(data::MyDataPrealloc) = data.nspec
@@ -270,6 +270,15 @@ end
 
 using Test
 function runtests()
+
+    if Sys.isapple()
+        return nothing
+        ## MacOS14 currently crashes here:
+        ## OMP: Error #13: Assertion failure at kmp_runtime.cpp(8114).
+        ## MacOS13 may crash here:
+        ## OMP: Error #13: Assertion failure at kmp_csupport.cpp(607).
+    end
+
     strategies = [
         (method = UMFPACKFactorization(), dims = (1, 2, 3)),
         (method = KrylovJL_GMRES(precs = LinearSolvePreconBuilder(UMFPACKFactorization())), dims = (1, 2, 3)),
@@ -297,17 +306,11 @@ function runtests()
         end
     end
 
-    if !Sys.isapple()
-        ## MacOS14 currently crashes here:        
-        ## OMP: Error #13: Assertion failure at kmp_runtime.cpp(8114).
-        ## MacOS13 may crash here:
-        ## OMP: Error #13: Assertion failure at kmp_csupport.cpp(607).
-        for dim in [2]
-            for assembly in [:edgewise, :cellwise]
-                for flux in [:flux_marray, :flux_strided, :flux_diffcache]
-                    result = main(; dim, n = 100, assembly, flux, npart = 20)
-                    @test  result ≈ 141.54097792523987
-                end
+    for dim in [2]
+        for assembly in [:edgewise, :cellwise]
+            for flux in [:flux_marray, :flux_strided, :flux_diffcache]
+                result = main(; dim, n = 100, assembly, flux, npart = 20)
+                @test  result ≈ 141.54097792523987
             end
         end
     end
