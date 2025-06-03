@@ -26,7 +26,8 @@ Base.@kwdef mutable struct SolverControl
     """
     Verbosity control. A collection of output categories is given in a string composed of the
     following letters:
-    -  a: allocation warnings
+    -  a: allocation warnings if julia is run with `--check-bounds=no` (which is the default outside of `Pkg.test()`)
+    -  A: allocation warnings regardless of the settings of `--check-bounds`
     -  d: deprecation warnings
     -  e: time/parameter evolution log
     -  n: newton solver log
