@@ -181,7 +181,7 @@ function solve_step!(
             if doprint(control, 'a') && (Base.JLOptions().check_bounds == 0)
                 _warn("[a]llocations in assembly loop: cells: $(ncalloc ÷ neval), bfaces: $(nballoc ÷ neval)")
             end
-            if doprint(control, 'A') 
+            if doprint(control, 'A')
                 _warn("[A]llocations in assembly loop: cells: $(ncalloc ÷ neval), bfaces: $(nballoc ÷ neval)")
             end
         end
