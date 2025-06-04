@@ -595,12 +595,13 @@ Keyword arguments:
 
 - __Embedding (homotopy) solver__: Invoked if `embed` kwarg is given.
   Use homotopy embedding + damped Newton's method  to 
-  solve stationary problem or to solve series of parameter dependent problems.
-  Parameter step control is performed according to solver control data.  kwargs and default values are:
+  solve a stationary problem or to solve series of parameter dependent problems.
+  Parameter step control is performed according to solver control data.  Keyword arguments and default values are:
   - `embed` (default: `nothing` ): vector of parameter values to be reached exactly
-  In addition,  all kwargs of the implicit Euler solver (besides `times`) are handled.  
+  In addition,  all kwargs of the implicit Euler solver (besides `times`) are handled, including `handle_exceptions` (see below).  
+  Step size control is performed based on the parameters `Δp, Δp_max, Δp_min, Δp_grow, Δp_decrease, Δu_opt, Δu_max_factor`.
   Returns a transient solution object `sol` containing the stored solution(s),  see [`TransientSolution`](@ref).
-  
+
 - __Implicit Euler transient solver__: Invoked if `times` kwarg is given.
   Use implicit Euler method  + damped   Newton's method  to 
   solve time dependent problem. Time step control is performed
@@ -610,7 +611,8 @@ Keyword arguments:
   - `post`  (default:  `(sol,oldsol, t, Δt)->nothing` ): callback invoked after each time step
   - `sample` (default:  `(sol,t)->nothing` ): callback invoked after timestep for all times in `times[2:end]`.
   - `delta` (default:  `(system, u,v,t, Δt)->norm(sys,u-v,Inf)` ):  Value  used to control the time step size `Δu`
-  If `control.handle_error` is true, if time step solution  throws an error,
+  Step size control is performed based on the parameters `Δt, Δt_max, Δt_min, Δt_grow, Δt_decrease, Δu_opt, Δu_max_factor`.
+  If `control.handle_exceptions` is true, if time step solution  throws an error,
   stepsize  is lowered, and  step solution is called again with a smaller time value.
   If `control.Δt<control.Δt_min`, solution is aborted with error.
   Returns a transient solution object `sol` containing the stored solution,  see [`TransientSolution`](@ref).
