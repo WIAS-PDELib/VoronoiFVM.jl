@@ -566,8 +566,10 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
             input = rand(num_dof(system))
             output = similar(input)
             tdetect = @elapsed begin
-                system.generic_matrix_prep = prepare_jacobian(generic_operator, output, system.generic_matrix_backend, input;
-                                                              strict = Val(false))
+                system.generic_matrix_prep = prepare_jacobian(
+                    generic_operator, output, system.generic_matrix_backend, input;
+                    strict = Val(false)
+                )
             end
             _info("Sparsity preparation for generic operator: $(tdetect) s")
         end
