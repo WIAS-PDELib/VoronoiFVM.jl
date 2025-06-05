@@ -6,7 +6,9 @@
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
-
+## v2.12.0 June 5, 2025
+  - Include DifferentiationInterface v0.7 into compat
+  
 ## v2.11.0 May 26, 2025
   - add `partition` field and `parttition(NodeOrEdge)` method to geometry items
   - test use of PreallocationTools to provide local buffers in flux 
