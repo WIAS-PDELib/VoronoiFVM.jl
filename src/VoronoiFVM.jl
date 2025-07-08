@@ -43,7 +43,7 @@ using ForwardDiff: ForwardDiff, value
 using GridVisualize: GridVisualize, GridVisualizer
 using InteractiveUtils: InteractiveUtils
 using JLD2: JLD2, jldopen
-using LinearAlgebra: LinearAlgebra, Diagonal, I, Tridiagonal, isdiag, ldiv!, norm
+using LinearAlgebra: LinearAlgebra, Diagonal, Tridiagonal, isdiag, ldiv!, norm
 using LinearSolve: LinearSolve, KrylovJL_BICGSTAB,
     KrylovJL_CG, KrylovJL_GMRES, LinearProblem,
     SparspakFactorization, UMFPACKFactorization, init, reinit!
@@ -65,7 +65,7 @@ global _check_allocs = true
 """
     check_allocs()
 
-Should alllocations be checked ?
+Should allocations be checked ?
 """
 function check_allocs()
     global _check_allocs
