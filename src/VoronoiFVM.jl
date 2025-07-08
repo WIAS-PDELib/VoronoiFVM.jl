@@ -60,6 +60,32 @@ using StaticArrays: StaticArrays, @MVector, @SArray, @SMatrix
 using Statistics: Statistics, mean
 using TextWrap: print_wrapped
 
+global _check_allocs = true
+
+"""
+    check_allocs()
+
+Should alllocations be checked ?
+"""
+function check_allocs()
+    global _check_allocs
+    return _check_allocs
+end
+
+"""
+    check_allocs!(bool)
+
+Control allocation checks. 
+To be used in CI due to https://github.com/JuliaLang/julia/issues/58634
+"""
+function check_allocs!(v::Bool)
+    global _check_allocs
+    _check_allocs = v
+    return _check_allocs
+end
+
+VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public check_allocs!"))
+
 """
    $(TYPEDEF)
 

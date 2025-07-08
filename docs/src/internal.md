@@ -57,6 +57,8 @@ These receive global degrees of freedom and the local species numbers to be hand
 ```@docs 
 VoronoiFVM.assemble_res_jac
 VoronoiFVM.assemble_res
+VoronoiFVM.check_allocs
+VoronoiFVM.check_allocs!
 ```
 
 

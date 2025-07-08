@@ -1,6 +1,24 @@
 using ExplicitImports, Aqua
 using ExampleJuggler: ExampleJuggler, cleanexamples, @testmodules, @testscripts
-using VoronoiFVM: VoronoiFVM
+using VoronoiFVM: VoronoiFVM, check_allocs!
+
+# Mitigate https://github.com/JuliaLang/julia/issues/58634
+function treshape(X::AbstractArray, n, m)
+    Y = reshape(X, n, m)
+    Y .= 1.0
+    return X
+end
+
+function talloc(; n = 10, m = 20)
+    X = rand(n, m)
+    treshape(X, n, m)
+    return @allocated treshape(X, n, m)
+end
+
+if talloc() > 0
+    VoronoiFVM.check_allocs!(false)
+    @warn "Disabling allocation checks due to julia issue #58634"
+end
 
 ExampleJuggler.verbose!(true)
 #

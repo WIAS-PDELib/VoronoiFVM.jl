@@ -177,7 +177,7 @@ function solve_step!(
     end
 
     if neval > 0
-        if ncalloc ÷ neval + nballoc ÷ neval > 0 && doprint(control, 'a') && !is_precompiling()
+        if ncalloc ÷ neval + nballoc ÷ neval > 0 && doprint(control, 'a') && !is_precompiling() && check_allocs()
             _warn("[a]llocations in assembly loop: cells: $(ncalloc ÷ neval), bfaces: $(nballoc ÷ neval)")
         end
     end

@@ -164,15 +164,15 @@ function runtests()
     inplacelu_piv_stridearray(10, Dual64)
     inplacelu_piv_marray(10, Dual64)
 
-    m1 = @allocated inplacelu_piv_stridearray(10, Float64)
+    m1 = @allocations inplacelu_piv_stridearray(10, Float64)
     @test m1 == 0
-    m2 = @allocated inplacelu_piv_marray(10, Float64)
+    m2 = @allocations inplacelu_piv_marray(10, Float64)
     @test m2 == 0
-    m3 = @allocated inplacelu_piv_marray(10, Dual64)
+    m3 = @allocations inplacelu_piv_marray(10, Dual64)
     @test m3 == 0
 
-    m4 = @allocated inplacelu_piv_stridearray(10, Dual64)
-    if VERSION < v"1.11.999"
+    m4 = @allocations inplacelu_piv_stridearray(10, Dual64)
+    if VoronoiFVM.check_allocs()
         @test m4 == 0
     else
         @test_broken m4 == 0
