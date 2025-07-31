@@ -147,14 +147,14 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
             f[1] = 10 * (u[1] - u[2])  ## Species 1 decreases when u1 > u2
             f[2] = 10 * (u[2] - u[1])  ## Species 2 increases when u1 > u2
             return nothing
-        end, 
+        end,
         ## Flux terms: Simple diffusion for both species
         ## f[i] = D_i * (u[i,1] - u[i,2]) represents diffusive flux
         flux = function (f, u, edge, data)
             f[1] = data.eps[1] * (u[1, 1] - u[1, 2])  ## Diffusion flux for species 1
             f[2] = data.eps[2] * (u[2, 1] - u[2, 2])  ## Diffusion flux for species 2
             return nothing
-        end, 
+        end,
         ## Storage terms: Simple time derivative terms
         storage = function (f, u, node, data)
             f[1] = u[1]  ## ∂u1/∂t
@@ -163,7 +163,7 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
         end,
         data = problem_data  ## Pass problem parameters
     )
-    
+
     ## Create the finite volume system
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage, assembly = assembly)
 
@@ -179,7 +179,7 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
     factory = TestFunctionFactory(sys)
     ## tf1: Test function = 1 at boundary 1, = 0 at boundary 2 (measures flux from right to left)
     tf1 = testfunction(factory, [2], [1])
-    ## tf2: Test function = 1 at boundary 2, = 0 at boundary 1 (measures flux from left to right)  
+    ## tf2: Test function = 1 at boundary 2, = 0 at boundary 1 (measures flux from left to right)
     tf2 = testfunction(factory, [1], [2])
 
     ## Initialize solution arrays
@@ -191,40 +191,40 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
     control = VoronoiFVM.SolverControl()
     control.verbose = verbose
     control.damp_initial = 0.1  ## Use damping to help convergence
-    
+
     ## Initialize flux integral result
     I1 = 0
-    
+
     ## Set up visualization
     p = GridVisualizer(; Plotter = Plotter, layout = (2, 1))
-    
+
     ## Parameter study: vary diffusion coefficients to test method robustness
     for xeps in [1.0, 0.1, 0.01]
         ## Update diffusion coefficients in the problem data structure
         problem_data.eps = [xeps, xeps]  ## Set both species to same diffusion coefficient
-        
+
         ## Solve the stationary problem
         U = solve(sys; inival, control)
-        
+
         ## Calculate flux integral using test function tf1
         ## This gives the net flux from boundary 2 to boundary 1
         I1 = integrate(sys, tf1, U)
-        
+
         ## Get grid coordinates for visualization
         coord = coordinates(grid)
-        
+
         ## Use current solution as initial guess for next iteration
         inival .= U
-        
+
         ## Visualize the solutions
         scalarplot!(p[1, 1], grid, U[1, :])  ## Plot species 1 concentration
         scalarplot!(p[2, 1], grid, U[2, :])  ## Plot species 2 concentration
         reveal(p)
-        
+
         ## Store a test value (concentration at grid point 5)
         u5 = U[5]
     end
-    
+
     ## Return the flux integral for species 1
     ## This should equal the input flux (0.01) for mass balance
     return I1[1]

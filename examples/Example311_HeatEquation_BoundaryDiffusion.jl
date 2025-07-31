@@ -13,7 +13,7 @@ using ExtendableGrids
 ## Problem data structure to avoid global variables
 mutable struct ProblemData
     eps::Float64        # Bulk heat conduction coefficient
-    eps_surf::Float64   # Surface diffusion coefficient  
+    eps_surf::Float64   # Surface diffusion coefficient
     k::Float64          # Transmission coefficient
     breg::Int           # Boundary region number for surface diffusion
 end

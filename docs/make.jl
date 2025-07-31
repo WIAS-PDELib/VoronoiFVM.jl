@@ -77,7 +77,6 @@ function make(;
         module_examples = vcat(["About the examples" => "runexamples.md"], module_examples)
         push!(pages, "Examples" => module_examples)
 
-        @show pages
         devmodules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("DevEx", ex), basename.(readdir(exampledir)))
         dev_examples = @docmodules(exampledir, devmodules, use_module_titles = true)
         push!(pages, "Development Examples" => dev_examples)

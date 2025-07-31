@@ -93,7 +93,7 @@ function main(; n = 10, Plotter = nothing, D = 0.01, v = 1.0, tend = 100)
     sys = VoronoiFVM.System(
         grid,
         VoronoiFVM.Physics(;
-            flux = exponential_flux!, 
+            flux = exponential_flux!,
             breaction = outflow!,
             data = problem_data
         )
