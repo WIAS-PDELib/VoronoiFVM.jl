@@ -127,4 +127,4 @@ Triangulate = "f7e6ffb2-c36d-4f8f-a77e-16e897189344"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [targets]
-test = ["AMGCLWrap", "AlgebraicMultigrid", "Aqua", "Catalyst", "ChunkSplitters", "DataStructures", "ExampleJuggler", "ExplicitImports", "ExtendableFEM", "ExtendableFEMBase", "HypertextLiteral", "ILUZero", "Markdown", "Metis", "OrdinaryDiffEqBDF", "OrdinaryDiffEqLowOrderRK", "OrdinaryDiffEqRosenbrock", "OrdinaryDiffEqSDIRK", "OrdinaryDiffEqTsit5", "Pardiso", "Pkg", "PlutoUI", "PreallocationTools", "Revise", "SimplexGridFactory", "StrideArraysCore", "Test", "Triangulate", "UUIDs"]
+test = ["AMGCLWrap", "AlgebraicMultigrid", "Aqua", "Catalyst", "ChunkSplitters", "DataStructures", "ExampleJuggler", "ExplicitImports", "HypertextLiteral", "ILUZero", "Markdown", "Metis", "OrdinaryDiffEqBDF", "OrdinaryDiffEqLowOrderRK", "OrdinaryDiffEqRosenbrock", "OrdinaryDiffEqSDIRK", "OrdinaryDiffEqTsit5", "Pardiso", "Pkg", "PlutoUI", "PreallocationTools", "Revise", "SimplexGridFactory", "StrideArraysCore", "Test", "Triangulate", "UUIDs"]
