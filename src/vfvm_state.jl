@@ -61,7 +61,7 @@ mutable struct SystemState{
     """
     Linear solver cache
     """
-    linear_cache::Union{Nothing, LinearSolve.LinearCache}
+    linear_cache::Any
 
     """
     Parameter vector
