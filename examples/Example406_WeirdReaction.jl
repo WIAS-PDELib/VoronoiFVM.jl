@@ -22,7 +22,7 @@ Species $A$ and $B$ exist in the interior of the do    function generic_operator
         sparsity[idx[problem_data.iA, 1], idx[problem_data.iA, 1]] = 1
         sparsity[idx[problem_data.iC, 1], idx[problem_data.iA, 2]] = 1
         return sparsity
-    endves a the boundary $\Gamma_1$.  We assume a heterogeneous reaction scheme
+    lives at the boundary $\Gamma_1$.  We assume a heterogeneous reaction scheme
 where $A$ reacts to $B$ with a rate depending on $\nabla A$ near the surface
 
 ```math
