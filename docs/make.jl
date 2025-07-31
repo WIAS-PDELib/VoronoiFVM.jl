@@ -1,7 +1,8 @@
 using Documenter, ExampleJuggler, PlutoStaticHTML, VoronoiFVM, DocumenterCitations
 using ExtendableGrids, GridVisualize, LinearAlgebra, RecursiveArrayTools, SciMLBase
 
-using ExtendableFEMBase, ExtendableFEM
+using ExtendableFEMBase
+# using ExtendableFEM # re-enable with updated ExtenableFEM
 
 using OrdinaryDiffEqBDF, OrdinaryDiffEqLowOrderRK, OrdinaryDiffEqRosenbrock, OrdinaryDiffEqSDIRK, OrdinaryDiffEqTsit5
 
@@ -105,9 +106,10 @@ function make(;
         deploydocs(; repo = "github.com/WIAS-PDELib/VoronoiFVM.jl.git")
     end
 end
+make(; with_examples = false, with_notebooks = false)
 
-if isinteractive()
-    make(; with_examples = false, with_notebooks = false)
-else
-    make(; with_examples = true, with_notebooks = true)
-end
+# if isinteractive()
+#     make(; with_examples = false, with_notebooks = false)
+# else
+#     make(; with_examples = true, with_notebooks = true)
+# end
