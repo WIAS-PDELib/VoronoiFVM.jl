@@ -1,9 +1,9 @@
 #=
-# 001: New linear solver API
+# 001: Legacy API for linear solvers
 ([source code](@__SOURCE_URL__))
 =#
 
-module Example001_Solvers
+module DevEx001_Solvers
 
 ## under development
 
