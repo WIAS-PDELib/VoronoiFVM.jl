@@ -112,12 +112,12 @@ function main(; n = 10, Plotter = nothing, verbose = false, D = 0.01, v = 1.0)
 
     data = (v = [v], D = D)
 
-    # Calculate three stationary solutions with different ways to calculate flux
+    ## Calculate three stationary solutions with different ways to calculate flux
     solution_exponential = calculate(grid, data, exponential_flux!, verbose)
     solution_upwind = calculate(grid, data, upwind_flux!, verbose)
     solution_central = calculate(grid, data, central_flux!, verbose)
 
-    # Visualize solutions using GridVisualize.jl
+    ## Visualize solutions using GridVisualize.jl
     p = GridVisualizer(; Plotter = Plotter, layout = (3, 1))
     scalarplot!(p[1, 1], grid, solution_exponential[1, :]; title = "exponential")
     scalarplot!(p[2, 1], grid, solution_upwind[1, :]; title = "upwind")
