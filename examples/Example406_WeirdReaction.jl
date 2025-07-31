@@ -3,13 +3,16 @@
 # 406: 1D Weird Surface Reaction
  ([source code](@__SOURCE_URL__))
 
-Species $A$ and $B$ exist in the interior of the do    function generic_operator!(f, u, sys)
+Species $A$ and $B$ exist in the interior of the domain. We assume a heterogeneous reaction scheme
+where $A$ reacts to $B$ with a rate depending on $\nabla A$ near the surface.
+
+function generic_operator!(f, u, sys)
         f .= 0
         idx = unknown_indices(unknowns(sys))
         f[idx[problem_data.iC, 1]] = u[idx[problem_data.iC, 1]] +
             0.1 * (u[idx[problem_data.iA, 1]] - u[idx[problem_data.iA, 2]]) / (problem_data.X[2] - problem_data.X[1])
         return nothing
-    end
+end
 
     # If we know the sparsity pattern, we can here create a
     # sparse matrix with values set to 1 in the nonzero
