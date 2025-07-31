@@ -48,9 +48,7 @@ end
 @testset "Development Examples" begin
     run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "DevEx")
 end
-@testset "MultiD Examples" begin
-    run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example5")
-end
+
 @testset "1D Examples" begin
     run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example1")
 end

@@ -67,12 +67,17 @@ function make(;
     end
 
     if with_examples
-        modules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("Example", ex) && !occursin("Disabled", ex), basename.(readdir(exampledir)))
+        modules = filter(
+            ex -> splitext(ex)[2] == ".jl"
+                && occursin("Example", ex)
+                && !occursin("Disabled", ex),
+            basename.(readdir(exampledir))
+        )
         module_examples = @docmodules(exampledir, modules, use_module_titles = true)
         module_examples = vcat(["About the examples" => "runexamples.md"], module_examples)
         push!(pages, "Examples" => module_examples)
 
-
+        @show pages
         devmodules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("DevEx", ex), basename.(readdir(exampledir)))
         dev_examples = @docmodules(exampledir, devmodules, use_module_titles = true)
         push!(pages, "Development Examples" => dev_examples)
