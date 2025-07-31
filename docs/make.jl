@@ -67,7 +67,7 @@ function make(;
     end
 
     if with_examples
-        modules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("Example", ex), basename.(readdir(exampledir)))
+        modules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("Example", ex) && !occursin("Disabled", ex), basename.(readdir(exampledir)))
         module_examples = @docmodules(exampledir, modules, use_module_titles = true)
         module_examples = vcat(["About the examples" => "runexamples.md"], module_examples)
         push!(pages, "Examples" => module_examples)
@@ -106,10 +106,9 @@ function make(;
         deploydocs(; repo = "github.com/WIAS-PDELib/VoronoiFVM.jl.git")
     end
 end
-make(; with_examples = false, with_notebooks = false)
 
-# if isinteractive()
-#     make(; with_examples = false, with_notebooks = false)
-# else
-#     make(; with_examples = true, with_notebooks = true)
-# end
+if isinteractive()
+    make(; with_examples = false, with_notebooks = false)
+else
+    make(; with_examples = true, with_notebooks = true)
+end
