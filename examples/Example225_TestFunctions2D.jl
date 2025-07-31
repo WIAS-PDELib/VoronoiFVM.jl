@@ -108,6 +108,12 @@ module Example225_TestFunctions2D
 
 using VoronoiFVM, GridVisualize, ExtendableGrids
 
+## Problem data structure to avoid global variables
+mutable struct ProblemData
+    reaction_coeff::Float64   # Reaction coefficient (-0.1 in the original r function)
+    source_val::Float64       # Source value (1.0 in the original source function)
+end
+
 function main(;
         n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
         dim = 2, tend = 5, dt = 0.2
@@ -128,6 +134,9 @@ function main(;
         Γ_where_T_equal_0 = [4]
     end
 
+    ## Create problem data structure
+    problem_data = ProblemData(-0.1, 1.0)
+
     function storage(f, u, node, data)
         f .= u
         return nothing
@@ -139,16 +148,16 @@ function main(;
         return nothing
     end
 
-    r(u1, u2) = u1 - 0.1 * u2
+    r(u1, u2, data) = u1 + data.reaction_coeff * u2
 
     function reaction(f, u, node, data)
-        f[1] = r(u[1], u[2])
-        f[2] = -r(u[1], u[2])
+        f[1] = r(u[1], u[2], data)
+        f[2] = -r(u[1], u[2], data)
         return nothing
     end
 
     function source(f, node, data)
-        f[1] = 1.0
+        f[1] = data.source_val
         return nothing
     end
 
@@ -156,7 +165,8 @@ function main(;
         flux = flux,
         storage = storage,
         reaction = reaction,
-        source = source
+        source = source,
+        data = problem_data
     )
 
     system = VoronoiFVM.System(grid, physics; assembly = assembly)
@@ -203,7 +213,7 @@ function main(;
 
     t0 = 0.0
 
-    control = fixed_timesteps!(VoronoiFVM.NewtonControl(), dt)
+    control = fixed_timesteps!(VoronoiFVM.SolverControl(), dt)
 
     tsol = solve(system; inival = 0.0, times = [t0, tend], control)
 

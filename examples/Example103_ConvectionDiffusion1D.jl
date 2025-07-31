@@ -51,6 +51,13 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
+## Mutable struct to hold problem parameters
+## This encapsulates all physical and numerical parameters
+mutable struct ProblemData
+    D::Float64      ## Diffusion coefficient
+    v::Vector{Float64}  ## Velocity vector
+end
+
 ## Bernoulli function used in the exponential fitting discretization
 function bernoulli(x)
     if abs(x) < nextfloat(eps(typeof(x)))
@@ -80,13 +87,15 @@ function main(; n = 10, Plotter = nothing, D = 0.01, v = 1.0, tend = 100)
     h = 1.0 / n
     grid = simplexgrid(0:h:1)
 
-    data = (v = [v], D = D)
+    ## Initialize problem parameters in data structure
+    problem_data = ProblemData(D, [v])
 
     sys = VoronoiFVM.System(
         grid,
         VoronoiFVM.Physics(;
-            flux = exponential_flux!, data = data,
-            breaction = outflow!
+            flux = exponential_flux!, 
+            breaction = outflow!,
+            data = problem_data
         )
     )
 
@@ -101,7 +110,7 @@ function main(; n = 10, Plotter = nothing, D = 0.01, v = 1.0, tend = 100)
     inival[1, :] .= map(x -> 1 - 2x, grid)
 
     ## Transient solution of the problem
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.Δt = 0.01 * h
     control.Δt_min = 0.01 * h
     control.Δt_max = 0.1 * tend

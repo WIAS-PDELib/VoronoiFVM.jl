@@ -3,8 +3,26 @@
 # 406: 1D Weird Surface Reaction
  ([source code](@__SOURCE_URL__))
 
-Species $A$ and $B$ exist in the interior of the domain, species $C$
-lives a the boundary $\Gamma_1$.  We assume a heterogeneous reaction scheme
+Species $A$ and $B$ exist in the interior of the do    function generic_operator!(f, u, sys)
+        f .= 0
+        idx = unknown_indices(unknowns(sys))
+        f[idx[problem_data.iC, 1]] = u[idx[problem_data.iC, 1]] +
+            0.1 * (u[idx[problem_data.iA, 1]] - u[idx[problem_data.iA, 2]]) / (problem_data.X[2] - problem_data.X[1])
+        return nothing
+    end
+
+    # If we know the sparsity pattern, we can here create a
+    # sparse matrix with values set to 1 in the nonzero
+    # slots. This allows to circumvent the
+    # autodetection which may takes some time.
+    function generic_operator_sparsity(sys)
+        idx = unknown_indices(unknowns(sys))
+        sparsity = spzeros(num_dof(sys), num_dof(sys))
+        sparsity[idx[problem_data.iC, 1], idx[problem_data.iC, 1]] = 1
+        sparsity[idx[problem_data.iA, 1], idx[problem_data.iA, 1]] = 1
+        sparsity[idx[problem_data.iC, 1], idx[problem_data.iA, 2]] = 1
+        return sparsity
+    endves a the boundary $\Gamma_1$.  We assume a heterogeneous reaction scheme
 where $A$ reacts to $B$ with a rate depending on $\nabla A$ near the surface
 
 ```math
@@ -51,6 +69,18 @@ using SparseArrays
 using ExtendableGrids
 using GridVisualize
 
+## Problem data structure to avoid global variables
+mutable struct ProblemData
+    D_A::Float64      # Diffusion coefficient for species A
+    D_B::Float64      # Diffusion coefficient for species B
+    kp_AB::Float64    # Forward reaction constant A->B
+    km_AB::Float64    # Backward reaction constant B->A
+    iA::Int           # Species index for A
+    iB::Int           # Species index for B
+    iC::Int           # Species index for C
+    X::Vector{Float64} # Grid coordinates (needed for gradient calculation)
+end
+
 function main(;
         n = 10,
         Plotter = nothing,
@@ -71,39 +101,35 @@ function main(;
     iB = 2
     iC = 3
 
+    ## Create problem data structure
+    problem_data = ProblemData(1.0, 1.0e-2, 1.0, 0.1, iA, iB, iC, X)
+
     ## Diffusion flux for species A and B
-    D_A = 1.0
-    D_B = 1.0e-2
     function flux!(f, u, edge, data)
-        f[iA] = D_A * (u[iA, 1] - u[iA, 2])
-        f[iB] = D_B * (u[iB, 1] - u[iB, 2])
+        f[data.iA] = data.D_A * (u[data.iA, 1] - u[data.iA, 2])
+        f[data.iB] = data.D_B * (u[data.iB, 1] - u[data.iB, 2])
         return nothing
     end
 
     ## Storage term of species A and B
     function storage!(f, u, node, data)
-        f[iA] = u[iA]
-        f[iB] = u[iB]
+        f[data.iA] = u[data.iA]
+        f[data.iB] = u[data.iB]
         return nothing
     end
 
     ## Source term for species a around 0.5
     function source!(f, node, data)
         x1 = node[1] - 0.5
-        f[iA] = exp(-100 * x1^2)
+        f[data.iA] = exp(-100 * x1^2)
         return nothing
     end
 
-    ## Reaction constants (p = + , m = -)
-    ## Chosen to prefer path A-> B
-    kp_AB = 1.0
-    km_AB = 0.1
-
     function breaction!(f, u, node, data)
         if node.region == 1
-            R = kp_AB * exp(u[iC]) * u[iA] - exp(-u[iC]) * km_AB * u[iB]
-            f[iA] += R
-            f[iB] -= R
+            R = data.kp_AB * exp(u[data.iC]) * u[data.iA] - exp(-u[data.iC]) * data.km_AB * u[data.iB]
+            f[data.iA] += R
+            f[data.iB] -= R
         end
         return nothing
     end
@@ -115,8 +141,9 @@ function main(;
     ## is then used as a parameter in the boundary reaction
     function generic_operator!(f, u, sys)
         f .= 0
-        f[idx[iC, 1]] = u[idx[iC, 1]] +
-            0.1 * (u[idx[iA, 1]] - u[idx[iA, 2]]) / (X[2] - X[1])
+        idx = unknown_indices(unknowns(sys))
+        f[idx[problem_data.iC, 1]] = u[idx[problem_data.iC, 1]] +
+            0.1 * (u[idx[problem_data.iA, 1]] - u[idx[problem_data.iA, 2]]) / (problem_data.X[2] - problem_data.X[1])
         return nothing
     end
 
@@ -127,9 +154,9 @@ function main(;
     function generic_operator_sparsity(sys)
         idx = unknown_indices(unknowns(sys))
         sparsity = spzeros(num_dof(sys), num_dof(sys))
-        sparsity[idx[iC, 1], idx[iC, 1]] = 1
-        sparsity[idx[iC, 1], idx[iA, 1]] = 1
-        sparsity[idx[iC, 1], idx[iA, 2]] = 1
+        sparsity[idx[problem_data.iC, 1], idx[problem_data.iC, 1]] = 1
+        sparsity[idx[problem_data.iC, 1], idx[problem_data.iA, 1]] = 1
+        sparsity[idx[problem_data.iC, 1], idx[problem_data.iA, 2]] = 1
         return sparsity
     end
 
@@ -139,7 +166,8 @@ function main(;
             generic = generic_operator!,
             flux = flux!,
             storage = storage!,
-            source = source!
+            source = source!,
+            data = problem_data
         )
     else
         physics = VoronoiFVM.Physics(;
@@ -148,20 +176,21 @@ function main(;
             generic_sparsity = generic_operator_sparsity,
             flux = flux!,
             storage = storage!,
-            source = source!
+            source = source!,
+            data = problem_data
         )
     end
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage)
 
     ## Enable species in bulk resp
-    enable_species!(sys, iA, [1])
-    enable_species!(sys, iB, [1])
+    enable_species!(sys, problem_data.iA, [1])
+    enable_species!(sys, problem_data.iB, [1])
 
     ## Enable surface species
-    enable_boundary_species!(sys, iC, [1])
+    enable_boundary_species!(sys, problem_data.iC, [1])
 
     ## Set Dirichlet bc for species B on \Gamma_2
-    boundary_dirichlet!(sys, iB, 2, 0.0)
+    boundary_dirichlet!(sys, problem_data.iB, 2, 0.0)
 
     ## Initial values
     U = unknowns(sys)
@@ -173,7 +202,7 @@ function main(;
     T = Float64[]
     u_C = Float64[]
 
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
     p = GridVisualizer(; Plotter = Plotter, layout = (2, 1))
     while time < tend
@@ -184,19 +213,19 @@ function main(;
         end
         ## Record  boundary pecies
         push!(T, time)
-        push!(u_C, U[iC, 1])
+        push!(u_C, U[problem_data.iC, 1])
 
         scalarplot!(
-            p[1, 1], grid, U[iA, :]; label = "[A]",
+            p[1, 1], grid, U[problem_data.iA, :]; label = "[A]",
             title = @sprintf(
-                "max_A=%.5f max_B=%.5f u_C=%.5f", maximum(U[iA, :]),
-                maximum(U[iB, :]), u_C[end]
+                "max_A=%.5f max_B=%.5f u_C=%.5f", maximum(U[problem_data.iA, :]),
+                maximum(U[problem_data.iB, :]), u_C[end]
             ), color = :red
         )
-        scalarplot!(p[1, 1], grid, U[iB, :]; label = "[B]", clear = false, color = :blue)
+        scalarplot!(p[1, 1], grid, U[problem_data.iB, :]; label = "[B]", clear = false, color = :blue)
         scalarplot!(p[2, 1], copy(T), copy(u_C); label = "[C]", clear = true, show = true)
     end
-    return U[iC, 1]
+    return U[problem_data.iC, 1]
 end
 
 using Test

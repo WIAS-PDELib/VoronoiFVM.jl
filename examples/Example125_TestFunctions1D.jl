@@ -124,13 +124,20 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
+## Mutable struct to hold problem parameters
+## This encapsulates diffusion coefficients and other physical parameters
+mutable struct ProblemData
+    eps::Vector{Float64}  ## Diffusion coefficients for both species
+end
+
 function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise)
     ## Create a 1D grid with n intervals on [0,1]
     h = 1 / n
     grid = simplexgrid(collect(0:h:1))
 
+    ## Initialize problem parameters in data structure
     ## Diffusion coefficients for both species (will be varied in the loop)
-    eps::Vector{Float64} = [1, 1.0e-1]
+    problem_data = ProblemData([1.0, 1.0e-1])
 
     ## Define the physics of the problem
     physics = VoronoiFVM.Physics(
@@ -144,8 +151,8 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
         ## Flux terms: Simple diffusion for both species
         ## f[i] = D_i * (u[i,1] - u[i,2]) represents diffusive flux
         flux = function (f, u, edge, data)
-            f[1] = eps[1] * (u[1, 1] - u[1, 2])  ## Diffusion flux for species 1
-            f[2] = eps[2] * (u[2, 1] - u[2, 2])  ## Diffusion flux for species 2
+            f[1] = data.eps[1] * (u[1, 1] - u[1, 2])  ## Diffusion flux for species 1
+            f[2] = data.eps[2] * (u[2, 1] - u[2, 2])  ## Diffusion flux for species 2
             return nothing
         end, 
         ## Storage terms: Simple time derivative terms
@@ -153,7 +160,8 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
             f[1] = u[1]  ## ∂u1/∂t
             f[2] = u[2]  ## ∂u2/∂t
             return nothing
-        end
+        end,
+        data = problem_data  ## Pass problem parameters
     )
     
     ## Create the finite volume system
@@ -180,7 +188,7 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
     inival[1, :] .= 0.1  ## Initial concentration of species 1
 
     ## Configure Newton solver
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
     control.damp_initial = 0.1  ## Use damping to help convergence
     
@@ -192,7 +200,8 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
     
     ## Parameter study: vary diffusion coefficients to test method robustness
     for xeps in [1.0, 0.1, 0.01]
-        eps = [xeps, xeps]  ## Set both species to same diffusion coefficient
+        ## Update diffusion coefficients in the problem data structure
+        problem_data.eps = [xeps, xeps]  ## Set both species to same diffusion coefficient
         
         ## Solve the stationary problem
         U = solve(sys; inival, control)

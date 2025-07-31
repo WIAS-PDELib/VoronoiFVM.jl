@@ -11,6 +11,11 @@ using GridVisualize
 using LinearSolve
 using ILUZero
 
+## Problem data structure to avoid global variables
+mutable struct ProblemData
+    eps::Float64  # Diffusion parameter
+end
+
 function main(;
         n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse,
         method_linear = nothing, assembly = :edgewise
@@ -21,14 +26,15 @@ function main(;
 
     grid = simplexgrid(X, Y)
 
-    eps = 1.0e-2
+    ## Create problem data structure
+    problem_data = ProblemData(1.0e-2)
 
     physics = VoronoiFVM.Physics(;
         reaction = function (f, u, node, data)
             f[1] = u[1]^2
             return nothing
         end, flux = function (f, u, edge, data)
-            f[1] = eps * (u[1, 1]^2 - u[1, 2]^2)
+            f[1] = data.eps * (u[1, 1]^2 - u[1, 2]^2)
             return nothing
         end, source = function (f, node, data)
             x1 = node[1] - 0.5
@@ -38,7 +44,8 @@ function main(;
         end, storage = function (f, u, node, data)
             f[1] = u[1]
             return nothing
-        end
+        end,
+        data = problem_data
     )
     sys = VoronoiFVM.System(grid, physics; unknown_storage, assembly = assembly)
     enable_species!(sys, 1, [1])
@@ -49,7 +56,7 @@ function main(;
     inival = unknowns(sys)
     inival .= 0.5
 
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
     control.reltol_linear = 1.0e-5
     control.method_linear = method_linear

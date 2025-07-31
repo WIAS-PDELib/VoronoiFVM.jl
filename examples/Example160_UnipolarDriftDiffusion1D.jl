@@ -129,7 +129,7 @@ function main(;
     if !dlcap
         ## Create solver control info for constant time step size
         tstep = 1.0e-5
-        control = VoronoiFVM.NewtonControl()
+        control = VoronoiFVM.SolverControl()
         control.verbose = false
         control.Δt_min = tstep
         control.Δt = tstep
@@ -174,7 +174,7 @@ function main(;
 
     else  # Calculate double layer capacitance
         U = unknowns(sys)
-        control = VoronoiFVM.NewtonControl()
+        control = VoronoiFVM.SolverControl()
         control.damp_initial = 1.0e-5
         delta = 1.0e-4
         @views inival[iphi, :] .= 0

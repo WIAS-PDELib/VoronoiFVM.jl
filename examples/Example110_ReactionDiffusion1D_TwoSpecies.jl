@@ -23,11 +23,18 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
+## Mutable struct to hold problem parameters
+## This encapsulates diffusion coefficients and other physical parameters
+mutable struct ProblemData
+    eps::Vector{Float64}  ## Diffusion coefficients for both species
+end
+
 function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise)
     h = 1 / n
     grid = simplexgrid(collect(0:h:1))
 
-    eps::Vector{Float64} = [1.0, 1.0]
+    ## Initialize problem parameters in data structure
+    problem_data = ProblemData([1.0, 1.0])
 
     physics = VoronoiFVM.Physics(
         ; reaction = function (f, u, node, data)
@@ -37,9 +44,9 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
         end,
         flux = function (f, u, edge, data)
             nspecies = 2
-            f[1] = eps[1] * (u[1, 1] - u[1, 2]) *
+            f[1] = data.eps[1] * (u[1, 1] - u[1, 2]) *
                 (0.01 + u[2, 1] + u[2, 2])
-            f[2] = eps[2] * (u[2, 1] - u[2, 2]) *
+            f[2] = data.eps[2] * (u[2, 1] - u[2, 2]) *
                 (0.01 + u[1, 1] + u[1, 2])
             return nothing
         end,
@@ -52,7 +59,8 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
             f[1] = u[1]
             f[2] = u[2]
             return nothing
-        end
+        end,
+        data = problem_data  ## Pass problem parameters
     )
 
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage)
@@ -69,13 +77,14 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
     U = unknowns(sys)
     U .= 0
 
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
     control.damp_initial = 0.1
     u5 = 0
     p = GridVisualizer(; Plotter = Plotter, layout = (2, 1))
     for xeps in [1.0, 0.5, 0.25, 0.1, 0.05, 0.025, 0.01]
-        eps = [xeps, xeps]
+        ## Update diffusion coefficients in the problem data structure
+        problem_data.eps = [xeps, xeps]
         U = solve(sys; inival = U, control)
         scalarplot!(p[1, 1], grid, U[1, :]; clear = true, title = "U1, eps=$(xeps)")
         scalarplot!(

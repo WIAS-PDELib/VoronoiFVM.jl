@@ -62,6 +62,20 @@ using LinearAlgebra
 using OrdinaryDiffEqRosenbrock
 using SciMLBase: NoInit
 
+## Problem data structure to avoid global variables
+mutable struct ProblemData
+    D_A::Float64      # Diffusion coefficient for species A
+    D_B::Float64      # Diffusion coefficient for species B
+    kp_AC::Float64    # Forward reaction constant A->C
+    km_AC::Float64    # Backward reaction constant C->A
+    kp_BC::Float64    # Forward reaction constant B->C
+    km_BC::Float64    # Backward reaction constant C->B
+    S::Float64        # Surface site density
+    iA::Int           # Species index for A
+    iB::Int           # Species index for B
+    iC::Int           # Species index for C
+end
+
 function main(;
         n = 10, Plotter = nothing, verbose = false, tend = 1,
         unknown_storage = :sparse, assembly = :edgewise,
@@ -88,50 +102,48 @@ function main(;
     iB = 2
     iC = 3
 
+    ## Create problem data structure with all parameters
+    problem_data = ProblemData(
+        1.0,      # D_A
+        1.0e-2,   # D_B
+        100.0,    # kp_AC
+        1.0,      # km_AC
+        0.1,      # kp_BC
+        1.0,      # km_BC
+        0.01,     # S
+        iA, iB, iC
+    )
+
     ## Diffusion flux for species A and B
-    D_A = 1.0
-    D_B = 1.0e-2
     function flux!(f, u, edge, data)
-        f[iA] = D_A * (u[iA, 1] - u[iA, 2])
-        f[iB] = D_B * (u[iB, 1] - u[iB, 2])
+        f[data.iA] = data.D_A * (u[data.iA, 1] - u[data.iA, 2])
+        f[data.iB] = data.D_B * (u[data.iB, 1] - u[data.iB, 2])
         return nothing
     end
 
     ## Storage term of species A and B
     function storage!(f, u, node, data)
-        f[iA] = u[iA]
-        f[iB] = u[iB]
+        f[data.iA] = u[data.iA]
+        f[data.iB] = u[data.iB]
         return nothing
     end
 
     ## Source term for species a around 0.5
     function source!(f, node, data)
         x1 = node[1] - 0.5
-        f[iA] = exp(-100 * x1^2)
+        f[data.iA] = exp(-100 * x1^2)
         return nothing
     end
 
-    ## Reaction constants (p = + , m = -)
-    ## Chosen to prefer path A-> C -> B
-    ## More over, A reacts faster than to C than C to B
-    ## leading to "catalyst poisoning", i.e. C taking up most of the
-    ## available catalyst sites
-    kp_AC = 100.0
-    km_AC = 1.0
-
-    kp_BC = 0.1
-    km_BC = 1.0
-
-    S = 0.01
-
-    R_AC(u_A, u_C) = kp_AC * u_A * (1 - u_C) - km_AC * u_C
-    R_BC(u_B, u_C) = kp_BC * u_B * (1 - u_C) - km_BC * u_C
+    ## Reaction rate functions using data structure
+    R_AC(u_A, u_C, data) = data.kp_AC * u_A * (1 - u_C) - data.km_AC * u_C
+    R_BC(u_B, u_C, data) = data.kp_BC * u_B * (1 - u_C) - data.km_BC * u_C
 
     function breaction!(f, u, node, data)
         if node.region == iCat
-            f[iA] = S * R_AC(u[iA], u[iC])
-            f[iB] = S * R_BC(u[iB], u[iC])
-            f[iC] = -R_BC(u[iB], u[iC]) - R_AC(u[iA], u[iC])
+            f[data.iA] = data.S * R_AC(u[data.iA], u[data.iC], data)
+            f[data.iB] = data.S * R_BC(u[data.iB], u[data.iC], data)
+            f[data.iC] = -R_BC(u[data.iB], u[data.iC], data) - R_AC(u[data.iA], u[data.iC], data)
         end
         return nothing
     end
@@ -139,7 +151,7 @@ function main(;
     ## This is for the term \partial_t u_C at the boundary
     function bstorage!(f, u, node, data)
         if node.region == iCat
-            f[iC] = u[iC]
+            f[data.iC] = u[data.iC]
         end
         return nothing
     end
@@ -149,20 +161,21 @@ function main(;
         bstorage = bstorage!,
         flux = flux!,
         storage = storage!,
-        source = source!
+        source = source!,
+        data = problem_data
     )
 
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage)
 
     ## Enable species in bulk resp
-    enable_species!(sys, iA, [1])
-    enable_species!(sys, iB, [1])
+    enable_species!(sys, problem_data.iA, [1])
+    enable_species!(sys, problem_data.iB, [1])
 
     ## Enable surface species
-    enable_boundary_species!(sys, iC, [iCat])
+    enable_boundary_species!(sys, problem_data.iC, [iCat])
 
     ## Set Dirichlet bc for species B on \Gamma_2
-    boundary_dirichlet!(sys, iB, iBulk, 0.0)
+    boundary_dirichlet!(sys, problem_data.iB, iBulk, 0.0)
 
     ## Initial values
     inival = unknowns(sys)
@@ -182,7 +195,7 @@ function main(;
         odesol = solve(problem, Rosenbrock23(); initializealg = NoInit(), dt = tstep, adaptive = false)
         tsol = reshape(odesol, sys)
     else
-        control = fixed_timesteps!(VoronoiFVM.NewtonControl(), tstep)
+        control = fixed_timesteps!(VoronoiFVM.SolverControl(), tstep)
         tsol = solve(sys; inival, times = [0, tend], control, verbose = verbose)
     end
 
@@ -190,20 +203,20 @@ function main(;
     for it in 1:length(tsol)
         time = tsol.t[it]
         scalarplot!(
-            p[1, 1], grid, tsol[iA, :, it]; clear = true,
-            title = @sprintf("[A]: (%.3f,%.3f)", extrema(tsol[iA, :, it])...)
+            p[1, 1], grid, tsol[problem_data.iA, :, it]; clear = true,
+            title = @sprintf("[A]: (%.3f,%.3f)", extrema(tsol[problem_data.iA, :, it])...)
         )
         scalarplot!(
-            p[2, 1], grid, tsol[iB, :, it]; clear = true,
-            title = @sprintf("[B]: (%.3f,%.3f)", extrema(tsol[iB, :, it])...)
+            p[2, 1], grid, tsol[problem_data.iB, :, it]; clear = true,
+            title = @sprintf("[B]: (%.3f,%.3f)", extrema(tsol[problem_data.iB, :, it])...)
         )
         scalarplot!(
-            p[3, 1], tsol.t[1:it], tsol[iC, inodeCat, 1:it]; title = @sprintf("[C]"),
+            p[3, 1], tsol.t[1:it], tsol[problem_data.iC, inodeCat, 1:it]; title = @sprintf("[C]"),
             clear = true, show = true
         )
     end
 
-    return tsol[iC, inodeCat, end]
+    return tsol[problem_data.iC, inodeCat, end]
 end
 
 using Test

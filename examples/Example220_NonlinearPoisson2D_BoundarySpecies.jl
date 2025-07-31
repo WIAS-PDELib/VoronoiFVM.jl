@@ -8,6 +8,12 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
+## Problem data structure to avoid global variables
+mutable struct ProblemData
+    k::Float64      # Reaction rate constant
+    eps::Float64    # Diffusion parameter
+end
+
 function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse)
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
@@ -15,14 +21,15 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
 
     grid = simplexgrid(X, Y)
 
-    k = 1.0
-    eps::Float64 = 1.0
+    ## Create problem data structure
+    problem_data = ProblemData(1.0, 1.0e-2)
+
     physics = VoronoiFVM.Physics(;
         breaction = function (f, u, node, data)
             if node.region == 2
-                f[1] = k * (u[1] - u[3])
-                f[3] = k * (u[3] - u[1]) + k * (u[3] - u[2])
-                f[2] = k * (u[2] - u[3])
+                f[1] = data.k * (u[1] - u[3])
+                f[3] = data.k * (u[3] - u[1]) + data.k * (u[3] - u[2])
+                f[2] = data.k * (u[2] - u[3])
             end
             return nothing
         end, bstorage = function (f, u, node, data)
@@ -31,8 +38,8 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
             end
             return nothing
         end, flux = function (f, u, edge, data)
-            f[1] = eps * (u[1, 1] - u[1, 2])
-            f[2] = eps * (u[2, 1] - u[2, 2])
+            f[1] = data.eps * (u[1, 1] - u[1, 2])
+            f[2] = data.eps * (u[2, 1] - u[2, 2])
             return nothing
         end, source = function (f, node, data)
             x1 = node[1] - 0.5
@@ -43,7 +50,8 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
             f[1] = u[1]
             f[2] = u[2]
             return nothing
-        end
+        end,
+        data = problem_data
     )
 
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage)
@@ -61,9 +69,7 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     inival = unknowns(sys)
     inival .= 0.0
 
-    eps = 1.0e-2
-
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
     control.reltol_linear = 1.0e-5
     control.reltol = 1.0e-5

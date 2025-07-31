@@ -168,7 +168,7 @@ function main(;
     U .= 0  ## Start with zero potential everywhere
 
     ## Configure Newton solver
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
 
     ## Set up visualization

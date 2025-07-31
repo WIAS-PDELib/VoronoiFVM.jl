@@ -10,6 +10,14 @@ using Printf
 using VoronoiFVM
 using ExtendableGrids
 
+## Problem data structure to avoid global variables
+mutable struct ProblemData
+    eps::Float64        # Bulk heat conduction coefficient
+    eps_surf::Float64   # Surface diffusion coefficient  
+    k::Float64          # Transmission coefficient
+    breg::Int           # Boundary region number for surface diffusion
+end
+
 """
   We solve the following system
 
@@ -34,27 +42,26 @@ function main(n = 1; assembly = :edgewise)
 
     grid = simplexgrid(X, X, Z)
 
-    # parameters
-    eps = 1.0e0  # bulk heat conduction coefficient
-    eps_surf = 1.0e-2 # surface diffusion coefficient
-    k = 1.0    # transmission coefficient
+    ## Create problem data structure
+    problem_data = ProblemData(1.0e0, 1.0e-2, 1.0, breg)
+
     physics = VoronoiFVM.Physics(;
         flux = function (f, u, edge, data)
-            f[1] = eps * (u[1, 1] - u[1, 2])
+            f[1] = data.eps * (u[1, 1] - u[1, 2])
             return nothing
         end,
         bflux = function (f, u, edge, data)
-            if edge.region == breg
-                f[2] = eps_surf * (u[2, 1] - u[2, 2])
+            if edge.region == data.breg
+                f[2] = data.eps_surf * (u[2, 1] - u[2, 2])
             else
                 f[2] = 0.0
             end
             return nothing
         end,
         breaction = function (f, u, node, data)
-            if node.region == breg
-                f[1] = k * (u[1] - u[2])
-                f[2] = k * (u[2] - u[1])
+            if node.region == data.breg
+                f[1] = data.k * (u[1] - u[2])
+                f[2] = data.k * (u[2] - u[1])
             else
                 f[1] = 0.0
                 f[2] = 0.0
@@ -68,31 +75,32 @@ function main(n = 1; assembly = :edgewise)
             f[2] = 1.0e4 * exp(-20.0 * (x1^2 + x2^2 + x3^2))
             return nothing
         end, bstorage = function (f, u, node, data)
-            if node.region == breg
+            if node.region == data.breg
                 f[2] = u[2]
             end
             return nothing
         end, storage = function (f, u, node, data)
             f[1] = u[1]
             return nothing
-        end
+        end,
+        data = problem_data
     )
 
     sys = VoronoiFVM.System(grid, physics; unknown_storage = :sparse, assembly)
     enable_species!(sys, 1, [1])
-    enable_boundary_species!(sys, 2, [breg])
+    enable_boundary_species!(sys, 2, [problem_data.breg])
 
     function tran32!(a, b)
         a[1] = b[2]
         return nothing
     end
 
-    bgrid2 = subgrid(grid, [breg]; boundary = true, transform = tran32!)
+    bgrid2 = subgrid(grid, [problem_data.breg]; boundary = true, transform = tran32!)
 
     U = unknowns(sys)
     U .= 0.5
 
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = false
     control.reltol_linear = 1.0e-5
     control.keepcurrent_linear = false
