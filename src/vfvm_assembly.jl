@@ -25,15 +25,26 @@ end
 zero!(m::AbstractMatrix{T}) where {T} = m .= zero(T)
 
 function assemble_nodes(
-        system, matrix, dudp, time, tstepinv, λ, data, params, part,
+        system::AbstractSystem{Tv, Tc, Ti, Tm}, matrix, dudp, time, tstepinv, λ, data,
+        params::AbstractVector{Tp}, part,
         U::AbstractMatrix{Tv}, # Actual solution iteration
         UOld::AbstractMatrix{Tv}, # Old timestep solution
         F::AbstractMatrix{Tv}
-    ) where {Tv}
+    ) where {Tv, Tc, Ti, Tm, Tp}
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
-    node = Node(system, time, λ, params; partition = part)
+    node::Union{Nothing, Node{Tc, Tp, Ti}} = nothing
+    lock(system.gridaccesslock)
+    try
+        # this may trigger building infrastructure in the grid, so this
+        # cannot be run in multithreaded code
+        node = Node(system, time, λ, params; partition = part)
+    finally
+        unlock(system.gridaccesslock)
+    end
+
+
     UK = Array{Tv, 1}(undef, nspecies + nparams)
     UKOld = Array{Tv, 1}(undef, nspecies + nparams)
 
@@ -104,15 +115,26 @@ function assemble_nodes(
 end
 
 function assemble_edges(
-        system, matrix, dudp, time, tstepinv, λ, data, params, part,
+        system::AbstractSystem{Tv, Tc, Ti, Tm}, matrix, dudp, time, tstepinv, λ, data,
+        params::AbstractVector{Tp}, part,
         U::AbstractMatrix{Tv}, # Actual solution iteration
         UOld::AbstractMatrix{Tv}, # Old timestep solution
         F::AbstractMatrix{Tv}
-    ) where {Tv}
+    ) where {Tv, Tc, Ti, Tm, Tp}
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
-    edge = Edge(system, time, λ, params; partition = part)
+    edge::Union{Nothing, Edge{Tc, Tp, Ti}} = nothing
+    lock(system.gridaccesslock)
+    try
+        # this may trigger building infrastructure in the grid, so this
+        # cannot be run in multithreaded code
+        edge = Edge(system, time, λ, params; partition = part)
+    finally
+        unlock(system.gridaccesslock)
+    end
+
+
     UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
     if nparams > 0
         UKL[(2 * nspecies + 1):end] .= params
@@ -402,18 +424,21 @@ function assemble_bnodes(
 end
 
 function assemble_bedges(
-        system, matrix, dudp, time, tstepinv, λ, data, params, part,
+        system::AbstractSystem{Tv, Tc, Ti, Tm}, matrix, dudp, time, tstepinv, λ,
+        data, params::AbstractVector{Tp}, part,
         U::AbstractMatrix{Tv}, # Actual solution iteration
         UOld::AbstractMatrix{Tv}, # Old timestep solution
         F::AbstractMatrix{Tv}
-    ) where {Tv}
+    ) where {Tv, Tc, Ti, Tm, Tp}
     physics = system.physics
-    # this may trigger building bedge infrastructure in the grid
-    lock(system.bedgelock)
+    bedge::Union{Nothing, BEdge{Tc, Tp, Ti}} = nothing
+    lock(system.gridaccesslock)
     try
+        # this may trigger building infrastructure in the grid, so this
+        # cannot be run in multithreaded code
         bedge = BEdge(system, time, λ, params; partition = part)
     finally
-        unlock(system.bedgelock)
+        unlock(system.gridaccesslock)
     end
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters

@@ -113,9 +113,9 @@ mutable struct System{Tv, Tc, Ti, Tm, TSpecMat <: AbstractMatrix} <: AbstractSys
     is_complete::Bool
 
     """
-        Reentrant lock used in assemble_bedges
+        Reentrant lock used for accesseing grid data in parallell regions
     """
-    bedgelock::Base.ReentrantLock
+    gridaccesslock::Base.ReentrantLock
 
     System{Tv, Tc, Ti, Tm, TSpecMat}() where {Tv, Tc, Ti, Tm, TSpecMat} = new()
 end
@@ -256,7 +256,7 @@ function System(
     system.is_complete = false
     physics!(system; kwargs...)
     enable_species!(system; species)
-    system.bedgelock = Base.ReentrantLock()
+    system.gridaccesslock = Base.ReentrantLock()
     return system
 end
 

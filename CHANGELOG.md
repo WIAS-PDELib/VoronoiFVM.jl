@@ -8,7 +8,7 @@
 
 ## v2.12.2 August 1, 2025
   - SparseConnectivitryTracer v1
-  - Fix multithreading bug occuring with assemble_bedges
+  - Fix multithreading bug occuring with assemble_bedges by introducing system.gridaccesslock
   - Don't call assemble_bedges if bflux is trivial
   - Use Any as type for state.linear_cache in order to work with the new LinearSolveForwardDiffExt
   - Suspend test of ExtendableFEM coupling until that code uses SparseConnectivityTracer
