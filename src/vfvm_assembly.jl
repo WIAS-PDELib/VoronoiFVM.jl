@@ -408,7 +408,13 @@ function assemble_bedges(
         F::AbstractMatrix{Tv}
     ) where {Tv}
     physics = system.physics
-    bedge = BEdge(system, time, λ, params; partition = part)
+    # this may trigger building bedge infrastructure in the grid
+    lock(system.bedgelock)
+    try
+        bedge = BEdge(system, time, λ, params; partition = part)
+    finally
+        unlock(system.bedgelock)
+    end
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
     UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
@@ -416,51 +422,47 @@ function assemble_bedges(
         UKL[(2 * nspecies + 1):end] .= params
     end
     bflux_evaluator = ResJacEvaluator(physics, data, :bflux, UKL, bedge, nspecies)
-    return if isnontrivial(bflux_evaluator)
-        @allocations for item in edgebatch(system.boundary_assembly_data, part)
-            for ibedge in edgerange(system.boundary_assembly_data, item)
-                _fill!(bedge, system.boundary_assembly_data, ibedge, item)
-                @views UKL[1:nspecies] .= U[:, bedge.node[1]]
-                @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, bedge.node[2]]
+    return @allocations for item in edgebatch(system.boundary_assembly_data, part)
+        for ibedge in edgerange(system.boundary_assembly_data, item)
+            _fill!(bedge, system.boundary_assembly_data, ibedge, item)
+            @views UKL[1:nspecies] .= U[:, bedge.node[1]]
+            @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, bedge.node[2]]
 
-                evaluate!(bflux_evaluator, UKL)
-                res_bflux = res(bflux_evaluator)
-                jac_bflux = jac(bflux_evaluator)
+            evaluate!(bflux_evaluator, UKL)
+            res_bflux = res(bflux_evaluator)
+            jac_bflux = jac(bflux_evaluator)
 
-                function asm_res(idofK, idofL, ispec)
-                    _add(F, idofK, bedge.fac * res_bflux[ispec])
-                    _add(F, idofL, -bedge.fac * res_bflux[ispec])
-                end
-
-                function asm_jac(idofK, jdofK, idofL, jdofL, ispec, jspec)
-                    _addnz(matrix, idofK, jdofK, +jac_bflux[ispec, jspec], bedge.fac, part)
-                    _addnz(matrix, idofL, jdofK, -jac_bflux[ispec, jspec], bedge.fac, part)
-                    _addnz(
-                        matrix,
-                        idofK,
-                        jdofL,
-                        +jac_bflux[ispec, jspec + nspecies],
-                        bedge.fac, part
-                    )
-                    _addnz(
-                        matrix,
-                        idofL,
-                        jdofL,
-                        -jac_bflux[ispec, jspec + nspecies],
-                        bedge.fac, part
-                    )
-                end
-
-                function asm_param(idofK, idofL, ispec, iparam)
-                    jparam = 2 * nspecies + iparam
-                    dudp[iparam][ispec, idofK] += bedge.fac * jac_bflux[ispec, jparam]
-                    dudp[iparam][ispec, idofL] -= bedge.fac * jac_bflux[ispec, jparam]
-                end
-                assemble_res_jac(bedge, system, asm_res, asm_jac, asm_param)
+            function asm_res(idofK, idofL, ispec)
+                _add(F, idofK, bedge.fac * res_bflux[ispec])
+                _add(F, idofL, -bedge.fac * res_bflux[ispec])
             end
+
+            function asm_jac(idofK, jdofK, idofL, jdofL, ispec, jspec)
+                _addnz(matrix, idofK, jdofK, +jac_bflux[ispec, jspec], bedge.fac, part)
+                _addnz(matrix, idofL, jdofK, -jac_bflux[ispec, jspec], bedge.fac, part)
+                _addnz(
+                    matrix,
+                    idofK,
+                    jdofL,
+                    +jac_bflux[ispec, jspec + nspecies],
+                    bedge.fac, part
+                )
+                _addnz(
+                    matrix,
+                    idofL,
+                    jdofL,
+                    -jac_bflux[ispec, jspec + nspecies],
+                    bedge.fac, part
+                )
+            end
+
+            function asm_param(idofK, idofL, ispec, iparam)
+                jparam = 2 * nspecies + iparam
+                dudp[iparam][ispec, idofK] += bedge.fac * jac_bflux[ispec, jparam]
+                dudp[iparam][ispec, idofL] -= bedge.fac * jac_bflux[ispec, jparam]
+            end
+            assemble_res_jac(bedge, system, asm_res, asm_jac, asm_param)
         end
-    else
-        0
     end
 end
 
@@ -510,13 +512,18 @@ function eval_and_assemble(
     ncallocs = zeros(Int, num_partitions(system.assembly_data))
     nballocs = zeros(Int, num_partitions(system.assembly_data))
 
+
+    hasbflux = getproperty(physics, :bflux) != nofunc
+
     if num_partitions(system.assembly_data) == 1
         part = 1
         ncalloc = assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
         ncalloc += assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
         ncallocs[part] = ncalloc
         nballoc = assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
-        nballoc += assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+        if hasbflux
+            nballoc += assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+        end
         nballocs[part] = nballoc
     elseif system.assembly_type == :edgewise
         for color in pcolors(system.assembly_data)
@@ -535,7 +542,9 @@ function eval_and_assemble(
         for color in pcolors(system.boundary_assembly_data)
             Threads.@threads for part in pcolor_partitions(system.boundary_assembly_data, color)
                 nballoc = assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
-                nballoc += assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+                if hasbflux
+                    nballoc += assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+                end
                 nballocs[part] = nballoc
             end
         end
@@ -551,7 +560,9 @@ function eval_and_assemble(
         for color in pcolors(system.boundary_assembly_data)
             Threads.@threads for part in pcolor_partitions(system.boundary_assembly_data, color)
                 nballoc = assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
-                nballoc += assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+                if hasbflux
+                    nballoc += assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+                end
                 nballocs[part] = nballoc
             end
         end
