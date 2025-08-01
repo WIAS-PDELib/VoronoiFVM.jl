@@ -113,7 +113,7 @@ mutable struct System{Tv, Tc, Ti, Tm, TSpecMat <: AbstractMatrix} <: AbstractSys
     is_complete::Bool
 
     """
-        Reentrant lock used for accesseing grid data in parallell regions
+        Reentrant lock used for accesseing grid data in parallel regions
     """
     gridaccesslock::Base.ReentrantLock
 
