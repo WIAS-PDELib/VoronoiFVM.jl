@@ -19,6 +19,12 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
+## Problem data structure to avoid global variables
+mutable struct ProblemData
+    m::Float64    # Nonlinearity parameter
+    ϵ::Float64    # Regularization parameter
+end
+
 function barenblatt(x, t, m)
     tx = t^(-1.0 / (m + 1.0))
     xx = x * tx
@@ -35,6 +41,9 @@ function main(;
         unknown_storage = :sparse, tend = 0.01, tstep = 0.0001, assembly = :edgewise
     )
 
+    ## Create problem data structure
+    problem_data = ProblemData(m, 1.0e-10)
+
     ## Create a one-dimensional discretization
     h = 1.0 / convert(Float64, n / 2)
     X = collect(-1:h:1)
@@ -47,20 +56,19 @@ function main(;
         return nothing
     end
 
-    ϵ = 1.0e-10
-
     ## Storage term
     ## This needs to be regularized as its derivative
     ## at 0 is infinity
     function storage!(f, u, node, data)
-        f[1] = (ϵ + u[1])^(1.0 / m)
+        f[1] = (data.ϵ + u[1])^(1.0 / data.m)
         return nothing
     end
 
     ## Create a physics structure
     physics = VoronoiFVM.Physics(;
         flux = flux!,
-        storage = storage!
+        storage = storage!,
+        data = problem_data
     )
 
     ## Create a finite volume system - either
@@ -78,10 +86,10 @@ function main(;
     t0 = 0.001
 
     ## Broadcast the initial value
-    inival[1, :] .= map(x -> barenblatt(x, t0, m)^m, X)
+    inival[1, :] .= map(x -> barenblatt(x, t0, problem_data.m)^problem_data.m, X)
 
     ## Create solver control info
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
     control.Δu_opt = 0.1
     control.force_first_step = true
@@ -96,7 +104,7 @@ function main(;
                 color = :red, label = "numerical"
             )
             scalarplot!(
-                p[1, 1], grid, map(x -> barenblatt(x, time, m)^m, grid); clear = false,
+                p[1, 1], grid, map(x -> barenblatt(x, time, problem_data.m)^problem_data.m, grid); clear = false,
                 color = :green, label = "exact"
             )
             reveal(p)

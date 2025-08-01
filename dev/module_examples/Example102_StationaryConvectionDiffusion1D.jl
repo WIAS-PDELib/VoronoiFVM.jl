@@ -33,6 +33,13 @@ using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
 
+## Mutable struct to hold problem parameters
+## This encapsulates physical parameters for the convection-diffusion problem
+mutable struct ProblemData
+    D::Float64           ## Diffusion coefficient
+    v::Vector{Float64}   ## Velocity vector
+end
+
 ## Central difference flux. The velocity term is discretized using the
 ## average of the solution in the endpoints of the grid. If the local Peclet
 ## number v*h/D>1, the monotonicity property is lost.  Grid refinement
@@ -96,7 +103,7 @@ function calculate(grid, data, flux, verbose)
     solution = unknowns(sys)
 
     ## Create solver control info
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
 
     ## Stationary solution of the problem
@@ -112,12 +119,12 @@ function main(; n = 10, Plotter = nothing, verbose = false, D = 0.01, v = 1.0)
 
     data = (v = [v], D = D)
 
-    # Calculate three stationary solutions with different ways to calculate flux
+    ## Calculate three stationary solutions with different ways to calculate flux
     solution_exponential = calculate(grid, data, exponential_flux!, verbose)
     solution_upwind = calculate(grid, data, upwind_flux!, verbose)
     solution_central = calculate(grid, data, central_flux!, verbose)
 
-    # Visualize solutions using GridVisualize.jl
+    ## Visualize solutions using GridVisualize.jl
     p = GridVisualizer(; Plotter = Plotter, layout = (3, 1))
     scalarplot!(p[1, 1], grid, solution_exponential[1, :]; title = "exponential")
     scalarplot!(p[2, 1], grid, solution_upwind[1, :]; title = "upwind")

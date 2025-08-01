@@ -1,5 +1,78 @@
-# # 120: Differing species sets in regions, 1D
-# ([source code](@__SOURCE_URL__))
+#=
+
+# 120: Differing Species Sets in Three Regions, 1D
+([source code](@__SOURCE_URL__))
+
+This example demonstrates how to handle **different species sets in different regions** of the computational domain. The problem showcases a multi-region reaction-diffusion system where species are enabled only in specific regions, creating a heterogeneous multi-physics problem.
+
+## Problem Setup
+
+The computational domain $\Omega = [0,3]$ is divided into three regions:
+- **Region 1**: $[0,1]$ - Contains species 1 and 2
+- **Region 2**: $[1,2]$ - Contains only species 2 (transport region)  
+- **Region 3**: $[2,3]$ - Contains species 2 and 3
+
+## Mathematical Model
+
+The system solves time-dependent reaction-diffusion equations with different species active in each region:
+
+```math
+\frac{\partial u_i}{\partial t} - \nabla \cdot (D_i \nabla u_i) + R_i = S_i \quad \text{in region(s) where species } i \text{ is active}
+```
+
+### Species Distribution
+- **Species 1**: Active only in region 1
+- **Species 2**: Active in all regions (transport species)
+- **Species 3**: Active only in region 3
+
+### Reaction Terms
+The reactions create a cascade where:
+
+**Region 1**: Species 1 converts to species 2
+```math
+R_1 = k_1 u_1, \quad R_2 = -k_1 u_1
+```
+
+**Region 3**: Species 2 converts to species 3  
+```math
+R_2 = k_3 u_2, \quad R_3 = -k_3 u_2
+```
+
+**Region 2**: No reactions (pure transport)
+
+### Source Terms
+Species 1 has a source term in region 1:
+```math
+S_1 = 10^{-4}(3 - x) \quad \text{for } x \in [0,1]
+```
+
+### Boundary Conditions
+- Natural boundary conditions at $x=0$ and $x=3$
+- Dirichlet condition: $u_3(3) = 0$
+
+## Implementation Approaches
+
+The example demonstrates two different implementation strategies:
+
+### 1. Picky Approach (`pickyflux`, `pickystorage`)
+The "traditional" approach where flux and storage functions explicitly check the region and only write to arrays for species that are enabled in that region.
+
+### 2. Correction Approach (`correctionflux`, `correctionstorage`)  
+The "modern" approach (since VoronoiFVM v0.17.0) where functions can write to all species everywhere, and the system automatically ignores contributions for species not enabled in that region.
+
+## Physical Interpretation
+
+This setup models a **three-stage process**:
+1. **Generation**: Species 1 is produced and consumed in region 1, generating species 2
+2. **Transport**: Species 2 diffuses through region 2 without reaction
+3. **Consumption**: Species 2 is converted to species 3 in region 3, which is removed at the boundary
+
+This type of problem is common in:
+- Multi-stage chemical reactors
+- Biological systems with different tissue types
+- Environmental transport with varying reaction zones
+
+=#
 
 module Example120_ThreeRegions1D
 

@@ -1,4 +1,4 @@
-# # 510: Mixture
+# # 005: Mixture
 # ([source code](@__SOURCE_URL__))
 #=
 
@@ -42,7 +42,7 @@ To do so without (heap) allocations can be achieved at least in three ways teste
 
 =#
 
-module Example510_Mixture
+module DevEx005_Mixture
 
 using Printf
 using VoronoiFVM

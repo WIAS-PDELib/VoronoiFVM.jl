@@ -9,6 +9,12 @@ using ExtendableGrids
 using GridVisualize
 using ExtendableSparse
 
+## Problem data structure to avoid global variables
+mutable struct ProblemData
+    eps::Float64    # Diffusion parameter
+    k_react::Float64  # Boundary reaction rate
+end
+
 function main(;
         n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise,
         tend = 100
@@ -19,26 +25,29 @@ function main(;
 
     grid = simplexgrid(X, Y)
 
-    eps = 1.0e-2
+    ## Create problem data structure
+    problem_data = ProblemData(1.0e-2, 1.0)
+
     physics = VoronoiFVM.Physics(;
         breaction = function (f, u, node, data)
             if node.region == 2
-                f[1] = 1 * (u[1] - u[2])
-                f[2] = 1 * (u[2] - u[1])
+                f[1] = data.k_react * (u[1] - u[2])
+                f[2] = data.k_react * (u[2] - u[1])
             else
                 f[1] = 0
                 f[2] = 0
             end
             return nothing
         end, flux = function (f, u, edge, data)
-            f[1] = eps * (u[1, 1] - u[1, 2])
-            f[2] = eps * (u[2, 1] - u[2, 2])
+            f[1] = data.eps * (u[1, 1] - u[1, 2])
+            f[2] = data.eps * (u[2, 1] - u[2, 2])
             return nothing
         end, storage = function (f, u, node, data)
             f[1] = u[1]
             f[2] = u[2]
             return nothing
-        end
+        end,
+        data = problem_data
     )
 
     sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage, assembly = assembly)
@@ -49,7 +58,7 @@ function main(;
     inival[1, :] .= map((x, y) -> exp(-5.0 * ((x - 0.5)^2 + (y - 0.5)^2)), grid)
     inival[2, :] .= 0
 
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
     control.reltol_linear = 1.0e-5
 

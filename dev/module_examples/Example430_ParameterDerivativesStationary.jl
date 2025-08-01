@@ -104,7 +104,7 @@ end
 
 Same as runf, but keep one system pass parameters via data.
 """
-function rung(; Plotter = nothing, method_linear = SparspakFactorization(), n = 10)
+function rung(; Plotter = nothing, n = 10)
     X = collect(0:(1.0 / n):1)
     grid = simplexgrid(X, X)
 
@@ -127,7 +127,7 @@ function rung(; Plotter = nothing, method_linear = SparspakFactorization(), n = 
             tfc = testfunction(tff, [1], [3])
         end
         data.p = P[1]
-        sol = solve(sys; inival = 0.5, method_linear)
+        sol = solve(sys; inival = 0.5)
         return [integrate(sys, tfc, sol)[1]]
     end
 

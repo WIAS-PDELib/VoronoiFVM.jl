@@ -1,5 +1,5 @@
 #=
-# 108: 1D Nonlinear Diffusion equation with ODE
+# 108: 1D Nonlinear Diffusion equation with Rosenbrock method
 ([source code](@__SOURCE_URL__))
 
 Solve the nonlinear diffusion equation
@@ -7,7 +7,7 @@ Solve the nonlinear diffusion equation
 ```math
 \partial_t u -\Delta u^m = 0
 ```
-in $\Omega=(-1,1)$ with homogeneous Neumann boundary conditions using the implicit Euler method.
+in $\Omega=(-1,1)$ with homogeneous Neumann boundary conditions using stiff ODE solvers from the SciML ecosystem.
 
 This equation is also called  "porous medium equation". 
 The Barenblatt solution is an exact solution of this problem which for m>1 has a finite support.

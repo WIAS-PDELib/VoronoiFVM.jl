@@ -3,7 +3,7 @@
 ([source code](@__SOURCE_URL__))
 =#
 
-module Example003_Solvers
+module DevEx003_Solvers
 
 ## under development
 
