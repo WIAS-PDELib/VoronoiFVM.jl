@@ -6,6 +6,13 @@
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
+## v2.12.2 August 1, 2025
+  - SparseConnectivitryTracer v1
+  - Fix multithreading bug occuring with assemble_bedges
+  - Don't call assemble_bedges if bflux is trivial
+  - Use Any as type for state.linear_cache in order to work with the new LinearSolveForwardDiffExt
+  - Suspend test of ExtendableFEM coupling until that code uses SparseConnectivityTracer
+
 ## v2.12.0 June 5, 2025
   - Include DifferentiationInterface v0.7 into compat
   
