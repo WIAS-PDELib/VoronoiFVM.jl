@@ -19,12 +19,12 @@ jobs:
 
     steps:
       # Check out master branch (to get the config file)
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: "master"
 
       # Check out logs branch into testdeps/logs
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: DownstreamTester/nightlylogs
           path: "testdeps/logs"
