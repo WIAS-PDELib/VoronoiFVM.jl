@@ -216,7 +216,7 @@ function runh(; Plotter = nothing, n = 10)
         sparsity_detector = TracerSparsityDetector(),
         coloring_algorithm = GreedyColoringAlgorithm()
     )
-    jac_prep = prepare_jacobian(mymeas!, output, backend, input)
+    jac_prep = prepare_jacobian(mymeas!, output, backend, input; strict = Val(false))
     ∂m∂u = similar(sparsity_pattern(jac_prep), Float64)
 
 
