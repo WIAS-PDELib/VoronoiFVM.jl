@@ -55,6 +55,9 @@ $(TYPEDSIGNATURES)
 Create testfunction which has Dirichlet zero boundary conditions  for boundary
 regions in bc0 and Dirichlet one boundary conditions  for boundary
 regions in bc1.
+The idea for defining such test function is inspired by Gajewski, WIAS Report No 6, 1993,
+to reformulate the surface integral describing the current though the contact bc1
+by a volume integral over the entire domain.
 """
 function testfunction(factory::TestFunctionFactory{Tv}, bc0, bc1) where {Tv}
     u = unknowns(factory.state.system)
@@ -98,7 +101,14 @@ end
 """
 $(SIGNATURES)
 
-Calculate test function integral for two consecutive time steps.
+Calculate test function integral for transient problems. More precicesly, this method
+computes the current ``\\int_{\\Gamma} \\vec J_i \\cdot \\vec n ds`` through a contact ``\\Gamma``
+using a test function approach.
+We rely on the reformulation [Gajewski, WIAS Report No 6, 1993]
+``\\int_{\\Gamma} \\vec J_i \\cdot \\vec n ds =
+\\int_{\\Omega} \\nabla T \\cdot \\vec J_i dx +
+\\int_{\\Omega} T \\nabla \\cdot \\vec J_i  dx``.
+Both integral contributions are calculated seperaetly.
 """
 function integrate(
         system::AbstractSystem,
@@ -109,6 +119,30 @@ function integrate(
         params = Tv[],
         data = system.physics.data
     ) where {Tv}
+
+    integral1 = integrate_nodebatch(system, tf, U, Uold, tstep; params = params, data = data)
+    integral2 = integrate_edgebatch(system, tf, U, Uold, tstep; params = params, data = data)
+
+    return integral1 .+ integral2
+end
+
+
+"""
+$(SIGNATURES)
+
+Calculate one of the two test function integrals
+`` \\int_{\\Omega} T \\nabla \\cdot \\vec J_i  dx``.
+"""
+function integrate_nodebatch(
+        system::AbstractSystem,
+        tf,
+        U::AbstractMatrix{Tv},
+        Uold::AbstractMatrix{Tv},
+        tstep;
+        params = Tv[],
+        data = system.physics.data
+    ) where {Tv}
+
     grid = system.grid
     nspecies = num_species(system)
     integral = zeros(Tv, nspecies)
@@ -119,26 +153,19 @@ function integrate(
     # !!! params etc
     physics = system.physics
     node = Node(system, 0.0, 1.0, params)
-    bnode = BNode(system, 0.0, 1.0, params)
-    edge = Edge(system, 0.0, 1.0, params)
-    bedge = Edge(system, 0.0, 1.0, params)
 
-    UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
     UK = Array{Tv, 1}(undef, nspecies + nparams)
     UKold = Array{Tv, 1}(undef, nspecies + nparams)
 
     if nparams > 0
         UK[(nspecies + 1):end] .= params
         UKold[(nspecies + 1):end] .= params
-        UKL[(2 * nspecies + 1):end] .= params
     end
 
     src_eval = ResEvaluator(physics, data, :source, UK, node, nspecies + nparams)
     rea_eval = ResEvaluator(physics, data, :reaction, UK, node, nspecies + nparams)
-    erea_eval = ResEvaluator(physics, data, :edgereaction, UK, edge, nspecies + nparams)
     stor_eval = ResEvaluator(physics, data, :storage, UK, node, nspecies + nparams)
     storold_eval = ResEvaluator(physics, data, :storage, UKold, node, nspecies + nparams)
-    flux_eval = ResEvaluator(physics, data, :flux, UKL, edge, nspecies + nparams)
 
     for item in nodebatch(system.assembly_data)
         for inode in noderange(system.assembly_data, item)
@@ -164,6 +191,48 @@ function integrate(
             assemble_res(node, system, asm_res)
         end
     end
+    return integral
+end
+
+
+"""
+$(SIGNATURES)
+
+Calculate one of the two test function integrals
+`` \\int_{\\Omega} \\nabla T \\cdot \\vec J_i dx``.
+"""
+function integrate_edgebatch(
+        system::AbstractSystem,
+        tf,
+        U::AbstractMatrix{Tv},
+        Uold::AbstractMatrix{Tv},
+        tstep;
+        params = Tv[],
+        data = system.physics.data
+    ) where {Tv}
+
+    grid = system.grid
+    nspecies = num_species(system)
+    integral = zeros(Tv, nspecies)
+    tstepinv = 1.0 / tstep
+    nparams = system.num_parameters
+    @assert nparams == length(params)
+
+    # !!! params etc
+    physics = system.physics
+    edge = Edge(system, 0.0, 1.0, params)
+    bedge = Edge(system, 0.0, 1.0, params)
+
+    UK = Array{Tv, 1}(undef, nspecies + nparams)
+    UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
+
+    if nparams > 0
+        UK[(nspecies + 1):end] .= params
+        UKL[(2 * nspecies + 1):end] .= params
+    end
+
+    erea_eval = ResEvaluator(physics, data, :edgereaction, UK, edge, nspecies + nparams)
+    flux_eval = ResEvaluator(physics, data, :flux, UKL, edge, nspecies + nparams)
 
     for item in edgebatch(system.assembly_data)
         for iedge in edgerange(system.assembly_data, item)
@@ -192,13 +261,176 @@ function integrate(
     end
 
     return integral
+
+end
+
+"""
+$(SIGNATURES)
+
+Calculate test function integral for the time time derivative of a current density. More precicesly, this method
+computes the current ``\\int_{\\Gamma} \\partial_t \\vec J_i \\cdot \\vec n ds`` through a contact ``\\Gamma``
+using a test function approach.
+This method can be used for general coupled systems such as Poisson-Nernst Planck or the van Roosbroeck model, where an internal electric through the moving charge carriers is considered.
+We rely on the reformulation [Gajewski, WIAS Report No 6, 1993]
+``\\int_{\\Gamma} \\partial_t \\vec J_i \\cdot \\vec n ds =
+\\int_{\\Omega} \\nabla T \\cdot \\partial_t \\vec J_i dx +
+\\int_{\\Omega} T \\partial_t \\nabla \\cdot \\vec J_i  dx``.
+Both integral contributions are calculated seperaetly.
+"""
+function integrate_displacement(
+        system::AbstractSystem, tf, U::AbstractMatrix{Tv},
+        Uold::AbstractMatrix{Tv}, tstep; params = Tv[], data = system.physics.data
+    ) where {Tv}
+
+    integral1 = integrate_displacement_nodebatch(system, tf, U, Uold, tstep; params = params, data = data)
+    integral2 = integrate_displacement_edgebatch(system, tf, U, Uold, tstep; params = params, data = data)
+
+    return integral1 .+ integral2
+end
+
+"""
+$(SIGNATURES)
+
+Calculate one of the two test function integrals
+``\\int_{\\Omega} T \\partial_t \\nabla \\cdot \\vec J_i  dx``.
+By assumption, we assume that there is no present storage term.
+"""
+function integrate_displacement_nodebatch(
+        system::AbstractSystem, tf, U::AbstractMatrix{Tv},
+        Uold::AbstractMatrix{Tv}, tstep; params = Tv[], data = system.physics.data
+    ) where {Tv}
+
+    grid = system.grid
+    nspecies = num_species(system)
+    integral = zeros(Tv, nspecies)
+    tstepinv = 1.0 / tstep
+
+    nparams = system.num_parameters
+    @assert nparams == length(params)
+
+    # !!! params etc
+    physics = system.physics
+    node = Node(system, 0.0, 1.0, params)
+
+    UK = Array{Tv, 1}(undef, nspecies + nparams)
+    UKold = Array{Tv, 1}(undef, nspecies + nparams)
+
+    if nparams > 0
+        UK[(nspecies + 1):end] .= params
+        UKold[(nspecies + 1):end] .= params
+    end
+
+    rea_eval = ResEvaluator(physics, data, :reaction, UK, node, nspecies + nparams)
+    reaold_eval = ResEvaluator(physics, data, :reaction, UKold, node, nspecies + nparams)
+
+    for item in nodebatch(system.assembly_data)
+        for inode in noderange(system.assembly_data, item)
+            _fill!(node, system.assembly_data, inode, item)
+            for ispec in 1:nspecies
+                UK[ispec] = U[ispec, node.index]
+                UKold[ispec] = Uold[ispec, node.index]
+            end
+
+            evaluate!(rea_eval, UK)
+            rea = res(rea_eval)
+            evaluate!(reaold_eval, UKold)
+            reaold = res(reaold_eval)
+
+            # source term cancels out
+            function asm_res(idof, ispec)
+                return integral[ispec] += node.fac *
+                    ((rea[ispec] - reaold[ispec])) * tstepinv * tf[node.index]
+            end
+            assemble_res(node, system, asm_res)
+        end
+
+    end
+    return integral
+end
+
+"""
+$(SIGNATURES)
+
+Calculate one of the two test function integrals
+``\\int_{\\Omega} \\nabla T \\cdot \\partial_t \\vec J_i dx``.
+"""
+function integrate_displacement_edgebatch(
+        system::AbstractSystem, tf, U::AbstractMatrix{Tv},
+        Uold::AbstractMatrix{Tv}, tstep; params = Tv[], data = system.physics.data
+    ) where {Tv}
+    grid = system.grid
+    nspecies = num_species(system)
+    integral = zeros(Tv, nspecies)
+    tstepinv = 1.0 / tstep
+
+    nparams = system.num_parameters
+    @assert nparams == length(params)
+
+    # !!! params etc
+    physics = system.physics
+    edge = Edge(system, 0.0, 1.0, params)
+    bedge = Edge(system, 0.0, 1.0, params)
+
+    UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
+    UK = Array{Tv, 1}(undef, nspecies + nparams)
+    UKLold = Array{Tv, 1}(undef, 2 * nspecies + nparams)
+    UKold = Array{Tv, 1}(undef, nspecies + nparams)
+
+    if nparams > 0
+        UKL[(2 * nspecies + 1):end] .= params
+        UKLold[(2 * nspecies + 1):end] .= params
+    end
+
+    erea_eval = ResEvaluator(physics, data, :edgereaction, UK, edge, nspecies + nparams)
+    ereaold_eval = ResEvaluator(physics, data, :edgereaction, UKold, edge, nspecies + nparams)
+    flux_eval = ResEvaluator(physics, data, :flux, UKL, edge, nspecies + nparams)
+    fluxold_eval = ResEvaluator(physics, data, :flux, UKLold, edge, nspecies + nparams)
+
+    for item in edgebatch(system.assembly_data)
+        for iedge in edgerange(system.assembly_data, item)
+            _fill!(edge, system.assembly_data, iedge, item)
+            @views UKL[1:nspecies] .= U[:, edge.node[1]]
+            @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, edge.node[2]]
+
+            @views UKLold[1:nspecies] .= Uold[:, edge.node[1]]
+            @views UKLold[(nspecies + 1):(2 * nspecies)] .= Uold[:, edge.node[2]]
+
+            evaluate!(flux_eval, UKL)
+            flux = res(flux_eval)
+
+            evaluate!(fluxold_eval, UKLold)
+            fluxold = res(fluxold_eval)
+
+            function asm_res(idofK, idofL, ispec)
+                return integral[ispec] += edge.fac * (flux[ispec] - fluxold[ispec]) * tstepinv * (tf[edge.node[1]] - tf[edge.node[2]])
+            end
+            assemble_res(edge, system, asm_res)
+
+            if isnontrivial(erea_eval)
+                evaluate!(erea_eval, UKL)
+                erea = res(erea_eval)
+
+                evaluate!(ereaold_eval, UKLold)
+                ereaold = res(ereaold_eval)
+
+                function easm_res(idofK, idofL, ispec)
+                    return integral[ispec] += edge.fac * (erea[ispec] - ereaold[ispec]) * tstepinv * (tf[edge.node[1]] + tf[edge.node[2]])
+                end
+                assemble_res(edge, system, easm_res)
+            end
+
+        end
+    end
+
+    return integral
+
 end
 
 ############################################################################
 """
      integrate(system, T, U)
 
-Calculate test function integral for steady state solution 
+Calculate test function integral for steady state solution
 ``\\int_{\\Gamma} T \\vec J_i \\cdot \\vec n ds``.
 """
 function integrate(
@@ -214,7 +446,7 @@ end
     integrate(system,tf, Ut; rate=true, params, data)
 
 Calculate test function integral for transient solution.
-If `rate=true` (default), calculate the flow rate (per second) 
+If `rate=true` (default), calculate the flow rate (per second)
 through the corresponding boundary. Otherwise, calculate the absolute
 amount. The result is a `nspec x (nsteps-1)` DiffEqArray.
 """

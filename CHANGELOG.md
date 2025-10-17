@@ -6,6 +6,11 @@
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
+## v2.13
+  - subdivide the `integrate` method into the two submethods `integrate_edgebatch` and `integrate_edgebatch` to have access to both integrals
+  - add the method `integrate_displacement` for charge transport applications of the type Poisson + drift-diffusion to account for the electric displacement flux
+  - add example `Example161_BipolarDriftDiffusionCurrent.jl` which explores the new integrate methods
+
 ## v2.12.2 August 1, 2025
   - SparseConnectivitryTracer v1
   - Fix multithreading bug occurring with assemble_bedges by introducing system.gridaccesslock
@@ -15,38 +20,38 @@
 
 ## v2.12.0 June 5, 2025
   - Include DifferentiationInterface v0.7 into compat
-  
+
 ## v2.11.0 May 26, 2025
   - add `partition` field and `parttition(NodeOrEdge)` method to geometry items
-  - test use of PreallocationTools to provide local buffers in flux 
+  - test use of PreallocationTools to provide local buffers in flux
     functions while multithreading (see Example510).
-  
+
 ## v2.10.0 April 16, 2025
   - Replace sparsity detection for generic operator
     Use DifferentiationInterface + SparseConnectivity tracer instead of Symbolics + SparseDiffTools
-    
+
 ## v2.9.1 April 4, 2025
   - bugfix with bstorage contribution to mass matrix calculation
-  
+
 ## v2.9 April 3, 2025
   - Fixed bug in `evaluate_residual_and_jacobian`
   - Added `init_dirichlet` flag to `evaluate_residual_and_jacobian!` to suppress initialization of Dirichlet values in argument vector `u`
 ## v2.8 February 23, 2025
   - Add `integrate` methods for transient solutions returning instances of `DiffEqArray`
-  
+
 ## v2.7 February 18, 2025
   - Allow for LinearSolve v3
   - Introduce `log_output!` and `print_output!` to control where output goes.
   - Modifications in test infrastructure
-  
+
 ## v2.6.1 November 27, 2024
   - Allow to calculate node flux reconstruction from general function
-  - Runic formatting 
+  - Runic formatting
   - pre-commit checks
-  
+
 ## v2.5.0 November 17, 2024
   - update show methods for physics, grid
-  
+
 ## v2.4.0 November 11, 2024
   - Use `precs` based linear solver API, see https://github.com/SciML/LinearSolve.jl/pull/514 with  ExtendableSparse 1.6
   - Deprecate VoronoiFVM solver strategies
@@ -58,7 +63,7 @@
 ## v2.2.0 October 30, 2024
   - Add `params` to SystemState, allow to pass params to ODEProblem
   - Fix use of end results of time evolution as steady state for impedance calculations
-  - new internal solutionarray method. 
+  - new internal solutionarray method.
 
 ## October 28, 2024
 
