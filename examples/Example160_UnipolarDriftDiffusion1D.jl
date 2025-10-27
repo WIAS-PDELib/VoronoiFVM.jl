@@ -117,9 +117,9 @@ function main(;
     sys = VoronoiFVM.System(
         grid,
         physics;
-        unknown_storage = unknown_storage,
+        unknown_storage,
         species = [1, 2],
-        assembly = assembly,
+        assembly,
     )
 
     inival = unknowns(sys)

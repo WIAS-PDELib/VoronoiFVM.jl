@@ -1,6 +1,6 @@
 #=
 
-# 160: Bipolar drift-diffusion with different definition of current
+# 161: Bipolar drift-diffusion with different definition of current
 ([source code](@__SOURCE_URL__))
 
 The problem consists of a Poisson equation for the electrostatic potential $\psi$:
@@ -27,8 +27,9 @@ using GridVisualize
 function main(;
         n = 20, # number of nodes
         Plotter = nothing,
-        plotting = false,
-        verbose = false
+        verbose = false,
+        unknown_storage = :sparse,
+        assembly = :edgewise
     )
 
     ################################################################################
@@ -100,7 +101,7 @@ function main(;
     lambda = 1.0e-1 # Debye length
     DirichletVal = 0.0
 
-    sys = VoronoiFVM.System(grid; unknown_storage = :sparse)
+    sys = VoronoiFVM.System(grid; unknown_storage, assembly)
     iphin = 1; zn = -1; enable_species!(sys, iphin, regions)
     iphip = 2; zp = 1;  enable_species!(sys, iphip, regions)
     ipsi = 3; enable_species!(sys, ipsi, regions)
@@ -254,7 +255,7 @@ function main(;
 
     tvalues_shift = tvalues .- (tPrecond + tRamp)
 
-    if plotting
+    if !isnothing(Plotter)
 
         vis1 = GridVisualizer(; layout = (3, 1), xlabel = "space", ylabel = "potential", legend = :lt, Plotter = Plotter, fignumber = 1)
 
@@ -288,13 +289,16 @@ function main(;
     end
 
     return sum(I2)
-
 end # main
 
 using Test
 function runtests()
     testval = -965.3101329657035
-    @test main() ≈ testval
+    for assembly in [:edgewise, :cellwise]
+        for unknown_storage in [:dense, :sparse]
+            @test main(; assembly, unknown_storage) ≈ testval
+        end
+    end
     return nothing
 end
 

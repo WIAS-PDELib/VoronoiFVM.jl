@@ -108,7 +108,7 @@ We rely on the reformulation [Gajewski, WIAS Report No 6, 1993]
 ``\\int_{\\Gamma} \\vec J_i \\cdot \\vec n ds =
 \\int_{\\Omega} \\nabla T \\cdot \\vec J_i dx +
 \\int_{\\Omega} T \\nabla \\cdot \\vec J_i  dx``.
-Both integral contributions are calculated seperaetly.
+Both integral contributions are calculated separately.
 """
 function integrate(
         system::AbstractSystem,
@@ -120,8 +120,8 @@ function integrate(
         data = system.physics.data
     ) where {Tv}
 
-    integral1 = integrate_nodebatch(system, tf, U, Uold, tstep; params = params, data = data)
-    integral2 = integrate_edgebatch(system, tf, U, Uold, tstep; params = params, data = data)
+    integral1 = integrate_nodebatch(system, tf, U, Uold, tstep; params, data)
+    integral2 = integrate_edgebatch(system, tf, U, Uold, tstep; params, data)
 
     return integral1 .+ integral2
 end
@@ -275,7 +275,6 @@ function integrate_flux_time_derivative(
         system::AbstractSystem, tf, U::AbstractMatrix{Tv},
         Uold::AbstractMatrix{Tv}, tstep; params = Tv[], data = system.physics.data
     ) where {Tv}
-
     grid = system.grid
     nspecies = num_species(system)
     integral = zeros(Tv, nspecies)
