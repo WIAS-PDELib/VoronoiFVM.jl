@@ -131,9 +131,6 @@ begin
     end
 end;
 
-# ╔═╡ 12ab322c-60ae-419f-9334-82f2f7ee7b59
-t1 = @elapsed sol1, sys1, err1 = run_vfvm(m = m, n = n);history_summary(sol1)
-
 # ╔═╡ 3a004ab9-2705-4f5c-8e6e-10d508cc9a1b
 md"""
 method: $(@bind method Select([keys(diffeqmethods)...]))
@@ -141,6 +138,9 @@ method: $(@bind method Select([keys(diffeqmethods)...]))
 
 # ╔═╡ 3e1e62ec-c50a-499e-b516-8478904429c5
 m = 2; n = 50;
+
+# ╔═╡ 12ab322c-60ae-419f-9334-82f2f7ee7b59
+t1 = @elapsed sol1, sys1, err1 = run_vfvm(m = m, n = n);history_summary(sol1)
 
 # ╔═╡ 604898ba-1e8f-4c7c-9711-9958a8351854
 t2 = @elapsed sol2, sys2, err2 = run_diffeq(m = m, n = n, solver = diffeqmethods[method]());history_summary(sol2)

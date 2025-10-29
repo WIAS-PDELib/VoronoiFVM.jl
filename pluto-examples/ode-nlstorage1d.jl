@@ -216,10 +216,6 @@ begin
     de_tsol = reshape(de_odesol, de_sys)
 end;
 
-# ╔═╡ 9340c3a2-12f9-4f0e-9e5b-3c960388f9cc
-plotsolutions()
-
-
 # ╔═╡ 1a5c5b50-8aea-47b9-9961-5d74e93e9d69
 md"""
 t=$(@bind t  PlutoUI.Slider(range(t0,tend,length=10001),default=2*t0;show_value=true)) 
@@ -294,6 +290,10 @@ function plotsolutions()
     scalarplot!(vis, grid, u[1, :], clear = false, color = :black, markershape = :none, linestyle = :dash, title = "t=$(t)", label = "vfvm_default")
     return reveal(vis)
 end
+
+# ╔═╡ 9340c3a2-12f9-4f0e-9e5b-3c960388f9cc
+plotsolutions()
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
