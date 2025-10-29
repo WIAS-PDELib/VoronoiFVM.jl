@@ -199,7 +199,7 @@ end
 """
     integrate_TxFunc(system, T, f!, U; kwargs...)
 
-Calculate ``∫_Ω T⋅ f!(U) dω`` for a test function `T` and unknonwn vector `U`. 
+Calculate ``∫_Ω T⋅ f!(U) dω`` for a test function `T` and unknown vector `U`. 
 The function `f!` shall have the same signature as a storage or reaction function.
 """
 function integrate_TxFunc(
@@ -278,7 +278,7 @@ end
 """
       integrate_∇TxFlux(system, T, f!, U; kwargs...)
 
-Calculate ``∫_Ω ∇T⋅ flux!(U) dω`` for a test function `T` and unknonwn vector `U`. 
+Calculate ``∫_Ω ∇T⋅ flux!(U) dω`` for a test function `T` and unknown vector `U`. 
 The function `f!` shall have the same signature as a flux function.
 """
 function integrate_∇TxFlux(
@@ -323,7 +323,7 @@ end
 """
       integrate_∇TxFlux(system, T, U; kwargs...)
 
-Calculate ``∫_Ω ∇T⋅ flux!(U) dω`` for a test function `T` and unknonwn vector `U`,
+Calculate ``∫_Ω ∇T⋅ flux!(U) dω`` for a test function `T` and unknown vector `U`,
 where `flux!` is the system flux.
 """
 integrate_∇TxFlux(system, T, U; kwargs...) = integrate_∇TxFlux(system, T, system.physics.flux, U; kwargs...)
@@ -331,7 +331,7 @@ integrate_∇TxFlux(system, T, U; kwargs...) = integrate_∇TxFlux(system, T, sy
 """
       integrate_TxEdgeFunc(system, T, f!, U; kwargs...)
 
-Calculate ``∫_Ω T⋅ f!(U) dω`` for a test function `T` and unknonwn vector `U`. 
+Calculate ``∫_Ω T⋅ f!(U) dω`` for a test function `T` and unknown vector `U`. 
 The function `f!` shall have the same signature as a flux function, but is assumed
 to describe a reaction term given on edges.
 """
