@@ -10,7 +10,7 @@
   - Restructure boundary flux calculation via test functions
     - Provide methods `integrate_TxFunc`, `integrate_TxSrc`, `integrate_∇TxFlux`, `integrate_TxEdgefunc` which allow
       to calculate the different contributions to the test function integrals separately.
-    - Use the new methods for in the existing test function intergral methods. This appears a bit more costly, 
+    - Use the new methods for in the existing test function integral methods. This appears a bit more costly, 
       but more transparent
   - Improve documentation of boundary flux calculation via test functions
   - Add example `Example161_BipolarDriftDiffusionCurrent.jl` which explores the (new) integrate methods
