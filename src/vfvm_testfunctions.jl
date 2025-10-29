@@ -8,6 +8,8 @@ test functions for boundary flux calculations.
 Type parameters:
 - `Tu`: value type of test functions
 - `Tv`: Default value type of system
+
+Fields:
 $(TYPEDFIELDS)
 """
 mutable struct TestFunctionFactory{Tu, Tv}
@@ -29,9 +31,9 @@ end
 
 ################################################
 """
-$(TYPEDSIGNATURES)
+    TestFunctionFactory(system; control= SolverControl())
 
-Constructor for TestFunctionFactory from System
+Constructor for TestFunctionFactory from system.
 """
 function TestFunctionFactory(system::AbstractSystem{Tv}; control = SolverControl()) where {Tv}
     physics = Physics(;
@@ -50,14 +52,11 @@ end
 
 ############################################################################
 """
-$(TYPEDSIGNATURES)
+    testfunction(factory::TestFunctionFactory, bc0, bc1)
 
 Create testfunction which has Dirichlet zero boundary conditions  for boundary
-regions in bc0 and Dirichlet one boundary conditions  for boundary
-regions in bc1.
-The idea for defining such test function is inspired by Gajewski, WIAS Report No 6, 1993,
-to reformulate the surface integral describing the current though the contact bc1
-by a volume integral over the entire domain.
+regions listed in `bc0` and Dirichlet one boundary conditions  for boundary
+regions listed in `bc1`. 
 """
 function testfunction(factory::TestFunctionFactory{Tv}, bc0, bc1) where {Tv}
     u = unknowns(factory.state.system)
@@ -97,18 +96,74 @@ function testfunction(factory::TestFunctionFactory{Tv}, bc0, bc1) where {Tv}
 end
 
 ############################################################################
+"""
+     integrate(system, T, U::AbstractMatrix)
+
+Calculate test function integral for a steady state solution ``u``  ``∫_Γ T \\vec j(u) ⋅ \\vec n dω ≈ I_j(T,u)-I_r(T,u)``,
+see the definition of [test function integral contributions](@ref discrete_appr).
+
+The result is a `nspec` vector giving one value of the integral for each species. 
+"""
+function integrate(
+        system::AbstractSystem,
+        tf::Vector{Tv},
+        U::AbstractMatrix{Tu};
+        kwargs...
+    ) where {Tu, Tv}
+    return integrate(system, tf, U, U, Inf; kwargs...)
+end
+
+############################################################################
 
 """
-$(SIGNATURES)
+    integrate(system,T, U::AbstractTransientSolution; rate=true, params, data)
 
-Calculate test function integral for transient problems. More precicesly, this method
-computes the current ``\\int_{\\Gamma} \\vec J_i \\cdot \\vec n ds`` through a contact ``\\Gamma``
-using a test function approach.
-We rely on the reformulation [Gajewski, WIAS Report No 6, 1993]
-``\\int_{\\Gamma} \\vec J_i \\cdot \\vec n ds =
-\\int_{\\Omega} \\nabla T \\cdot \\vec J_i dx +
-\\int_{\\Omega} T \\nabla \\cdot \\vec J_i  dx``.
-Both integral contributions are calculated separately.
+Calculate test function integrals for the transient solution  ``∫_Γ T \\vec j(u^n) ⋅ \\vec n dω ≈ I_j(T,u^n)-I_r(T,u^n)-I_{s_t}(T,u^{n-1}, u^n)``
+for each time interval ``(t^{n-1}, t^n)``,see the definition of [test function integral contributions](@ref discrete_appr).
+
+Keyword arguments:
+- `params`: vector of parameters used to calculate `U`. Default: `[]`.
+- `data`: user data   used to calculate `U`. Default: `data(system)`
+- `rate`: If `rate=true` (default), calculate the flow rate (per second) 
+   through the corresponding boundary. Otherwise, calculate the absolute 
+   amount per time inteval. 
+
+The result is a `nspec x (nsteps-1)` DiffEqArray.
+"""
+function integrate(
+        sys::AbstractSystem,
+        tf::Vector,
+        U::AbstractTransientSolution;
+        rate = true,
+        kwargs...
+    )
+    nsteps = length(U.t) - 1
+    integral = [
+        VoronoiFVM.integrate(
+                sys,
+                tf,
+                U.u[istep + 1],
+                U.u[istep],
+                U.t[istep + 1] - U.t[istep];
+                kwargs...
+            ) / (rate ? U.t[istep + 1] - U.t[istep] : 1)
+            for istep in 1:nsteps
+    ]
+    return DiffEqArray(integral, U.t[2:end])
+end
+
+
+"""
+  integrate(system, T, U::AbstractMatrix, Uold::AbstractMatrix, tstep; kwargs...)
+
+Calculate test function integrals for the implicit Euler time step results  ``∫_Γ T \\vec j(u) ⋅ \\vec n dω ≈ I_j(T,u)-I_r(T,u)-I_{s_t}(T,u_{old}, u)``,
+see the definition of [test function integral contributions](@ref discrete_appr).
+
+Keyword arguments:
+- `params`: vector of parameters used to calculate `U`. Default: `[]`.
+- `data`: user data   used to calculate `U`. Default: `data(system)`
+
+The result is a `nspec` vector giving one value of the integral for each species. 
 """
 function integrate(
         system::AbstractSystem,
@@ -128,148 +183,12 @@ end
 
 
 """
-$(SIGNATURES)
+     integrate_flux_time_derivative(system, T, U::AbstractMatrix, Uold::AbstractMatrix, tstep; kwargs...)
 
-Calculate one of the two test function integrals
-`` \\int_{\\Omega} T \\nabla \\cdot \\vec J_i  dx``.
-"""
-function integrate_nodebatch(
-        system::AbstractSystem,
-        tf,
-        U::AbstractMatrix{Tv},
-        Uold::AbstractMatrix{Tv},
-        tstep;
-        params = Tv[],
-        data = system.physics.data
-    ) where {Tv}
-
-    grid = system.grid
-    nspecies = num_species(system)
-    integral = zeros(Tv, nspecies)
-    tstepinv = 1.0 / tstep
-    nparams = system.num_parameters
-    @assert nparams == length(params)
-
-    # !!! params etc
-    physics = system.physics
-    node = Node(system, 0.0, 1.0, params)
-
-    UK = Array{Tv, 1}(undef, nspecies + nparams)
-    UKold = Array{Tv, 1}(undef, nspecies + nparams)
-
-    if nparams > 0
-        UK[(nspecies + 1):end] .= params
-        UKold[(nspecies + 1):end] .= params
-    end
-
-    src_eval = ResEvaluator(physics, data, :source, UK, node, nspecies + nparams)
-    rea_eval = ResEvaluator(physics, data, :reaction, UK, node, nspecies + nparams)
-    stor_eval = ResEvaluator(physics, data, :storage, UK, node, nspecies + nparams)
-    storold_eval = ResEvaluator(physics, data, :storage, UKold, node, nspecies + nparams)
-
-    for item in nodebatch(system.assembly_data)
-        for inode in noderange(system.assembly_data, item)
-            _fill!(node, system.assembly_data, inode, item)
-            for ispec in 1:nspecies
-                UK[ispec] = U[ispec, node.index]
-                UKold[ispec] = Uold[ispec, node.index]
-            end
-
-            evaluate!(rea_eval, UK)
-            rea = res(rea_eval)
-            evaluate!(stor_eval, UK)
-            stor = res(stor_eval)
-            evaluate!(storold_eval, UKold)
-            storold = res(storold_eval)
-            evaluate!(src_eval)
-            src = res(src_eval)
-
-            function asm_res(idof, ispec)
-                return integral[ispec] += node.fac *
-                    (rea[ispec] - src[ispec] + (stor[ispec] - storold[ispec]) * tstepinv) * tf[node.index]
-            end
-            assemble_res(node, system, asm_res)
-        end
-    end
-    return integral
-end
-
-
-"""
-$(SIGNATURES)
-
-Calculate one of the two test function integrals
-`` \\int_{\\Omega} \\nabla T \\cdot \\vec J_i dx``.
-"""
-function integrate_edgebatch(
-        system::AbstractSystem,
-        tf,
-        U::AbstractMatrix{Tv},
-        Uold::AbstractMatrix{Tv},
-        tstep;
-        params = Tv[],
-        data = system.physics.data
-    ) where {Tv}
-
-    grid = system.grid
-    nspecies = num_species(system)
-    integral = zeros(Tv, nspecies)
-    tstepinv = 1.0 / tstep
-    nparams = system.num_parameters
-    @assert nparams == length(params)
-
-    # !!! params etc
-    physics = system.physics
-    edge = Edge(system, 0.0, 1.0, params)
-    bedge = Edge(system, 0.0, 1.0, params)
-
-    UK = Array{Tv, 1}(undef, nspecies + nparams)
-    UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
-
-    if nparams > 0
-        UK[(nspecies + 1):end] .= params
-        UKL[(2 * nspecies + 1):end] .= params
-    end
-
-    erea_eval = ResEvaluator(physics, data, :edgereaction, UK, edge, nspecies + nparams)
-    flux_eval = ResEvaluator(physics, data, :flux, UKL, edge, nspecies + nparams)
-
-    for item in edgebatch(system.assembly_data)
-        for iedge in edgerange(system.assembly_data, item)
-            _fill!(edge, system.assembly_data, iedge, item)
-            @views UKL[1:nspecies] .= U[:, edge.node[1]]
-            @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, edge.node[2]]
-
-            evaluate!(flux_eval, UKL)
-            flux = res(flux_eval)
-
-            function asm_res(idofK, idofL, ispec)
-                return integral[ispec] += edge.fac * flux[ispec] * (tf[edge.node[1]] - tf[edge.node[2]])
-            end
-            assemble_res(edge, system, asm_res)
-
-            if isnontrivial(erea_eval)
-                evaluate!(erea_eval, UKL)
-                erea = res(erea_eval)
-
-                function easm_res(idofK, idofL, ispec)
-                    return integral[ispec] += edge.fac * erea[ispec] * (tf[edge.node[1]] + tf[edge.node[2]])
-                end
-                assemble_res(edge, system, easm_res)
-            end
-        end
-    end
-
-    return integral
-
-end
-
-"""
-$(SIGNATURES)
-
-Calculate test function integral for the time time derivative of a current density. More precicesly, this method
-computes the current ``\\int_{\\Omega} \\nabla T \\cdot \\partial_t \\vec J_i dx`` using a test function approach.
-This method can be used for general coupled systems such as Poisson-Nernst Planck or the van Roosbroeck model, where an internal electric through the moving charge carriers is considered.
+Calculate test function integral for the time time derivative of the current density. More precisely, this method
+computes the current ``\\int_{\\Omega} \\nabla T \\cdot \\partial_t \\vec j dx`` using a test function approach.
+This method can be used for to calculate the displacement current for  Poisson-Nernst Planck or the van Roosbroeck models.
+See [Farrell et al.,  Numerical Methods for Drift-DIffusion Models, WIAS Preprint No. 2263, (2016)](http://dx.doi.org/10.20347/WIAS.PREPRINT.2263).
 """
 function integrate_flux_time_derivative(
         system::AbstractSystem, tf, U::AbstractMatrix{Tv},
@@ -343,57 +262,156 @@ function integrate_flux_time_derivative(
 
 end
 
-############################################################################
-"""
-     integrate(system, T, U)
 
-Calculate test function integral for steady state solution
-``\\int_{\\Gamma} T \\vec J_i \\cdot \\vec n ds``.
 """
-function integrate(
+    integrate_nodebatch(system, T, U, Uold, tstep; kwargs...)
+
+Calculate  node contribution ``I_{s_t}(T, u_{old}, u) + I_r(T,u)``  to test function
+integral   ``∫_Γ T \\vec j(u) ⋅ \\vec n dω`` for a given timestep solution.
+See [the time step `integrate` method](@ref VoronoiFVM.integrate(::VoronoiFVM.AbstractSystem,::Any, ::AbstractMatrix{Tv},::AbstractMatrix{Tv}, ::Any; kwargs...) where {Tv}).
+"""
+function integrate_nodebatch(
         system::AbstractSystem,
-        tf::Vector{Tv},
-        U::AbstractMatrix{Tu};
-        kwargs...
-    ) where {Tu, Tv}
-    return integrate(system, tf, U, U, Inf; kwargs...)
+        tf,
+        U::AbstractMatrix{Tv},
+        Uold::AbstractMatrix{Tv},
+        tstep;
+        params = Tv[],
+        data = system.physics.data
+    ) where {Tv}
+
+    grid = system.grid
+    nspecies = num_species(system)
+    integral = zeros(Tv, nspecies)
+    tstepinv = 1.0 / tstep
+    nparams = system.num_parameters
+    @assert nparams == length(params)
+
+    # !!! params etc
+    physics = system.physics
+    node = Node(system, 0.0, 1.0, params)
+
+    UK = Array{Tv, 1}(undef, nspecies + nparams)
+    UKold = Array{Tv, 1}(undef, nspecies + nparams)
+
+    if nparams > 0
+        UK[(nspecies + 1):end] .= params
+        UKold[(nspecies + 1):end] .= params
+    end
+
+    src_eval = ResEvaluator(physics, data, :source, UK, node, nspecies + nparams)
+    rea_eval = ResEvaluator(physics, data, :reaction, UK, node, nspecies + nparams)
+    stor_eval = ResEvaluator(physics, data, :storage, UK, node, nspecies + nparams)
+    storold_eval = ResEvaluator(physics, data, :storage, UKold, node, nspecies + nparams)
+
+    for item in nodebatch(system.assembly_data)
+        for inode in noderange(system.assembly_data, item)
+            _fill!(node, system.assembly_data, inode, item)
+            for ispec in 1:nspecies
+                UK[ispec] = U[ispec, node.index]
+                UKold[ispec] = Uold[ispec, node.index]
+            end
+
+            evaluate!(rea_eval, UK)
+            rea = res(rea_eval)
+            evaluate!(stor_eval, UK)
+            stor = res(stor_eval)
+            evaluate!(storold_eval, UKold)
+            storold = res(storold_eval)
+            evaluate!(src_eval)
+            src = res(src_eval)
+
+            function asm_res(idof, ispec)
+                return integral[ispec] += node.fac *
+                    (rea[ispec] - src[ispec] + (stor[ispec] - storold[ispec]) * tstepinv) * tf[node.index]
+            end
+            assemble_res(node, system, asm_res)
+        end
+    end
+    return integral
 end
 
-"""
-    integrate(system,tf, Ut; rate=true, params, data)
 
-Calculate test function integral for transient solution.
-If `rate=true` (default), calculate the flow rate (per second)
-through the corresponding boundary. Otherwise, calculate the absolute
-amount. The result is a `nspec x (nsteps-1)` DiffEqArray.
 """
-function integrate(
-        sys::AbstractSystem,
-        tf::Vector,
-        U::AbstractTransientSolution;
-        rate = true,
-        kwargs...
-    )
-    nsteps = length(U.t) - 1
-    integral = [
-        VoronoiFVM.integrate(
-                sys,
-                tf,
-                U.u[istep + 1],
-                U.u[istep],
-                U.t[istep + 1] - U.t[istep];
-                kwargs...
-            ) / (rate ? U.t[istep + 1] - U.t[istep] : 1)
-            for istep in 1:nsteps
-    ]
-    return DiffEqArray(integral, U.t[2:end])
+    integrate_edgebatch(system, T, U, Uold, tstep; kwargs...)
+
+Calculate  edge (flux) contribution ``I_j(T,u)``  to test function
+integral   ``∫_Γ T \\vec j(u) ⋅ \\vec n dω`` for a given timestep solution.
+See [the time step `integrate` method](@ref VoronoiFVM.integrate(::VoronoiFVM.AbstractSystem,::Any, ::AbstractMatrix{Tv},::AbstractMatrix{Tv}, ::Any; kwargs...) where {Tv}).
+"""
+function integrate_edgebatch(
+        system::AbstractSystem,
+        tf,
+        U::AbstractMatrix{Tv},
+        Uold::AbstractMatrix{Tv},
+        tstep;
+        params = Tv[],
+        data = system.physics.data
+    ) where {Tv}
+
+    grid = system.grid
+    nspecies = num_species(system)
+    integral = zeros(Tv, nspecies)
+    tstepinv = 1.0 / tstep
+    nparams = system.num_parameters
+    @assert nparams == length(params)
+
+    # !!! params etc
+    physics = system.physics
+    edge = Edge(system, 0.0, 1.0, params)
+    bedge = Edge(system, 0.0, 1.0, params)
+
+    UK = Array{Tv, 1}(undef, nspecies + nparams)
+    UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
+
+    if nparams > 0
+        UK[(nspecies + 1):end] .= params
+        UKL[(2 * nspecies + 1):end] .= params
+    end
+
+    erea_eval = ResEvaluator(physics, data, :edgereaction, UK, edge, nspecies + nparams)
+    flux_eval = ResEvaluator(physics, data, :flux, UKL, edge, nspecies + nparams)
+
+    for item in edgebatch(system.assembly_data)
+        for iedge in edgerange(system.assembly_data, item)
+            _fill!(edge, system.assembly_data, iedge, item)
+            @views UKL[1:nspecies] .= U[:, edge.node[1]]
+            @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, edge.node[2]]
+
+            evaluate!(flux_eval, UKL)
+            flux = res(flux_eval)
+
+            function asm_res(idofK, idofL, ispec)
+                return integral[ispec] += edge.fac * flux[ispec] * (tf[edge.node[1]] - tf[edge.node[2]])
+            end
+            assemble_res(edge, system, asm_res)
+
+            if isnontrivial(erea_eval)
+                evaluate!(erea_eval, UKL)
+                erea = res(erea_eval)
+
+                function easm_res(idofK, idofL, ispec)
+                    return integral[ispec] += edge.fac * erea[ispec] * (tf[edge.node[1]] + tf[edge.node[2]])
+                end
+                assemble_res(edge, system, easm_res)
+            end
+        end
+    end
+
+    return integral
+
 end
+
 
 ############################################################################
 """
-$(SIGNATURES)
+    integrate_stdy(system, T, U; kwargs...)
 
-Steady state part of test function integral.
+Calculate  steady state contribution ``I_j(T,u) - I_r(T,u)``  to test function
+integral   ``∫_Γ T \\vec j(u) ⋅ \\vec n dω`` for a given timestep solution.
+See [the time step `integrate` method](@ref VoronoiFVM.integrate(::VoronoiFVM.AbstractSystem,::Any, ::AbstractMatrix{Tv},::AbstractMatrix{Tv}, ::Any; kwargs...) where {Tv}).
+
+Used for impedance calculations.
 """
 function integrate_stdy(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray{Tu, 2}; data = system.physics.data) where {Tu, Tv}
     grid = system.grid
@@ -462,9 +480,9 @@ end
 
 ############################################################################
 """
-$(SIGNATURES)
+    integrate_tran(system, T, U; kwargs...)
 
-Calculate transient part of test function integral.
+Calculate  storage term contribution to test function integral. Used for impedance calculations.
 """
 function integrate_tran(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray{Tu, 2}; data = system.physics.data) where {Tu, Tv}
     grid = system.grid

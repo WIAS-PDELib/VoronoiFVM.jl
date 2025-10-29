@@ -101,14 +101,14 @@ with storage terms $s(u)$, reaction terms $r(u)$ and source terms $f$:
 ```
 Semidiscretization in time (for implicit Euler) leads to 
 ```math
-\frac{s(u)-s(u^\flat)}{\tau} + \nabla \cdot \vec j + r(u) -f =0
+\frac{s(u^n)-s(u^{n-1})}{t^n-t^{n-1}} + \nabla \cdot \vec j(u^n) + r(u^n) - f =0
 ```
-where $\tau$ is the time step size and $u^\flat$ is the solution from the old timestep.
+where $t^1\dots t^{n_{end}}$ are  the simulation time moments and $u^n$ the solutions at time $t^n$.
 The approximation  approach then for each control volume gives
 ```math
-|\omega_k|\frac{s(u_k)-s(u_k^\flat)}{\tau} + \sum_{l\in N_k} \frac{\sigma_{kl}}{h_{kl}}g(u_k, u_l)+ \sum_{m\in\mathcal M_k} |\gamma_{km}|  (au_k -b) + |\omega_k| (r(u_k)- f_k)=0
+|\omega_k|\frac{s(u^n_k)-s(u^{n-1}_k)}{t^n-t^{n-1}} + \sum_{l\in N_k} \frac{\sigma_{kl}}{h_{kl}}g(u^n_k, u^n_l)+ \sum_{m\in\mathcal M_k} |\gamma_{km}|  (au^n_k -b) + |\omega_k| (r(u^n_k)- f_k)=0
 ```
-If $n$ is the number of discretization nodes, we get a system of $n$ equations with $n$ unknowns
+If $K$ is the number of discretization nodes, we get a system of $K$ equations with $K$ unknowns
 which under proper conditions on $r,g,s$ has a unique solution. 
 
 The implicit Euler method is the default solver for time dependent problems.
