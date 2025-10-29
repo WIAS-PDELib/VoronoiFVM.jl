@@ -34,7 +34,7 @@ l2h1norm
 nodevolumes
 ```
 
-## Solution ntegrals
+## Solution integrals
 ```@docs
 VoronoiFVM.integrate(::VoronoiFVM.AbstractSystem, ::Any, ::AbstractMatrix{Tu}; boundary, data) where Tu
 VoronoiFVM.integrate(::VoronoiFVM.AbstractSystem, ::Any, ::VoronoiFVM.AbstractTransientSolution; boundary, data)

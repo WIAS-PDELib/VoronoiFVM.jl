@@ -126,7 +126,7 @@ Keyword arguments:
 - `data`: user data   used to calculate `U`. Default: `data(system)`
 - `rate`: If `rate=true` (default), calculate the flow rate (per second) 
    through the corresponding boundary. Otherwise, calculate the absolute 
-   amount per time inteval. 
+   amount per time interval. 
 
 The result is a `nspec x (nsteps-1)` DiffEqArray.
 """
