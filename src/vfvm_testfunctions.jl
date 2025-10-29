@@ -52,11 +52,21 @@ end
 
 ############################################################################
 """
-    testfunction(factory::TestFunctionFactory, bc0, bc1)
+    testfunction(factory::TestFunctionFactory, B_0, B_1)
 
-Create testfunction which has Dirichlet zero boundary conditions  for boundary
-regions listed in `bc0` and Dirichlet one boundary conditions  for boundary
-regions listed in `bc1`. 
+Create a test function ``T`` defined in the domain ``Ω`` given by the system
+behind the factory object. Assume  that the  boundary ``Γ=∂Ω=⋃_{i∈ B}Γ_i`` is subdivided into non-overlapping parts
+where the set of boundary regions ``B`` is subdivided into ``B=B_N∪ B_0 ∪ B_1``.
+Create ``T`` by solving
+```math
+   -Δ T =0 \\quad \\text{in}\\; Ω
+```
+such that
+- ``∇  T ⋅  \\vec n|_{Γ_i}=  0`` for ``i∈ B_N``
+- ``T|_{Γ_i} = 0`` for  ``i∈ B_0``,
+- ``T|_{Γ_i} = 1`` for  ``i∈ B_1``.
+
+Returns a vector representing T.
 """
 function testfunction(factory::TestFunctionFactory{Tv}, bc0, bc1) where {Tv}
     u = unknowns(factory.state.system)
@@ -99,7 +109,8 @@ end
 """
      integrate(system, T, U::AbstractMatrix)
 
-Calculate test function integral for a steady state solution ``u``  ``∫_Γ T \\vec j(u) ⋅ \\vec n dω ≈ I_j(T,u)-I_r(T,u)``,
+Calculate test function integral for a steady state solution ``u``  
+``∫_Γ T \\vec j(u) ⋅ \\vec n dω ≈ I_{flux}(j, T,u)-I_{func}(r,T,u) + I_{src}(f,T) ``,
 see the definition of [test function integral contributions](@ref discrete_appr).
 
 The result is a `nspec` vector giving one value of the integral for each species. 
@@ -128,8 +139,9 @@ end
 """
     integrate(system,T, U::AbstractTransientSolution; rate=true, params, data)
 
-Calculate test function integrals for the transient solution  ``∫_Γ T \\vec j(u^n) ⋅ \\vec n dω ≈ I_j(T,u^n)-I_r(T,u^n)-I_{s_t}(T,u^{n-1}, u^n)``
-for each time interval ``(t^{n-1}, t^n)``,see the definition of [test function integral contributions](@ref discrete_appr).
+Calculate test function integrals for the transient solution  
+``∫_Γ T \\vec j(u^n) ⋅ \\vec n dω ≈ I_{flux}(j,T,u^n)-I_{func}(r,T,u^n)-\\frac{I_{func}(s,T,u^n)-I_{func}(s,T,u^{n-1})}{t^n-t^{n-1}} + I_{src}(f,T)``
+for each time interval ``(t^{n-1}, t^n)``, see the definition of [test function integral contributions](@ref discrete_appr).
 
 Keyword arguments:
 - `params`: vector of parameters used to calculate `U`. Default: `[]`.
@@ -164,9 +176,11 @@ end
 
 
 """
-  integrate(system, T, U::AbstractMatrix, Uold::AbstractMatrix, tstep; kwargs...)
+     integrate(system, T, U::AbstractMatrix, Uold::AbstractMatrix, Δt; kwargs...)
 
-Calculate test function integrals for the implicit Euler time step results  ``∫_Γ T \\vec j(u) ⋅ \\vec n dω ≈ I_j(T,u)-I_r(T,u)-I_{s_t}(T,u_{old}, u)``,
+Calculate test function integrals for the implicit Euler time step results ``u^n≡`` `U` and
+``u^{n-1}≡`` `Uold` as 
+``∫_Γ T \\vec j(u^n) ⋅ \\vec n dω ≈ I_{flux}(j,T,u^n)-I_{func}(r,T,u^n)-\\frac{I_{func}(s,T,u^n)-I_{func}(s,T,u^{n-1})}{Δt} + I_{src}(f,T)``,
 see the definition of [test function integral contributions](@ref discrete_appr).
 
 Keyword arguments:
@@ -199,8 +213,9 @@ end
 """
     integrate_TxFunc(system, T, f!, U; kwargs...)
 
-Calculate ``∫_Ω T⋅ f!(U) dω`` for a test function `T` and unknown vector `U`. 
+Calculate ``I_{func}(f!,T, U)=∫_Ω T⋅ f!(U) dω`` for a test function `T` and unknown vector `U`. 
 The function `f!` shall have the same signature as a storage or reaction function.
+See the definition of [test function integral contributions](@ref discrete_appr).
 """
 function integrate_TxFunc(
         system::AbstractSystem, T, func!::Tfunc,
@@ -243,7 +258,7 @@ end
 """
     integrate_TxSrc(system, T, f!; kwargs...)
 
-Calculate ``∫_Ω T⋅ f! dω`` for a test function `T. 
+Calculate ``I_{src}(f!,T)= ∫_Ω T⋅ f! dω`` for a test function `T. 
 The function `f!` shall have the same signature as a storage or reaction function.
 """
 function integrate_TxSrc(
@@ -278,7 +293,7 @@ end
 """
       integrate_∇TxFlux(system, T, f!, U; kwargs...)
 
-Calculate ``∫_Ω ∇T⋅ flux!(U) dω`` for a test function `T` and unknown vector `U`. 
+Calculate ``I_{flux}(f!,T, U)=∫_Ω ∇T⋅ f!(U) dω`` for a test function `T` and unknown vector `U`. 
 The function `f!` shall have the same signature as a flux function.
 """
 function integrate_∇TxFlux(
@@ -323,7 +338,7 @@ end
 """
       integrate_∇TxFlux(system, T, U; kwargs...)
 
-Calculate ``∫_Ω ∇T⋅ flux!(U) dω`` for a test function `T` and unknown vector `U`,
+Calculate ``I_{flux}(f!,T, U)=∫_Ω ∇T⋅ f!(U) dω`` for a test function `T` and unknown vector `U`,
 where `flux!` is the system flux.
 """
 integrate_∇TxFlux(system, T, U; kwargs...) = integrate_∇TxFlux(system, T, system.physics.flux, U; kwargs...)
