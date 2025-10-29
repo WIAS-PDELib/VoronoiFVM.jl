@@ -241,10 +241,12 @@ function main(;
         push!(I1, In1[istep - 1] + Ip1[istep - 1])
 
         ## Variant 2: Define all current contributions as the edge integrals and add the dielectric displacement
-        IIEdge = VoronoiFVM.integrate_edgebatch(sys, tf, solution, inival, Δt)
-        IIDispEdge = VoronoiFVM.integrate_flux_time_derivative(sys, tf, solution, inival, Δt)
+        IIEdge = VoronoiFVM.integrate_∇TxFlux(sys, tf, solution)
+        IIEdgeOld = VoronoiFVM.integrate_∇TxFlux(sys, tf, inival)
 
-        push!(In2, IIEdge[iphin]); push!(Ip2, IIEdge[iphip]); push!(Iψ2, IIDispEdge[ipsi])
+        push!(In2, IIEdge[iphin])
+        push!(Ip2, IIEdge[iphip])
+        push!(Iψ2, (IIEdge[ipsi] - IIEdgeOld[ipsi]) / Δt)
         push!(I2, In2[istep - 1] + Ip2[istep - 1] + Iψ2[istep - 1])
 
     end

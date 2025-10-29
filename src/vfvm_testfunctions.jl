@@ -106,11 +106,21 @@ The result is a `nspec` vector giving one value of the integral for each species
 """
 function integrate(
         system::AbstractSystem,
-        tf::Vector{Tv},
+        T::Vector{Tv},
         U::AbstractMatrix{Tu};
         kwargs...
     ) where {Tu, Tv}
-    return integrate(system, tf, U, U, Inf; kwargs...)
+    I_react = integrate_TxFunc(system, T, system.physics.reaction, U; kwargs...)
+    I_src = integrate_TxSrc(system, T, system.physics.source; kwargs...)
+    I_flux = integrate_∇TxFlux(system, T, system.physics.flux, U; kwargs...)
+
+    I = I_flux + I_react - I_src
+
+    if system.physics.edgereaction != nofunc
+        I += integrate_TxEdgefunc(system, T, system.physics.edgereaction, U; kwargs...)
+    end
+
+    return I
 end
 
 ############################################################################
@@ -132,7 +142,7 @@ The result is a `nspec x (nsteps-1)` DiffEqArray.
 """
 function integrate(
         sys::AbstractSystem,
-        tf::Vector,
+        T::Vector,
         U::AbstractTransientSolution;
         rate = true,
         kwargs...
@@ -141,7 +151,7 @@ function integrate(
     integral = [
         VoronoiFVM.integrate(
                 sys,
-                tf,
+                T,
                 U.u[istep + 1],
                 U.u[istep],
                 U.t[istep + 1] - U.t[istep];
@@ -167,239 +177,196 @@ The result is a `nspec` vector giving one value of the integral for each species
 """
 function integrate(
         system::AbstractSystem,
-        tf,
+        T,
         U::AbstractMatrix{Tv},
         Uold::AbstractMatrix{Tv},
         tstep;
-        params = Tv[],
-        data = system.physics.data
+        kwargs...
     ) where {Tv}
 
-    integral1 = integrate_nodebatch(system, tf, U, Uold, tstep; params, data)
-    integral2 = integrate_edgebatch(system, tf, U, Uold, tstep; params, data)
-
-    return integral1 .+ integral2
+    I_react = integrate_TxFunc(system, T, system.physics.reaction, U; kwargs...)
+    I_stor = integrate_TxFunc(system, T, system.physics.storage, U; kwargs...)
+    I_oldstor = integrate_TxFunc(system, T, system.physics.storage, Uold; kwargs...)
+    I_src = integrate_TxSrc(system, T, system.physics.source; kwargs...)
+    I_flux = integrate_∇TxFlux(system, T, system.physics.flux, U; kwargs...)
+    I = I_flux + I_react - I_src + (I_stor - I_oldstor) / tstep
+    if system.physics.edgereaction != nofunc
+        I += integrate_TxEdgefunc(system, T, system.physics.edgereaction, U; kwargs...)
+    end
+    return I
 end
 
-
 """
-     integrate_flux_time_derivative(system, T, U::AbstractMatrix, Uold::AbstractMatrix, tstep; kwargs...)
+    integrate_TxFunc(system, T, f!, U; kwargs...)
 
-Calculate test function integral for the time time derivative of the current density. More precisely, this method
-computes the current ``\\int_{\\Omega} \\nabla T \\cdot \\partial_t \\vec j dx`` using a test function approach.
-This method can be used for to calculate the displacement current for  Poisson-Nernst Planck or the van Roosbroeck models.
-See [Farrell et al.,  Numerical Methods for Drift-DIffusion Models, WIAS Preprint No. 2263, (2016)](http://dx.doi.org/10.20347/WIAS.PREPRINT.2263).
+Calculate ``∫_Ω T⋅ f!(U) dω`` for a test function `T` and unknonwn vector `U`. 
+The function `f!` shall have the same signature as a storage or reaction function.
 """
-function integrate_flux_time_derivative(
-        system::AbstractSystem, tf, U::AbstractMatrix{Tv},
-        Uold::AbstractMatrix{Tv}, tstep; params = Tv[], data = system.physics.data
-    ) where {Tv}
+function integrate_TxFunc(
+        system::AbstractSystem, T, func!::Tfunc,
+        U::AbstractMatrix{Tv};
+        params = Tv[], data = system.physics.data
+    ) where {Tfunc, Tv}
     grid = system.grid
     nspecies = num_species(system)
     integral = zeros(Tv, nspecies)
-    tstepinv = 1.0 / tstep
-
     nparams = system.num_parameters
     @assert nparams == length(params)
 
-    # !!! params etc
-    physics = system.physics
-    edge = Edge(system, 0.0, 1.0, params)
-    bedge = Edge(system, 0.0, 1.0, params)
-
-    UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
-    UK = Array{Tv, 1}(undef, nspecies + nparams)
-    UKLold = Array{Tv, 1}(undef, 2 * nspecies + nparams)
-    UKold = Array{Tv, 1}(undef, nspecies + nparams)
-
-    if nparams > 0
-        UKL[(2 * nspecies + 1):end] .= params
-        UKLold[(2 * nspecies + 1):end] .= params
-    end
-
-    erea_eval = ResEvaluator(physics, data, :edgereaction, UK, edge, nspecies + nparams)
-    ereaold_eval = ResEvaluator(physics, data, :edgereaction, UKold, edge, nspecies + nparams)
-    flux_eval = ResEvaluator(physics, data, :flux, UKL, edge, nspecies + nparams)
-    fluxold_eval = ResEvaluator(physics, data, :flux, UKLold, edge, nspecies + nparams)
-
-    for item in edgebatch(system.assembly_data)
-        for iedge in edgerange(system.assembly_data, item)
-            _fill!(edge, system.assembly_data, iedge, item)
-            @views UKL[1:nspecies] .= U[:, edge.node[1]]
-            @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, edge.node[2]]
-
-            @views UKLold[1:nspecies] .= Uold[:, edge.node[1]]
-            @views UKLold[(nspecies + 1):(2 * nspecies)] .= Uold[:, edge.node[2]]
-
-            evaluate!(flux_eval, UKL)
-            flux = res(flux_eval)
-
-            evaluate!(fluxold_eval, UKLold)
-            fluxold = res(fluxold_eval)
-
-            function asm_res(idofK, idofL, ispec)
-                return integral[ispec] += edge.fac * (flux[ispec] - fluxold[ispec]) * tstepinv * (tf[edge.node[1]] - tf[edge.node[2]])
-            end
-            assemble_res(edge, system, asm_res)
-
-            if isnontrivial(erea_eval)
-                evaluate!(erea_eval, UKL)
-                erea = res(erea_eval)
-
-                evaluate!(ereaold_eval, UKLold)
-                ereaold = res(ereaold_eval)
-
-                function easm_res(idofK, idofL, ispec)
-                    return integral[ispec] += edge.fac * (erea[ispec] - ereaold[ispec]) * tstepinv * (tf[edge.node[1]] + tf[edge.node[2]])
-                end
-                assemble_res(edge, system, easm_res)
-            end
-
-        end
-    end
-
-    return integral
-
-end
-
-
-"""
-    integrate_nodebatch(system, T, U, Uold, tstep; kwargs...)
-
-Calculate  node contribution ``I_{s_t}(T, u_{old}, u) + I_r(T,u)``  to test function
-integral   ``∫_Γ T \\vec j(u) ⋅ \\vec n dω`` for a given timestep solution.
-See [the time step `integrate` method](@ref VoronoiFVM.integrate(::VoronoiFVM.AbstractSystem,::Any, ::AbstractMatrix{Tv},::AbstractMatrix{Tv}, ::Any; kwargs...) where {Tv}).
-"""
-function integrate_nodebatch(
-        system::AbstractSystem,
-        tf,
-        U::AbstractMatrix{Tv},
-        Uold::AbstractMatrix{Tv},
-        tstep;
-        params = Tv[],
-        data = system.physics.data
-    ) where {Tv}
-
-    grid = system.grid
-    nspecies = num_species(system)
-    integral = zeros(Tv, nspecies)
-    tstepinv = 1.0 / tstep
-    nparams = system.num_parameters
-    @assert nparams == length(params)
-
-    # !!! params etc
     physics = system.physics
     node = Node(system, 0.0, 1.0, params)
 
     UK = Array{Tv, 1}(undef, nspecies + nparams)
-    UKold = Array{Tv, 1}(undef, nspecies + nparams)
+    YK = Array{Tv, 1}(undef, nspecies)
 
     if nparams > 0
         UK[(nspecies + 1):end] .= params
-        UKold[(nspecies + 1):end] .= params
     end
-
-    src_eval = ResEvaluator(physics, data, :source, UK, node, nspecies + nparams)
-    rea_eval = ResEvaluator(physics, data, :reaction, UK, node, nspecies + nparams)
-    stor_eval = ResEvaluator(physics, data, :storage, UK, node, nspecies + nparams)
-    storold_eval = ResEvaluator(physics, data, :storage, UKold, node, nspecies + nparams)
+    VK = unknowns(node, UK)
 
     for item in nodebatch(system.assembly_data)
         for inode in noderange(system.assembly_data, item)
             _fill!(node, system.assembly_data, inode, item)
             for ispec in 1:nspecies
                 UK[ispec] = U[ispec, node.index]
-                UKold[ispec] = Uold[ispec, node.index]
             end
-
-            evaluate!(rea_eval, UK)
-            rea = res(rea_eval)
-            evaluate!(stor_eval, UK)
-            stor = res(stor_eval)
-            evaluate!(storold_eval, UKold)
-            storold = res(storold_eval)
-            evaluate!(src_eval)
-            src = res(src_eval)
-
-            function asm_res(idof, ispec)
-                return integral[ispec] += node.fac *
-                    (rea[ispec] - src[ispec] + (stor[ispec] - storold[ispec]) * tstepinv) * tf[node.index]
+            YK .= zero(Tv)
+            func!(YK, VK, node, data)
+            for ispec in 1:nspecies
+                integral[ispec] += node.fac * YK[ispec] * T[node.index]
             end
-            assemble_res(node, system, asm_res)
         end
     end
     return integral
 end
 
-
 """
-    integrate_edgebatch(system, T, U, Uold, tstep; kwargs...)
+    integrate_TxSrc(system, T, f!; kwargs...)
 
-Calculate  edge (flux) contribution ``I_j(T,u)``  to test function
-integral   ``∫_Γ T \\vec j(u) ⋅ \\vec n dω`` for a given timestep solution.
-See [the time step `integrate` method](@ref VoronoiFVM.integrate(::VoronoiFVM.AbstractSystem,::Any, ::AbstractMatrix{Tv},::AbstractMatrix{Tv}, ::Any; kwargs...) where {Tv}).
+Calculate ``∫_Ω T⋅ f! dω`` for a test function `T. 
+The function `f!` shall have the same signature as a storage or reaction function.
 """
-function integrate_edgebatch(
-        system::AbstractSystem,
-        tf,
-        U::AbstractMatrix{Tv},
-        Uold::AbstractMatrix{Tv},
-        tstep;
-        params = Tv[],
-        data = system.physics.data
-    ) where {Tv}
-
+function integrate_TxSrc(
+        system::AbstractSystem{Tv}, T, src!::Tsrc;
+        params = Tv[], data = system.physics.data
+    ) where {Tsrc, Tv}
     grid = system.grid
     nspecies = num_species(system)
     integral = zeros(Tv, nspecies)
-    tstepinv = 1.0 / tstep
     nparams = system.num_parameters
     @assert nparams == length(params)
 
-    # !!! params etc
     physics = system.physics
-    edge = Edge(system, 0.0, 1.0, params)
-    bedge = Edge(system, 0.0, 1.0, params)
+    node = Node(system, 0.0, 1.0, params)
 
-    UK = Array{Tv, 1}(undef, nspecies + nparams)
+    YK = Array{Tv, 1}(undef, nspecies)
+
+
+    for item in nodebatch(system.assembly_data)
+        for inode in noderange(system.assembly_data, item)
+            _fill!(node, system.assembly_data, inode, item)
+            YK .= zero(Tv)
+            src!(YK, node, data)
+            for ispec in 1:nspecies
+                integral[ispec] += node.fac * YK[ispec] * T[node.index]
+            end
+        end
+    end
+    return integral
+end
+
+"""
+      integrate_∇TxFlux(system, T, f!, U; kwargs...)
+
+Calculate ``∫_Ω ∇T⋅ flux!(U) dω`` for a test function `T` and unknonwn vector `U`. 
+The function `f!` shall have the same signature as a flux function.
+"""
+function integrate_∇TxFlux(
+        system::AbstractSystem,
+        T,
+        flux!::Tflux,
+        U::AbstractMatrix{Tv};
+        params = Tv[],
+        data = system.physics.data
+    ) where {Tflux, Tv}
+    grid = system.grid
+    nspecies = num_species(system)
+    integral = zeros(Tv, nspecies)
+    nparams = system.num_parameters
+    @assert nparams == length(params)
+
+    edge = Edge(system, 0.0, 1.0, params)
     UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
+    YK = Array{Tv, 1}(undef, nspecies)
 
     if nparams > 0
-        UK[(nspecies + 1):end] .= params
         UKL[(2 * nspecies + 1):end] .= params
     end
 
-    erea_eval = ResEvaluator(physics, data, :edgereaction, UK, edge, nspecies + nparams)
-    flux_eval = ResEvaluator(physics, data, :flux, UKL, edge, nspecies + nparams)
+    VKL = unknowns(edge, UKL)
 
     for item in edgebatch(system.assembly_data)
         for iedge in edgerange(system.assembly_data, item)
             _fill!(edge, system.assembly_data, iedge, item)
             @views UKL[1:nspecies] .= U[:, edge.node[1]]
             @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, edge.node[2]]
-
-            evaluate!(flux_eval, UKL)
-            flux = res(flux_eval)
-
-            function asm_res(idofK, idofL, ispec)
-                return integral[ispec] += edge.fac * flux[ispec] * (tf[edge.node[1]] - tf[edge.node[2]])
-            end
-            assemble_res(edge, system, asm_res)
-
-            if isnontrivial(erea_eval)
-                evaluate!(erea_eval, UKL)
-                erea = res(erea_eval)
-
-                function easm_res(idofK, idofL, ispec)
-                    return integral[ispec] += edge.fac * erea[ispec] * (tf[edge.node[1]] + tf[edge.node[2]])
-                end
-                assemble_res(edge, system, easm_res)
+            YK .= zero(Tv)
+            flux!(YK, VKL, edge, data)
+            for ispec in 1:nspecies
+                integral[ispec] += edge.fac * YK[ispec] * (T[edge.node[1]] - T[edge.node[2]])
             end
         end
     end
-
     return integral
+end
 
+"""
+      integrate_∇TxFlux(system, T, U; kwargs...)
+
+Calculate ``∫_Ω ∇T⋅ flux!(U) dω`` for a test function `T` and unknonwn vector `U`,
+where `flux!` is the system flux.
+"""
+integrate_∇TxFlux(system, T, U; kwargs...) = integrate_∇TxFlux(system, T, system.physics.flux, U; kwargs...)
+
+"""
+      integrate_TxEdgeFunc(system, T, f!, U; kwargs...)
+
+Calculate ``∫_Ω T⋅ f!(U) dω`` for a test function `T` and unknonwn vector `U`. 
+The function `f!` shall have the same signature as a flux function, but is assumed
+to describe a reaction term given on edges.
+"""
+function integrate_TxEdgefunc(
+        system::AbstractSystem, T, func!::Tfunc, U::AbstractMatrix{Tv};
+        params = Tv[], data = system.physics.data
+    ) where {Tfunc, Tv}
+    grid = system.grid
+    nspecies = num_species(system)
+    integral = zeros(Tv, nspecies)
+    nparams = system.num_parameters
+    @assert nparams == length(params)
+
+    edge = Edge(system, 0.0, 1.0, params)
+    UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
+    YK = Array{Tv, 1}(undef, nspecies)
+
+    VKL = unknowns(edge, UKL)
+    if nparams > 0
+        UKL[(2 * nspecies + 1):end] .= params
+    end
+
+    for item in edgebatch(system.assembly_data)
+        for iedge in edgerange(system.assembly_data, item)
+            _fill!(edge, system.assembly_data, iedge, item)
+            @views UKL[1:nspecies] .= U[:, edge.node[1]]
+            @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, edge.node[2]]
+            YK .= zero(Tv)
+            func!(YK, VKL, edge, data)
+            for ispec in 1:nspecies
+                integral[ispec] += edge.fac * YK[ispec] * (T[edge.node[1]] + T[edge.node[2]])
+            end
+        end
+    end
+    return integral
 end
 
 
@@ -413,69 +380,18 @@ See [the time step `integrate` method](@ref VoronoiFVM.integrate(::VoronoiFVM.Ab
 
 Used for impedance calculations.
 """
-function integrate_stdy(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray{Tu, 2}; data = system.physics.data) where {Tu, Tv}
-    grid = system.grid
-    nspecies = num_species(system)
-    integral = zeros(Tu, nspecies)
+function integrate_stdy(system::AbstractSystem, T::Vector{Tv}, U::AbstractArray{Tu, 2}; kwargs...) where {Tu, Tv}
 
-    physics = system.physics
-    node = Node(system)
-    bnode = BNode(system)
-    edge = Edge(system)
-    bedge = BEdge(system)
+    I_react = integrate_TxFunc(system, T, system.physics.reaction, U; kwargs...)
+    I_src = integrate_TxSrc(system, T, system.physics.source; kwargs...)
+    I_flux = integrate_∇TxFlux(system, T, system.physics.flux, U; kwargs...)
 
-    UKL = Array{Tu, 1}(undef, 2 * nspecies)
-    UK = Array{Tu, 1}(undef, nspecies)
-    geom = grid[CellGeometries][1]
+    I = I_flux + I_react - I_src
 
-    src_eval = ResEvaluator(physics, data, :source, UK, node, nspecies)
-    rea_eval = ResEvaluator(physics, data, :reaction, UK, node, nspecies)
-    erea_eval = ResEvaluator(physics, data, :edgereaction, UK, node, nspecies)
-    flux_eval = ResEvaluator(physics, data, :flux, UKL, edge, nspecies)
-
-    for item in nodebatch(system.assembly_data)
-        for inode in noderange(system.assembly_data, item)
-            _fill!(node, system.assembly_data, inode, item)
-            @views UK .= U[:, node.index]
-
-            evaluate!(rea_eval, UK)
-            rea = res(rea_eval)
-            evaluate!(src_eval)
-            src = res(src_eval)
-
-            function asm_res(idof, ispec)
-                return integral[ispec] += node.fac * (rea[ispec] - src[ispec]) * tf[node.index]
-            end
-            assemble_res(node, system, asm_res)
-        end
+    if system.physics.edgereaction != nofunc
+        I += integrate_TxEdgefunc(system, T, system.physics.edgereaction, U; kwargs...)
     end
-
-    for item in edgebatch(system.assembly_data)
-        for iedge in edgerange(system.assembly_data, item)
-            _fill!(edge, system.assembly_data, iedge, item)
-            @views UKL[1:nspecies] .= U[:, edge.node[1]]
-            @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, edge.node[2]]
-            evaluate!(flux_eval, UKL)
-            flux = res(flux_eval)
-
-            function asm_res(idofK, idofL, ispec)
-                return integral[ispec] += edge.fac * flux[ispec] * (tf[edge.node[1]] - tf[edge.node[2]])
-            end
-            assemble_res(edge, system, asm_res)
-
-            if isnontrivial(erea_eval)
-                evaluate!(erea_eval, UKL)
-                erea = res(erea_eval)
-
-                function easm_res(idofK, idofL, ispec)
-                    return integral[ispec] += edge.fac * erea[ispec] * (tf[edge.node[1]] + tf[edge.node[2]])
-                end
-                assemble_res(edge, system, easm_res)
-            end
-        end
-    end
-
-    return integral
+    return I
 end
 
 ############################################################################
@@ -484,33 +400,6 @@ end
 
 Calculate  storage term contribution to test function integral. Used for impedance calculations.
 """
-function integrate_tran(system::AbstractSystem, tf::Vector{Tv}, U::AbstractArray{Tu, 2}; data = system.physics.data) where {Tu, Tv}
-    grid = system.grid
-    nspecies = num_species(system)
-    integral = zeros(Tu, nspecies)
-
-    physics = system.physics
-    node = Node(system)
-    bnode = BNode(system)
-    edge = Edge(system)
-    bedge = BEdge(system)
-    # !!! Parameters
-
-    UK = Array{Tu, 1}(undef, nspecies)
-    geom = grid[CellGeometries][1]
-    csys = grid[CoordinateSystem]
-    stor_eval = ResEvaluator(physics, data, :storage, UK, node, nspecies)
-
-    for item in nodebatch(system.assembly_data)
-        for inode in noderange(system.assembly_data, item)
-            _fill!(node, system.assembly_data, inode, item)
-            @views UK .= U[:, node.index]
-            evaluate!(stor_eval, UK)
-            stor = res(stor_eval)
-            asm_res(idof, ispec) = integral[ispec] += node.fac * stor[ispec] * tf[node.index]
-            assemble_res(node, system, asm_res)
-        end
-    end
-
-    return integral
+function integrate_tran(system::AbstractSystem, T::Vector{Tv}, U::AbstractArray{Tu, 2}; kwargs...) where {Tu, Tv}
+    return I_stor = integrate_TxFunc(system, T, system.physics.storage, U; kwargs...)
 end

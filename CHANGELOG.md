@@ -7,9 +7,13 @@
   - Remove `params` from edge, node structs (apparently never used)
 
 ## v2.13
-  - subdivide the `integrate` method into the two submethods `integrate_edgebatch` and `integrate_edgebatch` to have access to both integrals
-  - add the method `integrate_flux_time_derivative` for charge transport applications of the type Poisson + drift-diffusion to account for the electric displacement flux
-  - add example `Example161_BipolarDriftDiffusionCurrent.jl` which explores the (new) integrate methods
+  - Restructure boundary flux calculation via test functions
+    - Provide methods `integrate_TxFunc`, `integrate_TxSrc`, `integrate_∇TxFlux`, `integrate_TxEdgefunc` which allow
+      to calculate the different contributions to the test function integrals separately.
+    - Use the new methods for in the existing test function intergral methods. This appears a bit more costly, 
+      but more transparent
+  - Improve documentation of boundary flux calculation via test functions
+  - Add example `Example161_BipolarDriftDiffusionCurrent.jl` which explores the (new) integrate methods
 
 ## v2.12.2 August 1, 2025
   - SparseConnectivitryTracer v1

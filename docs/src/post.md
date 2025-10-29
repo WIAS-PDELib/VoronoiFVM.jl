@@ -95,9 +95,10 @@ VoronoiFVM.integrate(::VoronoiFVM.AbstractSystem,::Vector,::VoronoiFVM.AbstractT
 ### Special purpose cases
 ```@docs
 VoronoiFVM.integrate(::VoronoiFVM.AbstractSystem,::Any, ::AbstractMatrix{Tv},::AbstractMatrix{Tv}, ::Any; kwargs...) where {Tv}
-VoronoiFVM.integrate_flux_time_derivative
-VoronoiFVM.integrate_nodebatch
-VoronoiFVM.integrate_edgebatch
+VoronoiFVM.integrate_TxFunc
+VoronoiFVM.integrate_TxSrc
+VoronoiFVM.integrate_∇TxFlux
+VoronoiFVM.integrate_TxEdgefunc
 VoronoiFVM.integrate_stdy
 VoronoiFVM.integrate_tran
 ```
