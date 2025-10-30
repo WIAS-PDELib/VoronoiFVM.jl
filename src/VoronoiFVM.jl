@@ -203,6 +203,8 @@ export nondelaunay
 include("vfvm_testfunctions.jl")
 export testfunction
 export TestFunctionFactory
+export integrate_TxFunc, integrate_TxSrc, integrate_∇TxFlux, integrate_TxEdgefunc
+VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public integrate_stdy, integrate_tran"))
 
 include("vfvm_quantities.jl")
 export ContinuousQuantity
