@@ -94,7 +94,7 @@ function make(;
         clean = false,
         doctest = false,
         authors = "J. Fuhrmann",
-        repo = "https://github.com/WIAS-PDELib/VoronoiFVM.jl",
+        repo = Documenter.Remotes.GitHub("WIAS-PDELib", "VoronoiFVM.jl"),
         format = Documenter.HTML(;
             size_threshold_ignore,
             assets = String["assets/citations.css"],

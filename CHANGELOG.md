@@ -2,11 +2,11 @@
 
 ## v3.0 Planned  (pending some improvements in LinearSolve)
   - Remove VoronoiFVM solver strategies
-  - Stop re-exporting ForwardDiff.value
+  - Stop re-exporting ForwardDiff.valuex
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
-## v2.13
+## v2.13 October 29, 2025
   - Restructure boundary flux calculation via test functions
     - Provide methods `integrate_TxFunc`, `integrate_TxSrc`, `integrate_∇TxFlux`, `integrate_TxEdgefunc` which allow
       to calculate the different contributions to the test function integrals separately.
