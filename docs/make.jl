@@ -95,7 +95,7 @@ function make(;
         doctest = false,
         authors = "J. Fuhrmann",
         repo = Documenter.Remotes.GitHub("WIAS-PDELib", "VoronoiFVM.jl"),
-        format = Documenter.HTML(;a
+        format = Documenter.HTML(;
             size_threshold_ignore,
             assets = String["assets/citations.css"],
             mathengine = MathJax3()
