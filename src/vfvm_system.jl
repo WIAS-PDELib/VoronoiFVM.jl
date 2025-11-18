@@ -568,12 +568,19 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
                     coloring_algorithm = GreedyColoringAlgorithm()
                 )
             end
-            generic_operator(f, u) = system.physics.generic_operator(f, u, system)
             input = rand(num_dof(system))
             output = similar(input)
+            if applicable(system.physics.generic_operator, output, input, system)
+                @warn "use of `generic_operator(f,u,system)` is deprecated, use  `generic_operator(f,u,system, data)` instead"
+            end
             tdetect = @elapsed begin
                 system.generic_matrix_prep = prepare_jacobian(
-                    generic_operator, output, system.generic_matrix_backend, input;
+                    applicable(system.physics.generic_operator, output, input, system, data) ?
+                        (f, u) -> system.physics.generic_operator(f, u, system, data) :
+                        (f, u) -> system.physics.generic_operator(f, u, system),
+                    output,
+                    system.generic_matrix_backend,
+                    input;
                     strict = Val(false)
                 )
             end

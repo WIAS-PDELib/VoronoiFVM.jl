@@ -618,7 +618,7 @@ function eval_and_assemble(
             allnballocs = 0
         end
     end
-    _eval_and_assemble_generic_operator(system, matrix, generic_matrix, U, F)
+    _eval_and_assemble_generic_operator(system, matrix, generic_matrix, data, U, F)
     _eval_and_assemble_inactive_species(system, matrix, U, UOld, F)
 
     return allncallocs, allnballocs, neval
@@ -627,16 +627,18 @@ end
 """
 Evaluate and assemble jacobian for generic operator part.
 """
-function _eval_and_assemble_generic_operator(system::AbstractSystem, matrix, generic_matrix, U, F)
+function _eval_and_assemble_generic_operator(system::AbstractSystem, matrix, generic_matrix, data, U, F)
     if !has_generic_operator(system)
         return
     end
-    generic_operator(f, u) = system.physics.generic_operator(f, u, system)
+
     vecF = dofs(F)
     vecU = dofs(U)
     y = similar(vecF)
     DifferentiationInterface.value_and_jacobian!(
-        generic_operator,
+        applicable(system.physics.generic_operator, vecF, vecU, system, data) ?
+            (f, u) -> system.physics.generic_operator(f, u, system, data) :
+            (f, u) -> system.physics.generic_operator(f, u, system),
         y,
         generic_matrix,
         system.generic_matrix_prep,
