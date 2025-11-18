@@ -575,8 +575,8 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
             end
             tdetect = @elapsed begin
                 system.generic_matrix_prep = prepare_jacobian(
-                    applicable(system.physics.generic_operator, output, input, system, data) ?
-                        (f, u) -> system.physics.generic_operator(f, u, system, data) :
+                    applicable(system.physics.generic_operator, output, input, system, system.physics.data) ?
+                        (f, u) -> system.physics.generic_operator(f, u, system, system.physics.data) :
                         (f, u) -> system.physics.generic_operator(f, u, system),
                     output,
                     system.generic_matrix_backend,
