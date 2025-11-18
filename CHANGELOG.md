@@ -6,6 +6,11 @@
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
+## v2.14 November 17, 2025
+  - Allow for `generic_operator(f,u,sys, data)`
+     - This allows to pass system state data in a proper way
+     - Deprecated `generic_operator(f,u,sys)`
+     
 ## v2.13 October 29, 2025
   - Restructure boundary flux calculation via test functions
     - Provide methods `integrate_TxFunc`, `integrate_TxSrc`, `integrate_∇TxFlux`, `integrate_TxEdgefunc` which allow

@@ -142,7 +142,7 @@ function main(;
     ## Its sparsity is detected automatically using SparsityDetection.jl
     ## Here, we calculate the gradient of u_A at the boundary and store the value in u_C which
     ## is then used as a parameter in the boundary reaction
-    function generic_operator!(f, u, sys)
+    function generic_operator!(f, u, sys, data)
         f .= 0
         idx = unknown_indices(unknowns(sys))
         f[idx[problem_data.iC, 1]] = u[idx[problem_data.iC, 1]] +
