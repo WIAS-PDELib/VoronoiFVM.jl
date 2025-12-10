@@ -102,7 +102,7 @@ The passed flags regulate the following behavior:
     and the species concentration $u(r,z)$ in cylindrical coordinates, assuming 
     rotationally symmetric solutions for both.
   - `usefem`:               if true, calculates the velocity field $\mathbf{v}$ using the
-    finite element method provided by [`ExtendableFEM`](https://github.com/chmerdon/ExtendableFEM.jl).
+    finite element method provided by [`ExtendableFEM`](https://github.com/WIAS-PDELib/ExtendableFEM.jl).
   - `reconst`:              if true, interpolates the FEM-calculated 
     velocity field onto a "reconstruction" finite element space that
     provides an exactly divergence-free solution. In a cylindrical grid, 

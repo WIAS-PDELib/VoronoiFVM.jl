@@ -2,7 +2,7 @@ using Documenter, ExampleJuggler, PlutoStaticHTML, VoronoiFVM, DocumenterCitatio
 using ExtendableGrids, GridVisualize, LinearAlgebra, RecursiveArrayTools, SciMLBase
 
 using ExtendableFEMBase
-# using ExtendableFEM # re-enable with updated ExtenableFEM
+using ExtendableFEM
 
 using OrdinaryDiffEqBDF, OrdinaryDiffEqLowOrderRK, OrdinaryDiffEqRosenbrock, OrdinaryDiffEqSDIRK, OrdinaryDiffEqTsit5
 
