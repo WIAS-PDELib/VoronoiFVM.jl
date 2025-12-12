@@ -109,7 +109,7 @@ end
 $(SIGNATURES)
 
 Compute [`VoronoiFVM.edgevelocities`](@ref) for a finite element flow field computed
-by [`ExtendableFEM`](https://github.com/chmerdon/ExtendableFEM.jl).
+by [`ExtendableFEM`](https://github.com/WIAS-PDELib/ExtendableFEM.jl).
 """
 function VoronoiFVM.edgevelocities(grid::ExtendableGrid, vel::FEVectorBlock; kwargs...)
     # construct an augmented type to gather precomputed information
@@ -130,7 +130,7 @@ end
 $(SIGNATURES)
 
 Compute [`VoronoiFVM.bfacevelocities`](@ref) for a finite element flow field computed
-by [`ExtendableFEM`](https://github.com/chmerdon/ExtendableFEM.jl).
+by [`ExtendableFEM`](https://github.com/WIAS-PDELib/ExtendableFEM.jl).
 """
 function VoronoiFVM.bfacevelocities(grid::ExtendableGrid, vel::FEVectorBlock; kwargs...)
     axisymmetric = grid[CoordinateSystem] <: Cylindrical2D ? true : false
@@ -233,7 +233,7 @@ function _integrate_along_segments(p1, p2, hnormal, aug_vec_block::AugmentedFEVe
         # a cell containing p1 in the direction of (p2-p1)
         if count(<=(interpolate_eps), bp1) == 2 # 10^(-13)
             @. p1_temp2 = p1 + 10 * interpolate_eps * (p2 - p1)
-            icell_new = gFindLocal!(bp1, CF, p1_temp2; eps = 10 * interpolate_eps, icellstart = icell) #!!! allocates
+            icell_new = gFindLocal!(bp1, CF, p1_temp2; eps = interpolate_eps, icellstart = icell) #!!! allocates
             if icell_new == 0
                 # TODO: test the following
                 # icell_new = gFindBruteForce!(bp1, CF, p1_temp[1:2])

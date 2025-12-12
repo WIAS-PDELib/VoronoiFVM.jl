@@ -80,7 +80,7 @@ Moved repository from https://github.com/j-fu/VoronoiFVM.jl to https://github.co
 
 ## v2.1.0 October 23, 2024
   - Features:
-    - Add VoronoiFVMExtendableFEMBaseExt  extension allowing to use velocity fields calculated  with [ExtendableFEM](https://github.com/chmerdon/ExtendableFEM.jl) in convection-diffusion problems
+    - Add VoronoiFVMExtendableFEMBaseExt  extension allowing to use velocity fields calculated  with [ExtendableFEM](https://github.com/WIAS-PDELib/ExtendableFEM.jl) in convection-diffusion problems
 
 ## v2.0.2 October 12, 2024
   - Bugfixes
