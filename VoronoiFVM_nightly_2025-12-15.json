@@ -1,0 +1,12 @@
+{
+  "commithash": "8aea231aae0a980f0ff67222e3bf1300ce7f549f",
+  "nightlyversion": "1.14.0-DEV.1368",
+  "failures": [
+    {
+      "suite": "DownstreamTester",
+      "casename": "nightly()",
+      "message": "XML file not found, check output of GitHub action",
+      "location": ".github/workflows/downstreamtester.yml"
+    }
+  ]
+}
