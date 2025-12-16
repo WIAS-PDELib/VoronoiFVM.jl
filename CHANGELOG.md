@@ -6,6 +6,11 @@
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
+## v2.15 December 16, 2025
+  - update to LinearSolve 3.52. Besides of Sparspak which is able to run with dual numbers,
+there is a new way to solve linear systems in dual numbers which takes apart the matrices in dual numbers and solves several linear systems for both primal and dual parts.
+
+
 ## v2.14 November 17, 2025
   - Allow for `generic_operator(f,u,sys, data)`
      - This allows to pass system state data in a proper way
