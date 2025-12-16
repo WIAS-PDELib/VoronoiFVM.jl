@@ -49,7 +49,7 @@ function make(;
             "OrdinaryDiffEq.jl nonlinear diffusion" => "ode-diffusion1d.jl",
             "OrdinaryDiffEq.jl 1D wave equation" => "ode-wave1d.jl",
             "OrdinaryDiffEq.jl changing mass matrix" => "ode-nlstorage1d.jl",
-            "OrdinaryDiffEq.jl brusselator" => "ode-brusselator.jl",
+            #           "OrdinaryDiffEq.jl brusselator" => "ode-brusselator.jl",
             "Coupling with Catalyst.jl" => "heterogeneous-catalysis.jl",
             "Outflow boundary conditions" => "outflow.jl",
             "Obtaining vector fields" => "flux-reconstruction.jl",
@@ -57,7 +57,7 @@ function make(;
             "A case for caution" => "problemcase.jl",
             "Nonlinear solver control" => "nonlinear-solvers.jl",
             "Bernoulli function test" => "bernoulli.jl",
-            "API Updates" => "api-update.jl",
+            #            "API Updates" => "api-update.jl",
         ]
         ENV["PLUTO_PROJECT"] = @__DIR__
         notebook_examples = @docplutonotebooks(notebookdir, notebooks, iframe = false)
