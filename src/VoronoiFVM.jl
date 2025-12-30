@@ -31,12 +31,12 @@ using DifferentiationInterface: DifferentiationInterface,
     AutoForwardDiff,
     prepare_jacobian
 
-using ExtendableSparse: ExtendableSparse, BlockPreconditioner,
+using ExtendableSparse: ExtendableSparse,
     ExtendableSparseMatrix,
     ExtendableSparseMatrixCSC,
     MTExtendableSparseMatrixCSC,
     AbstractExtendableSparseMatrixCSC,
-    PointBlockILUZeroPreconditioner, factorize!, flush!,
+    factorize!, flush!,
     nnz, rawupdateindex!, updateindex!, nnznew
 
 using ForwardDiff: ForwardDiff, value
@@ -181,9 +181,8 @@ export calc_divergences
 
 include("vfvm_solvercontrol.jl")
 export fixed_timesteps!, NewtonControl, SolverControl
-include("vfvm_linsolve_deprecated.jl")
+
 include("vfvm_linsolve.jl")
-export DirectSolver, GMRESIteration, CGIteration, BICGstabIteration, NoBlock, EquationBlock, PointBlock
 
 include("vfvm_assembly.jl")
 include("vfvm_solver.jl")
