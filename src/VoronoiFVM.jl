@@ -153,7 +153,6 @@ export boundary_dirichlet!
 export boundary_neumann!
 export boundary_robin!
 export ramp
-export value
 export physics!
 export history, history_summary, history_details
 export evaluate_residual_and_jacobian
