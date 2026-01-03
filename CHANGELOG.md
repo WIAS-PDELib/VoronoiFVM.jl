@@ -2,33 +2,70 @@
 
 ## v3.0 Planned  (pending some improvements in LinearSolve)
   - Remove VoronoiFVM solver strategies
-  - Stop re-exporting ForwardDiff.value
+  - Stop re-exporting ForwardDiff.valuex
   - Try to remove type piracies
   - Remove `params` from edge, node structs (apparently never used)
 
+## v2.15 December 16, 2025
+  - update to LinearSolve 3.52. Besides of Sparspak which is able to run with dual numbers,
+there is a new way to solve linear systems in dual numbers which takes apart the matrices in dual numbers and solves several linear systems for both primal and dual parts.
+
+
+## v2.14 November 17, 2025
+  - Allow for `generic_operator(f,u,sys, data)`
+     - This allows to pass system state data in a proper way
+     - Deprecated `generic_operator(f,u,sys)`
+     
+## v2.13 October 29, 2025
+  - Restructure boundary flux calculation via test functions
+    - Provide methods `integrate_TxFunc`, `integrate_TxSrc`, `integrate_∇TxFlux`, `integrate_TxEdgefunc` which allow
+      to calculate the different contributions to the test function integrals separately.
+    - Use the new methods for in the existing test function integral methods. This appears a bit more costly, 
+      but more transparent
+  - Improve documentation of boundary flux calculation via test functions
+  - Add example `Example161_BipolarDriftDiffusionCurrent.jl` which explores the (new) integrate methods
+
+## v2.12.2 August 1, 2025
+  - SparseConnectivitryTracer v1
+  - Fix multithreading bug occurring with assemble_bedges by introducing system.gridaccesslock
+  - Don't call assemble_bedges if bflux is trivial
+  - Use Any as type for state.linear_cache in order to work with the new LinearSolveForwardDiffExt
+  - Suspend test of ExtendableFEM coupling until that code uses SparseConnectivityTracer
+
+## v2.12.0 June 5, 2025
+  - Include DifferentiationInterface v0.7 into compat
+
+## v2.11.0 May 26, 2025
+  - add `partition` field and `parttition(NodeOrEdge)` method to geometry items
+  - test use of PreallocationTools to provide local buffers in flux
+    functions while multithreading (see Example510).
+
+## v2.10.0 April 16, 2025
+  - Replace sparsity detection for generic operator
+    Use DifferentiationInterface + SparseConnectivity tracer instead of Symbolics + SparseDiffTools
+
 ## v2.9.1 April 4, 2025
   - bugfix with bstorage contribution to mass matrix calculation
-  
+
 ## v2.9 April 3, 2025
   - Fixed bug in `evaluate_residual_and_jacobian`
   - Added `init_dirichlet` flag to `evaluate_residual_and_jacobian!` to suppress initialization of Dirichlet values in argument vector `u`
-
 ## v2.8 February 23, 2025
   - Add `integrate` methods for transient solutions returning instances of `DiffEqArray`
-  
+
 ## v2.7 February 18, 2025
   - Allow for LinearSolve v3
   - Introduce `log_output!` and `print_output!` to control where output goes.
   - Modifications in test infrastructure
-  
+
 ## v2.6.1 November 27, 2024
   - Allow to calculate node flux reconstruction from general function
-  - Runic formatting 
+  - Runic formatting
   - pre-commit checks
-  
+
 ## v2.5.0 November 17, 2024
   - update show methods for physics, grid
-  
+
 ## v2.4.0 November 11, 2024
   - Use `precs` based linear solver API, see https://github.com/SciML/LinearSolve.jl/pull/514 with  ExtendableSparse 1.6
   - Deprecate VoronoiFVM solver strategies
@@ -40,7 +77,7 @@
 ## v2.2.0 October 30, 2024
   - Add `params` to SystemState, allow to pass params to ODEProblem
   - Fix use of end results of time evolution as steady state for impedance calculations
-  - new internal solutionarray method. 
+  - new internal solutionarray method.
 
 ## October 28, 2024
 
@@ -48,7 +85,7 @@ Moved repository from https://github.com/j-fu/VoronoiFVM.jl to https://github.co
 
 ## v2.1.0 October 23, 2024
   - Features:
-    - Add VoronoiFVMExtendableFEMBaseExt  extension allowing to use velocity fields calculated  with [ExtendableFEM](https://github.com/chmerdon/ExtendableFEM.jl) in convection-diffusion problems
+    - Add VoronoiFVMExtendableFEMBaseExt  extension allowing to use velocity fields calculated  with [ExtendableFEM](https://github.com/WIAS-PDELib/ExtendableFEM.jl) in convection-diffusion problems
 
 ## v2.0.2 October 12, 2024
   - Bugfixes

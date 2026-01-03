@@ -30,7 +30,7 @@ VoronoiFVM.jl and most of these packages are  part of the meta package [PDELib.j
 
 
 ## Some alternatives
-- [ExtendableFEM.jl](https://github.com/chmerdon/ExtendableFEM.jl): finite element library implementing gradient robust FEM
+- [ExtendableFEM.jl](https://github.com/WIAS-PDELib/ExtendableFEM.jl): finite element library implementing gradient robust FEM
   from the same package base by Ch. Merdon
 - [SkeelBerzins.jl](https://github.com/gregoirepourtier/SkeelBerzins.jl): a Julian variation on Matlab's `pdepe` API
 - [Trixi.jl](https://github.com/trixi-framework/Trixi.jl):  numerical simulation framework for hyperbolic conservation laws

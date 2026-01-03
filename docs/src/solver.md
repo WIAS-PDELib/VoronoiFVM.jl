@@ -19,7 +19,6 @@ Overview:
 - [Solver control](@ref "Solver control")
 - [System state](@ref "System state")
 - [Linear solver control](@ref "Linear solver control")
-- [Block preconditioning](@ref "Block preconditioning")
 - [History handling](@ref "History handling")
 - [Matrix extraction](@ref "Matrix extraction")
 
@@ -140,23 +139,3 @@ are supported for backward compatibility.
 ```@docs
 NewtonControl
 ``` 
-
-## Deprecated API
-The methods and struct in this section are deprecated as of version 2.4 and will be removed in version 3.
-### Linear solver strategies
-```@docs
-VoronoiFVM.LinearSolverStrategy
-DirectSolver
-CGIteration
-BICGstabIteration
-GMRESIteration
-```
-
-### Block preconditioning
-
-```@docs
-VoronoiFVM.BlockStrategy
-NoBlock
-EquationBlock
-PointBlock
-```

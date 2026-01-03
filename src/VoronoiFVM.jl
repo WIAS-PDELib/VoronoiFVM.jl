@@ -6,6 +6,7 @@ $(read(joinpath(@__DIR__, "..", "README.md"), String))
 module VoronoiFVM
 
 using BandedMatrices: BandedMatrices, BandedMatrix, Zeros
+using ADTypes: ADTypes, KnownJacobianSparsityDetector
 import Colors
 using CommonSolve: CommonSolve, solve, solve!
 using DiffResults: DiffResults
@@ -25,21 +26,24 @@ using ExtendableGrids: ExtendableGrids, BEdgeNodes, BFaceCells, BFaceEdges,
     num_partitions, pcolor_partitions, pcolors, num_pcolors,
     PColorPartitions, PartitionCells, PartitionBFaces, PartitionNodes, PartitionEdges
 
-using ExtendableSparse: ExtendableSparse, BlockPreconditioner,
+using DifferentiationInterface: DifferentiationInterface,
+    AutoSparse,
+    AutoForwardDiff,
+    prepare_jacobian
+
+using ExtendableSparse: ExtendableSparse,
     ExtendableSparseMatrix,
     ExtendableSparseMatrixCSC,
     MTExtendableSparseMatrixCSC,
     AbstractExtendableSparseMatrixCSC,
-    PointBlockILUZeroPreconditioner, factorize!, flush!,
-    nnz, rawupdateindex!, sparse, updateindex!, nnznew
+    flush!, nnz, rawupdateindex!, updateindex!, nnznew
 
 using ForwardDiff: ForwardDiff, value
 using GridVisualize: GridVisualize, GridVisualizer
 using InteractiveUtils: InteractiveUtils
 using JLD2: JLD2, jldopen
-using LinearAlgebra: LinearAlgebra, Diagonal, I, Tridiagonal, isdiag, ldiv!, norm
-using LinearSolve: LinearSolve, KrylovJL_BICGSTAB,
-    KrylovJL_CG, KrylovJL_GMRES, LinearProblem,
+using LinearAlgebra: LinearAlgebra, Diagonal, Tridiagonal, isdiag, ldiv!, norm
+using LinearSolve: LinearSolve, LinearProblem,
     SparspakFactorization, UMFPACKFactorization, init, reinit!
 using Printf: Printf, @printf, @sprintf
 using Random: Random, AbstractRNG
@@ -48,12 +52,37 @@ import RecursiveFactorization
 using SciMLBase: SciMLBase
 using SparseArrays: SparseArrays, SparseMatrixCSC, dropzeros!, nonzeros,
     nzrange, spzeros, issparse
-using SparseDiffTools: SparseDiffTools, forwarddiff_color_jacobian!,
-    matrix_colors
+using SparseConnectivityTracer: SparseConnectivityTracer, TracerSparsityDetector
+using SparseMatrixColorings: GreedyColoringAlgorithm, sparsity_pattern
 using StaticArrays: StaticArrays, @MVector, @SArray, @SMatrix
 using Statistics: Statistics, mean
-using Symbolics: Symbolics
 using TextWrap: print_wrapped
+
+global _check_allocs = true
+
+"""
+    check_allocs()
+
+Should allocations be checked ?
+"""
+function check_allocs()
+    global _check_allocs
+    return _check_allocs
+end
+
+"""
+    check_allocs!(bool)
+
+Control allocation checks. 
+To be used in CI due to https://github.com/JuliaLang/julia/issues/58634
+"""
+function check_allocs!(v::Bool)
+    global _check_allocs
+    _check_allocs = v
+    return _check_allocs
+end
+
+VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public check_allocs!"))
 
 """
    $(TYPEDEF)
@@ -150,9 +179,8 @@ export calc_divergences
 
 include("vfvm_solvercontrol.jl")
 export fixed_timesteps!, NewtonControl, SolverControl
-include("vfvm_linsolve_deprecated.jl")
+
 include("vfvm_linsolve.jl")
-export DirectSolver, GMRESIteration, CGIteration, BICGstabIteration, NoBlock, EquationBlock, PointBlock
 
 include("vfvm_assembly.jl")
 include("vfvm_solver.jl")
@@ -172,6 +200,8 @@ export nondelaunay
 include("vfvm_testfunctions.jl")
 export testfunction
 export TestFunctionFactory
+export integrate_TxFunc, integrate_TxSrc, integrate_∇TxFlux, integrate_TxEdgefunc
+VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public integrate_stdy, integrate_tran"))
 
 include("vfvm_quantities.jl")
 export ContinuousQuantity

@@ -19,12 +19,12 @@ jobs:
 
     steps:
       # Check out master branch (to get the config file)
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           path: "master"
 
       # Check out logs branch into testdeps/logs
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: DownstreamTester/nightlylogs
           path: "testdeps/logs"
@@ -46,7 +46,7 @@ jobs:
         run: |
           julia -e '
             using Pkg
-            Pkg.add(url="https://github.com/jpthiele/DownstreamTester.jl")
+            Pkg.add(name="DownstreamTester",version="0.1")
             using DownstreamTester
             DownstreamTester.nightly(;nightlylabels=["julia nightly"])'
 

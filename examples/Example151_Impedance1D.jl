@@ -119,13 +119,13 @@ function main(;
 
     function meas_stdy(meas, U)
         u = reshape(U, sys)
-        meas[1] = -VoronoiFVM.integrate_stdy(sys, measurement_testfunction, u)[excited_spec]
+        meas[1] = -VoronoiFVM.integrate_stdy(sys, measurement_testfunction, u, params = [1.0])[excited_spec]
         return nothing
     end
 
     function meas_tran(meas, U)
         u = reshape(U, sys)
-        meas[1] = -VoronoiFVM.integrate_tran(sys, measurement_testfunction, u)[excited_spec]
+        meas[1] = -VoronoiFVM.integrate_tran(sys, measurement_testfunction, u, params = [1.0])[excited_spec]
         return nothing
     end
 

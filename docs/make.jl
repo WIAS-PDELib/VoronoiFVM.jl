@@ -1,7 +1,8 @@
 using Documenter, ExampleJuggler, PlutoStaticHTML, VoronoiFVM, DocumenterCitations
 using ExtendableGrids, GridVisualize, LinearAlgebra, RecursiveArrayTools, SciMLBase
 
-using ExtendableFEMBase, ExtendableFEM
+using ExtendableFEMBase
+using ExtendableFEM
 
 using OrdinaryDiffEqBDF, OrdinaryDiffEqLowOrderRK, OrdinaryDiffEqRosenbrock, OrdinaryDiffEqSDIRK, OrdinaryDiffEqTsit5
 
@@ -48,7 +49,7 @@ function make(;
             "OrdinaryDiffEq.jl nonlinear diffusion" => "ode-diffusion1d.jl",
             "OrdinaryDiffEq.jl 1D wave equation" => "ode-wave1d.jl",
             "OrdinaryDiffEq.jl changing mass matrix" => "ode-nlstorage1d.jl",
-            "OrdinaryDiffEq.jl brusselator" => "ode-brusselator.jl",
+            #           "OrdinaryDiffEq.jl brusselator" => "ode-brusselator.jl",
             "Coupling with Catalyst.jl" => "heterogeneous-catalysis.jl",
             "Outflow boundary conditions" => "outflow.jl",
             "Obtaining vector fields" => "flux-reconstruction.jl",
@@ -56,7 +57,7 @@ function make(;
             "A case for caution" => "problemcase.jl",
             "Nonlinear solver control" => "nonlinear-solvers.jl",
             "Bernoulli function test" => "bernoulli.jl",
-            "API Updates" => "api-update.jl",
+            #            "API Updates" => "api-update.jl",
         ]
         ENV["PLUTO_PROJECT"] = @__DIR__
         notebook_examples = @docplutonotebooks(notebookdir, notebooks, iframe = false)
@@ -66,10 +67,19 @@ function make(;
     end
 
     if with_examples
-        modules = filter(ex -> splitext(ex)[2] == ".jl", basename.(readdir(exampledir)))
+        modules = filter(
+            ex -> splitext(ex)[2] == ".jl"
+                && occursin("Example", ex)
+                && !occursin("Disabled", ex),
+            basename.(readdir(exampledir))
+        )
         module_examples = @docmodules(exampledir, modules, use_module_titles = true)
         module_examples = vcat(["About the examples" => "runexamples.md"], module_examples)
         push!(pages, "Examples" => module_examples)
+
+        devmodules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("DevEx", ex), basename.(readdir(exampledir)))
+        dev_examples = @docmodules(exampledir, devmodules, use_module_titles = true)
+        push!(pages, "Development Examples" => dev_examples)
     end
 
     makedocs(;
@@ -84,7 +94,7 @@ function make(;
         clean = false,
         doctest = false,
         authors = "J. Fuhrmann",
-        repo = "https://github.com/WIAS-PDELib/VoronoiFVM.jl",
+        repo = Documenter.Remotes.GitHub("WIAS-PDELib", "VoronoiFVM.jl"),
         format = Documenter.HTML(;
             size_threshold_ignore,
             assets = String["assets/citations.css"],

@@ -14,7 +14,6 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macOS-13 # intel
           - macOS-14 # arm
         arch:
           - x64
@@ -24,17 +23,15 @@ jobs:
             arch: aarch64
           - os: windows-latest
             arch: aarch64
-          - os: macOS-13
-            arch: aarch64
           - os: macOS-14
             arch: x64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         env:
           cache-name: cache-artifacts
         with:

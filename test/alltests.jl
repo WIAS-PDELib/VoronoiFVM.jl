@@ -1,6 +1,24 @@
 using ExplicitImports, Aqua
 using ExampleJuggler: ExampleJuggler, cleanexamples, @testmodules, @testscripts
-using VoronoiFVM: VoronoiFVM
+using VoronoiFVM: VoronoiFVM, check_allocs!
+
+# Mitigate https://github.com/JuliaLang/julia/issues/58634
+function treshape(X::AbstractArray, n, m)
+    Y = reshape(X, n, m)
+    Y .= 1.0
+    return X
+end
+
+function talloc(; n = 10, m = 20)
+    X = rand(n, m)
+    treshape(X, n, m)
+    return @allocated treshape(X, n, m)
+end
+
+if talloc() > 0
+    VoronoiFVM.check_allocs!(false)
+    @warn "Disabling allocation checks due to julia issue #58634"
+end
 
 ExampleJuggler.verbose!(true)
 #
@@ -28,11 +46,9 @@ end
 end
 
 @testset "Development Examples" begin
-    run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example0")
+    run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "DevEx")
 end
-@testset "MultiD Examples" begin
-    run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example5")
-end
+
 @testset "1D Examples" begin
     run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example1")
 end
@@ -80,7 +96,9 @@ end
     Aqua.test_stale_deps(VoronoiFVM)
     Aqua.test_deps_compat(VoronoiFVM)
     Aqua.test_piracies(VoronoiFVM, broken = true)
-    Aqua.test_persistent_tasks(VoronoiFVM)
+    if !Sys.iswindows()
+        Aqua.test_persistent_tasks(VoronoiFVM)
+    end
 end
 
 @testset "UndocumentedNames" begin

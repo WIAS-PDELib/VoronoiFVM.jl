@@ -5,7 +5,6 @@
 VoronoiFVM.AbstractPhysics
 VoronoiFVM.Physics
 VoronoiFVM.Physics(;kwargs...)
-VoronoiFVM.generic_operator_sparsity!
 Base.show(io::IO,physics::VoronoiFVM.AbstractPhysics)
 VoronoiFVM.AbstractData
 Base.show(::IO, ::MIME{Symbol("text/plain")}, ::VoronoiFVM.AbstractData)
@@ -54,6 +53,7 @@ VoronoiFVM.Edge
 VoronoiFVM.BEdge
 VoronoiFVM.time
 VoronoiFVM.region
+ExtendableGrids.partition(::AbstractGeometryItem)
 VoronoiFVM.parameters
 VoronoiFVM.embedparam
 VoronoiFVM.project

@@ -1,15 +1,48 @@
 #=
 
-# 103: 1D Convection-diffusion equation
+# 103: 1D Transient convection-diffusion equation
 ([source code](@__SOURCE_URL__))
 
-Solve the equation
+Solve the time-dependent convection-diffusion equation
 
 ```math
 \partial_t u -\nabla ( D \nabla u - v u) = 0
 ```
 in $\Omega=(0,1)$ with homogeneous Neumann boundary condition
 at $x=0$ and outflow boundary condition at $x=1$.
+
+This is the time-dependent version of the convection-diffusion problem from Example102.
+The equation models the evolution of a scalar quantity $u$ (e.g., concentration, temperature)
+under the combined effects of diffusion (with coefficient $D$) and advection (with velocity $v$).
+
+## Physical Interpretation
+
+- **Diffusion term**: $D \nabla u$ represents spreading due to random motion
+- **Convection term**: $v u$ represents transport by bulk motion of the medium
+- **Time evolution**: $\partial_t u$ describes how the quantity changes over time
+
+## Boundary Conditions
+
+- **Left boundary** ($x=0$): Homogeneous Neumann condition $\partial_n u = 0$ (no flux)
+- **Right boundary** ($x=1$): Outflow condition $D\partial_n u = 0$, equivalent to $  ( D \nabla u - v u)\cdot \vec n =  v u \cdot \vec n $
+allowing material transported by convection towards the boundary  to leave the domain.
+
+## Discretization
+
+The spatial discretization uses the **exponential fitting scheme** (Scharfetter-Gummel method) which maintains monotonicity properties and provides accurate solutions even for convection-dominated transport (high Peclet numbers). This method uses the Bernoulli function:
+
+```math
+B(x) = \frac{x}{e^x - 1}
+```
+
+to construct fluxes that exactly solve the local two-point boundary value problem on each edge.
+
+## Initial Condition
+
+The simulation starts with a linear profile $u(x,0) = 1 - 2x$, which evolves under the
+combined effects of diffusion and convection until it reaches a steady state or is
+advected out of the domain.
+
 =#
 
 module Example103_ConvectionDiffusion1D
@@ -17,6 +50,13 @@ using Printf
 using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
+
+## Mutable struct to hold problem parameters
+## This encapsulates all physical and numerical parameters
+mutable struct ProblemData
+    D::Float64      ## Diffusion coefficient
+    v::Vector{Float64}  ## Velocity vector
+end
 
 ## Bernoulli function used in the exponential fitting discretization
 function bernoulli(x)
@@ -47,13 +87,15 @@ function main(; n = 10, Plotter = nothing, D = 0.01, v = 1.0, tend = 100)
     h = 1.0 / n
     grid = simplexgrid(0:h:1)
 
-    data = (v = [v], D = D)
+    ## Initialize problem parameters in data structure
+    problem_data = ProblemData(D, [v])
 
     sys = VoronoiFVM.System(
         grid,
         VoronoiFVM.Physics(;
-            flux = exponential_flux!, data = data,
-            breaction = outflow!
+            flux = exponential_flux!,
+            breaction = outflow!,
+            data = problem_data
         )
     )
 
@@ -68,7 +110,7 @@ function main(; n = 10, Plotter = nothing, D = 0.01, v = 1.0, tend = 100)
     inival[1, :] .= map(x -> 1 - 2x, grid)
 
     ## Transient solution of the problem
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.Δt = 0.01 * h
     control.Δt_min = 0.01 * h
     control.Δt_max = 0.1 * tend

@@ -2,7 +2,7 @@
  # 002: check edge reaction
 =#
 
-module Example002_EdgeReaction
+module DevEx002_EdgeReaction
 
 using Printf
 using VoronoiFVM

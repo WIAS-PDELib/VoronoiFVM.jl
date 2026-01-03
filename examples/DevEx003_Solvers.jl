@@ -3,7 +3,7 @@
 ([source code](@__SOURCE_URL__))
 =#
 
-module Example003_Solvers
+module DevEx003_Solvers
 
 ## under development
 
@@ -13,7 +13,7 @@ using ExtendableGrids
 using GridVisualize
 using LinearSolve
 using ExtendableSparse
-using ExtendableSparse: ILUZeroPreconBuilder, JacobiPreconBuilder, SmoothedAggregationPreconBuilder
+using ExtendableSparse: ILUZeroPreconBuilder, JacobiPreconBuilder
 using SparseArrays
 using AMGCLWrap
 using AlgebraicMultigrid

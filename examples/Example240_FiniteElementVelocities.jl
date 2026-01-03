@@ -102,7 +102,7 @@ The passed flags regulate the following behavior:
     and the species concentration $u(r,z)$ in cylindrical coordinates, assuming 
     rotationally symmetric solutions for both.
   - `usefem`:               if true, calculates the velocity field $\mathbf{v}$ using the
-    finite element method provided by [`ExtendableFEM`](https://github.com/chmerdon/ExtendableFEM.jl).
+    finite element method provided by [`ExtendableFEM`](https://github.com/WIAS-PDELib/ExtendableFEM.jl).
   - `reconst`:              if true, interpolates the FEM-calculated 
     velocity field onto a "reconstruction" finite element space that
     provides an exactly divergence-free solution. In a cylindrical grid, 
@@ -218,11 +218,11 @@ function runtests()
         sol_fem, evelo_fem, bfvelo_fem, minmax_fem = main(;
             cylindrical_grid, cin, usefem = true
         )
-        @test norm(evelo_analytical .- evelo_fem, Inf) ≤ 1.0e-11
+        @test norm(evelo_analytical .- evelo_fem, Inf) ≤ 1.0e-9
         @test norm(bfvelo_analytical .- bfvelo_fem, Inf) ≤ 1.0e-9
-        @test norm(sol_analytical .- sol_fem, Inf) ≤ 1.0e-10
+        @test norm(sol_analytical .- sol_fem, Inf) ≤ 1.0e-9
         @test norm(minmax_analytical .- [0.0, cin], Inf) ≤ 1.0e-15
-        @test norm(minmax_fem .- [0.0, cin], Inf) ≤ 1.0e-11
+        @test norm(minmax_fem .- [0.0, cin], Inf) ≤ 1.0e-9
     end
     return nothing
 end

@@ -13,15 +13,15 @@ using GridVisualize
 using ExtendableSparse
 using ExtendableSparse: ILUZeroPreconBuilder
 using ForwardDiff, DiffResults
-using SparseDiffTools, SparseArrays
+using SparseArrays
 using ILUZero, LinearSolve
-
+using DifferentiationInterface, SparseConnectivityTracer, SparseMatrixColorings
 """
     f(P)
 
 Parameter dependent function which creates system and solves it
 """
-function f(P; n = 10)
+function f(P; n = 10, method_linear = SparspakFactorization())
     p = P[1]
 
     valuetype = typeof(p)
@@ -52,7 +52,7 @@ function f(P; n = 10)
     )
     tff = VoronoiFVM.TestFunctionFactory(sys)
     tfc = testfunction(tff, [1], [3])
-    sol = solve(sys; inival = 0.5)
+    sol = solve(sys; inival = 0.5, method_linear)
     return [integrate(sys, tfc, sol)[1]]
 end
 
@@ -62,12 +62,12 @@ end
 Run parameter series, plot f(p), df(p).
 For each p,create a new system. Use VoronoiFVM with dual numbers. Pass parameters via closure.
 """
-function runf(; Plotter = nothing, n = 10)
+function runf(; Plotter = nothing, n = 10, method_linear = SparspakFactorization())
     P = 0.1:0.05:2
     dresult = DiffResults.JacobianResult(ones(1))
     F = zeros(0)
     DF = zeros(0)
-    ff(p) = f(p; n)
+    ff(p) = f(p; n, method_linear)
     @time for p in P
         ForwardDiff.jacobian!(dresult, ff, [p])
         push!(F, DiffResults.value(dresult)[1])
@@ -104,7 +104,7 @@ end
 
 Same as runf, but keep one system pass parameters via data.
 """
-function rung(; Plotter = nothing, method_linear = SparspakFactorization(), n = 10)
+function rung(; Plotter = nothing, n = 10, method_linear = SparspakFactorization())
     X = collect(0:(1.0 / n):1)
     grid = simplexgrid(X, X)
 
@@ -178,7 +178,7 @@ main assembly loop.
 This needs quite a bit of additional implementation + corresponding API and still lacks local assembly of the 
 measurement derivative (when using testfunction based calculation) when calculating current.
 """
-function runh(; Plotter = nothing, n = 10)
+function runh(; Plotter = nothing, n = 10, method_linear = SparspakFactorization())
     X = collect(0:(1.0 / n):1)
     grid = simplexgrid(X, X)
 
@@ -208,12 +208,17 @@ function runh(; Plotter = nothing, n = 10)
     state = VoronoiFVM.SystemState(sys)
     U0 = solve!(state; inival = 0.5, params = [P[1]])
 
-    ndof = num_dof(sys)
-    colptr = [i for i in 1:(ndof + 1)]
-    rowval = [1 for i in 1:ndof]
-    nzval = [1.0 for in in 1:ndof]
-    ∂m∂u = zeros(1, ndof)
-    colors = matrix_colors(∂m∂u)
+
+    input = VoronoiFVM.dofs(U0)
+    output = zeros(1)
+    backend = AutoSparse(
+        AutoForwardDiff();
+        sparsity_detector = TracerSparsityDetector(),
+        coloring_algorithm = GreedyColoringAlgorithm()
+    )
+    jac_prep = prepare_jacobian(mymeas!, output, backend, input; strict = Val(false))
+    ∂m∂u = similar(sparsity_pattern(jac_prep), Float64)
+
 
     H = zeros(0)
     DH = zeros(0)
@@ -222,13 +227,13 @@ function runh(; Plotter = nothing, n = 10)
 
     @time for p in P
         params[1] = p
-        sol = solve!(state; inival = 0.5, params)
+        sol = solve!(state; inival = 0.5, params, method_linear)
 
         mymeas!(m, sol)
         push!(H, m[1])
 
         # this one is expensive - we would need to assemble this jacobian via local calls
-        forwarddiff_color_jacobian!(∂m∂u, mymeas!, vec(sol); colorvec = colors)
+        DifferentiationInterface.jacobian!(mymeas!, output, ∂m∂u, jac_prep, backend, vec(sol))
 
         # need to have the full derivative of m vs p
         ∂m∂p = ForwardDiff.gradient(p -> measp(p, sol), params)
@@ -247,9 +252,11 @@ end
 using Test
 function runtests()
     testval = 489.3432830184927
-    @test runf() ≈ testval
-    @test rung() ≈ testval
-    @test runh() ≈ testval
+    for method_linear in [UMFPACKFactorization(), SparspakFactorization()]
+        @test runf(; method_linear) ≈ testval
+        @test rung(; method_linear) ≈ testval
+        @test runh(; method_linear) ≈ testval
+    end
     return nothing
 end
 

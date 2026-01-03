@@ -30,7 +30,7 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     ## Here, instead of the flux function we provide a "generic operator"
     ## which provides the stiffness part of the problem. Its sparsity is detected automatically
     ## using Symbolics.jl
-    function generic_operator!(f, u, sys)
+    function generic_operator!(f, u, sys, data)
         f .= 0.0
         for i in 1:(length(X) - 1)
             du = D * (u[idx[1, i]] - u[idx[1, i + 1]]) / (X[i + 1] - X[i]) +

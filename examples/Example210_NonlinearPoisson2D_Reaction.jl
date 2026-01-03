@@ -16,7 +16,7 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
 
     grid = simplexgrid(X, Y)
 
-    grid = partition(grid, PlainMetisPartitioning(npart = 10))
+    #    grid = partition(grid, PlainMetisPartitioning(npart = 10))
     @show grid
     data = (eps = 1.0e-2, k = 1.0)
 
@@ -61,7 +61,7 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     inival = unknowns(sys)
     inival .= 0.0
 
-    control = VoronoiFVM.NewtonControl()
+    control = VoronoiFVM.SolverControl()
     control.verbose = verbose
     tstep = 0.01
     time = 0.0
