@@ -139,4 +139,3 @@ are supported for backward compatibility.
 ```@docs
 NewtonControl
 ``` 
-
