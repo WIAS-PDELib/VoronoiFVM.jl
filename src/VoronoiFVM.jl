@@ -36,16 +36,14 @@ using ExtendableSparse: ExtendableSparse,
     ExtendableSparseMatrixCSC,
     MTExtendableSparseMatrixCSC,
     AbstractExtendableSparseMatrixCSC,
-    factorize!, flush!,
-    nnz, rawupdateindex!, updateindex!, nnznew
+    flush!, nnz, rawupdateindex!, updateindex!, nnznew
 
 using ForwardDiff: ForwardDiff, value
 using GridVisualize: GridVisualize, GridVisualizer
 using InteractiveUtils: InteractiveUtils
 using JLD2: JLD2, jldopen
 using LinearAlgebra: LinearAlgebra, Diagonal, Tridiagonal, isdiag, ldiv!, norm
-using LinearSolve: LinearSolve, KrylovJL_BICGSTAB,
-    KrylovJL_CG, KrylovJL_GMRES, LinearProblem,
+using LinearSolve: LinearSolve, LinearProblem,
     SparspakFactorization, UMFPACKFactorization, init, reinit!
 using Printf: Printf, @printf, @sprintf
 using Random: Random, AbstractRNG

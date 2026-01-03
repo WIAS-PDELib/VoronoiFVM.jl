@@ -11,8 +11,6 @@ CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
 DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-ExtendableFEM = "a722555e-65e0-4074-a036-ca7ce79a4aed"
-ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
 ExtendableGrids = "cfc395e8-590f-11e8-1f13-43a2532b2fa8"
 ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -33,6 +31,9 @@ SparseMatrixColorings = "0a514795-09f3-496d-8182-132a7b665d35"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 TextWrap = "b718987f-49a8-5099-9789-dcd902bef87d"
+
+[weakdeps]
+ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
 
 [extensions]
 VoronoiFVMExtendableFEMBaseExt = "ExtendableFEMBase"

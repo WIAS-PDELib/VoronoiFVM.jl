@@ -594,7 +594,7 @@ function eval_and_assemble(
     end
 
     noallocs(m::AbstractExtendableSparseMatrixCSC) = iszero(nnznew(m))
-    noallocs(m::ExtendableSparseMatrix) = nnz(hasproperty(m, :lnkmatrix) ? m.lnkmatrix : m.xmatrix) == 0
+    noallocs(m::ExtendableSparseMatrix) = hasproperty(m, :lnkmatrix) ? isnothing(m.lnkmatrix) : iszero(nnznew(m))
     noallocs(m::AbstractMatrix) = false
     allncallocs = sum(ncallocs)
     allnballocs = sum(nballocs)
