@@ -92,9 +92,8 @@ Base.@kwdef mutable struct SolverControl
     - `UMFPACKFactorization()` for sparse matrices with Float64 
     - `SparspakFactorization()` for sparse matrices with  general number types.
     -  Defaults from LinearSolve.jl for tridiagonal and banded matrices 
-    Users should experiment with what works best for their problem.
 
-    For an overeview on possible alternatives, see [`VoronoiFVM.LinearSolverStrategy`](@ref).
+    Any sparse direct and iterative solver available via [LinearSolve.jl](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/#Sparse-Matrices) can be chosen.
 
     """
     method_linear::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing
