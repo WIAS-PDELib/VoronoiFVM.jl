@@ -50,6 +50,7 @@ using Random: Random, AbstractRNG
 using RecursiveArrayTools: RecursiveArrayTools, AbstractDiffEqArray, DiffEqArray
 import RecursiveFactorization
 using SciMLBase: SciMLBase
+using SciMLPublic: @public
 using SparseArrays: SparseArrays, SparseMatrixCSC, dropzeros!, nonzeros,
     nzrange, spzeros, issparse
 using SparseConnectivityTracer: SparseConnectivityTracer, TracerSparsityDetector
@@ -82,7 +83,7 @@ function check_allocs!(v::Bool)
     return _check_allocs
 end
 
-VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public check_allocs!"))
+@public check_allocs
 
 """
    $(TYPEDEF)
@@ -106,8 +107,7 @@ solutionarray(a::AbstractSolutionArray) = a
 export AbstractSolutionArray
 
 include("vfvm_physics.jl")
-# see https://discourse.julialang.org/t/is-compat-jl-worth-it-for-the-public-keyword/119041/34
-VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public Physics, AbstractPhysics, AbstractData"))
+@public Physics, AbstractPhysics, AbstractData
 
 include("vfvm_functions.jl")
 export fbernoulli
@@ -120,11 +120,7 @@ export NewtonSolverHistory, TransientSolverHistory, details
 
 include("vfvm_densesolution.jl")
 include("vfvm_sparsesolution.jl")
-VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public dofs"))
-export num_dof
-export dof
-export getdof
-export setdof!
+@public dof, dofs, num_dof, getdof, setdof!
 export unknown_indices, SparseSolutionIndices
 
 include("vfvm_transientsolution.jl")
@@ -161,13 +157,13 @@ export viewK, viewL, data
 export hasoutflownode, isoutflownode, outflownode
 export parameters
 
-VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public System, AbstractSystem, SystemState"))
+@public System, AbstractSystem, SystemState
 
 # export to be deprecated
 export partitioning, Equationwise
 
 include("vfvm_logging_exceptions.jl")
-VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public print_output!, log_output!"))
+@public print_output!, log_output!
 
 include("vfvm_formfactors.jl")
 export meas, project
@@ -200,7 +196,7 @@ include("vfvm_testfunctions.jl")
 export testfunction
 export TestFunctionFactory
 export integrate_TxFunc, integrate_TxSrc, integrate_∇TxFlux, integrate_TxEdgefunc
-VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public integrate_stdy, integrate_tran"))
+@public integrate_stdy, integrate_tran
 
 include("vfvm_quantities.jl")
 export ContinuousQuantity

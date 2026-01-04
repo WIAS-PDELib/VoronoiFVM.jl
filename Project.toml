@@ -1,7 +1,7 @@
 name = "VoronoiFVM"
 uuid = "82b139dc-5afc-11e9-35da-9b9bdfd336f3"
-authors = ["Jürgen Fuhrmann <juergen.fuhrmann@wias-berlin.de>", "Patrick Jaap", "Daniel Runge", "Dilara Abdel", "Jan Weidner", "Alexander Seiler", "Patricio Farrell", "Matthias Liero"]
 version = "3.0.0"
+authors = ["Jürgen Fuhrmann <juergen.fuhrmann@wias-berlin.de>", "Patrick Jaap", "Daniel Runge", "Dilara Abdel", "Jan Weidner", "Alexander Seiler", "Patricio Farrell", "Matthias Liero"]
 
 [deps]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
@@ -25,6 +25,7 @@ RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 RecursiveFactorization = "f2c3362d-daeb-58d1-803e-2bc74f2840b4"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SciMLOperators = "c0aeaf25-5076-4817-a8d5-81caf7dfa961"
+SciMLPublic = "431bcebd-1456-4ced-9d72-93c2757fff0b"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SparseConnectivityTracer = "9f842d2f-2579-4b1d-911e-f412cf18a3f5"
 SparseMatrixColorings = "0a514795-09f3-496d-8182-132a7b665d35"
@@ -84,6 +85,7 @@ RecursiveFactorization = "0.2.18"
 Revise = "3.9"
 SciMLBase = "2.6"
 SciMLOperators = "1.14.0"
+SciMLPublic = "1.0.1"
 SimplexGridFactory = "2.4.0"
 SparseArrays = "1.9"
 SparseConnectivityTracer = "0.6.17, 1"
