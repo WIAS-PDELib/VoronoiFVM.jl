@@ -46,7 +46,7 @@ using LinearAlgebra: LinearAlgebra, Diagonal, Tridiagonal, isdiag, ldiv!, norm
 using LinearSolve: LinearSolve, LinearProblem,
     SparspakFactorization, UMFPACKFactorization, init, reinit!
 using Printf: Printf, @printf, @sprintf
-using Random: Random, AbstractRNG
+using Random: Random
 using RecursiveArrayTools: RecursiveArrayTools, AbstractDiffEqArray, DiffEqArray
 import RecursiveFactorization
 using SciMLBase: SciMLBase
@@ -120,7 +120,8 @@ export NewtonSolverHistory, TransientSolverHistory, details
 
 include("vfvm_densesolution.jl")
 include("vfvm_sparsesolution.jl")
-@public dof, dofs, num_dof, getdof, setdof!
+@public dof, dofs, getdof, setdof!
+export num_dof
 export unknown_indices, SparseSolutionIndices
 
 include("vfvm_transientsolution.jl")
@@ -128,7 +129,7 @@ export TransientSolution
 
 include("vfvm_xgrid.jl")
 export cartesian!, circular_symmetric!, spherical_symmetric!
-export coordinates
+
 
 """
 $(TYPEDEF)

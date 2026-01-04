@@ -85,7 +85,7 @@ Abstract type for data on edges.
 """
 abstract type AbstractEdgeData{Tv <: Number} <: AbstractMatrix{Tv} end
 Base.size(u::AbstractEdgeData) = (u.n1, 2)
-Base.getindex(u::AbstractEdgeData, i, j) = @inbounds u.val[(j - 1) * u.n1 + i]
+Base.getindex(u::AbstractEdgeData, i::Integer, j::Integer) = @inbounds u.val[(j - 1) * u.n1 + i]
 
 function parameters(u::AbstractEdgeData)
     return DParameters(u.val, u.n1 + u.n1)
@@ -169,7 +169,7 @@ mutable struct Node{Tc, Ti} <: AbstractNode{Tc, Ti}
             zero(Ti), 0,
             partition,
             num_species(sys), 0,
-            coordinates(sys.grid),
+            sys.grid[Coordinates],
             sys.grid[CellNodes],
             sys.grid[CellRegions],
             time, embedparam, 0.0, 0
@@ -288,7 +288,7 @@ mutable struct BNode{Td, Tc, Ti} <: AbstractNode{Tc, Ti}
         return new(
             0, 0, 0, 0, partition, zeros(Ti, 2),
             num_species(sys),
-            coordinates(sys.grid),
+            sys.grid[Coordinates],
             sys.grid[BFaceNodes],
             sys.grid[BFaceRegions],
             sys.grid[CellRegions],
@@ -416,7 +416,7 @@ function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition =
     edge.partition = partition
     edge.nspec = num_species(sys)
     edge.icell = 0
-    edge.coord = coordinates(sys.grid)
+    edge.coord = sys.grid[Coordinates]
     geom = sys.grid[CellGeometries][1]
     if haskey(sys.grid, CellEdges)
         edge.cellx = sys.grid[CellEdges]
@@ -566,7 +566,7 @@ function BEdge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition 
     bedge.partition = 1
     bedge.nspec = num_species(sys)
     bedge.icell = 0
-    bedge.coord = coordinates(sys.grid)
+    bedge.coord = sys.grid[Coordinates]
 
     bedge.bfaceedges = sys.grid[BFaceEdges] # !!! another bug in ExtendableGrids
     bedge.bedgenodes = sys.grid[BEdgeNodes]

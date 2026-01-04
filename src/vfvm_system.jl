@@ -431,20 +431,21 @@ bulk and boundary species have to be distinct.
 Once a species has been added, it cannot be removed.
 """
 function enable_species!(system::AbstractSystem, ispec::Integer, regions::AbstractVector)
+    grid = system.grid
     increase_num_species!(system, ispec)
 
     if is_boundary_species(system, ispec)
         throw(DomainError(ispec, "Species is already boundary species"))
     end
-    _cellregions = cellregions(system.grid)
-    _cellnodes = cellnodes(system.grid)
+    cellregions = grid[CellRegions]
+    cellnodes = grid[CellNodes]
     for i in eachindex(regions)
         ireg = regions[i]
         system.region_species[ispec, ireg] = ispec
         for icell in 1:num_cells(system.grid)
-            if _cellregions[icell] == ireg
-                for iloc in 1:num_targets(_cellnodes, icell)
-                    iglob = _cellnodes[iloc, icell]
+            if cellregions[icell] == ireg
+                for iloc in 1:num_targets(cellnodes, icell)
+                    iglob = cellnodes[iloc, icell]
                     system.node_dof[ispec, iglob] = ispec
                 end
             end
@@ -489,21 +490,22 @@ bulk and boundary species have to be distinct.
 Once a species has been added, it cannot be removed.
 """
 function enable_boundary_species!(system::AbstractSystem, ispec::Integer, bregions::AbstractVector)
+    grid = system.grid
     increase_num_species!(system, ispec)
 
     if is_bulk_species(system, ispec)
         throw(DomainError(ispec, "Species is already bulk species"))
     end
-    _bfaceregions = bfaceregions(system.grid)
-    _bfacenodes = bfacenodes(system.grid)
+    bfaceregions = grid[BFaceRegions]
+    bfacenodes = grid[BFaceNodes]
 
     for i in eachindex(bregions)
         ireg = bregions[i]
         system.bregion_species[ispec, ireg] = ispec
         for ibface in 1:num_bfaces(system.grid)
-            if _bfaceregions[ibface] == ireg
-                for iloc in 1:size(_bfacenodes, 1)
-                    iglob = _bfacenodes[iloc, ibface]
+            if bfaceregions[ibface] == ireg
+                for iloc in 1:size(bfacenodes, 1)
+                    iglob = bfacenodes[iloc, ibface]
                     system.node_dof[ispec, iglob] = ispec
                 end
             end
@@ -643,10 +645,10 @@ function update_grid_cellwise!(system::AbstractSystem{Tv, Tc, Ti, Tm}, grid) whe
     nbfaces = num_bfaces(grid)
     ncells = num_cells(grid)
 
-    cellnodefactors = zeros(Tv, num_nodes(geom), ncells)
-    celledgefactors = zeros(Tv, num_edges(geom), ncells)
-    bfacenodefactors = zeros(Tv, num_nodes(bgeom), nbfaces)
-    bfaceedgefactors = zeros(Tv, num_edges(bgeom), nbfaces)
+    cellnodefactors = zeros(Tc, num_nodes(geom), ncells)
+    celledgefactors = zeros(Tc, num_edges(geom), ncells)
+    bfacenodefactors = zeros(Tc, num_nodes(bgeom), nbfaces)
+    bfaceedgefactors = zeros(Tc, num_edges(bgeom), nbfaces)
 
     function cellwise_factors!(csys::Type{T}) where {T}
         nalloc = @allocations for icell in 1:ncells
@@ -667,7 +669,6 @@ function update_grid_cellwise!(system::AbstractSystem{Tv, Tc, Ti, Tm}, grid) whe
     end
 
     cellwise_factors!(csys)
-
     system.assembly_data = CellwiseAssemblyData{Tc, Ti}(
         cellnodefactors,
         celledgefactors,
@@ -699,10 +700,10 @@ function update_grid_edgewise!(system::AbstractSystem{Tv, Tc, Ti, Tm}, grid) whe
 
     celledges = grid[CellEdges]
     grid[EdgeNodes] # !!!workaround for bug in extendablegrids: sets num_edges right.
-    bfacenodefactors = zeros(Tv, num_nodes(bgeom), nbfaces)
-    bfaceedgefactors = zeros(Tv, num_edges(bgeom), nbfaces)
-    cnf = ExtendableSparseMatrix{Tv, Ti}(num_cellregions(grid), num_nodes(grid))
-    cef = ExtendableSparseMatrix{Tv, Ti}(num_cellregions(grid), num_edges(grid))
+    bfacenodefactors = zeros(Tc, num_nodes(bgeom), nbfaces)
+    bfaceedgefactors = zeros(Tc, num_edges(bgeom), nbfaces)
+    cnf = ExtendableSparseMatrix{Tc, Ti}(num_cellregions(grid), num_nodes(grid))
+    cef = ExtendableSparseMatrix{Tc, Ti}(num_cellregions(grid), num_edges(grid))
 
     nn::Int = num_nodes(geom)
     ne::Int = num_edges(geom)

@@ -46,7 +46,7 @@ function main(; N = 5, Plotter = nothing, unknown_storage = :sparse, assembly = 
     carrierList = [cspec dspec]
     numberCarriers = length(carrierList)
 
-    params2 = zeros(1, numberCarriers)
+    params2 = zeros(numberCarriers)
 
     for icc in carrierList
         params2[icc] = 2

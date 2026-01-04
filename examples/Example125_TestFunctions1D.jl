@@ -211,7 +211,7 @@ function main(; n = 100, Plotter = nothing, verbose = false, unknown_storage = :
         I1 = integrate(sys, tf1, U)
 
         ## Get grid coordinates for visualization
-        coord = coordinates(grid)
+        coord = grid[Coordinates]
 
         ## Use current solution as initial guess for next iteration
         inival .= U
