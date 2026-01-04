@@ -6,7 +6,19 @@ $(SIGNATURES)
 
 Add value `v*fac` to matrix if `v` is nonzero
 """
-@inline function _addnz(matrix, i, j, v::Tv, fac, part = 1) where {Tv}
+@inline function _addnz(matrix::AbstractMatrix, i, j, v::Tv, fac, part = 1) where {Tv}
+    if isnan(v)
+        error("trying to assemble NaN")
+    end
+    return matrix[i, j] += v * fac
+end
+
+"""
+$(SIGNATURES)
+
+Add value `v*fac` to matrix if `v` is nonzero
+"""
+@inline function _addnz(matrix::AbstractSparseMatrixCSC, i, j, v::Tv, fac, part = 1) where {Tv}
     if isnan(v)
         error("trying to assemble NaN")
     end
@@ -15,7 +27,6 @@ Add value `v*fac` to matrix if `v` is nonzero
     end
 end
 
-ExtendableSparse.rawupdateindex!(m::AbstractMatrix, op, v, i, j) = m[i, j] = op(m[i, j], v)
 
 function zero!(m::ExtendableSparseMatrix{Tv, Ti}) where {Tv, Ti}
     nzv = nonzeros(m)

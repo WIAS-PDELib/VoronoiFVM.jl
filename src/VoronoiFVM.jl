@@ -51,7 +51,7 @@ using RecursiveArrayTools: RecursiveArrayTools, AbstractDiffEqArray, DiffEqArray
 import RecursiveFactorization
 using SciMLBase: SciMLBase
 using SciMLPublic: @public
-using SparseArrays: SparseArrays, SparseMatrixCSC, dropzeros!, nonzeros,
+using SparseArrays: SparseArrays, SparseMatrixCSC, AbstractSparseMatrixCSC, dropzeros!, nonzeros,
     nzrange, spzeros, issparse
 using SparseConnectivityTracer: SparseConnectivityTracer, TracerSparsityDetector
 using SparseMatrixColorings: GreedyColoringAlgorithm, sparsity_pattern

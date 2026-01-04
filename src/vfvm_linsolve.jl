@@ -1,15 +1,5 @@
-################################################################
-# These are needed to enable iterative solvers to work with dual numbers
-# TODO: Remove this Pirate's nest
-Base.Float64(x::ForwardDiff.Dual) = value(x)
-function Random.rand(
-        rng::AbstractRNG,
-        ::Random.SamplerType{ForwardDiff.Dual{T, V, N}}
-    ) where {T, V, N}
-    return ForwardDiff.Dual{T, V, N}(rand(rng, V))
-end
-
-# TODO: these may be not anymore needed
+# TODO: these may be not anymore needed but require
+# that preconditioners work with AbstractSparseMatrixCSC.
 canonical_matrix(A) = A
 canonical_matrix(A::AbstractExtendableSparseMatrixCSC) = SparseMatrixCSC(A)
 
