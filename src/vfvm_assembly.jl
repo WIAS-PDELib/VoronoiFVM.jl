@@ -34,12 +34,12 @@ function assemble_nodes(
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
-    node::Union{Nothing, Node{Tc, Tp, Ti}} = nothing
+    node::Union{Nothing, Node{Tc, Ti}} = nothing
     lock(system.gridaccesslock)
     try
         # this may trigger building infrastructure in the grid, so this
         # cannot be run in multithreaded code
-        node = Node(system, time, λ, params; partition = part)
+        node = Node(system, time, λ; partition = part)
     finally
         unlock(system.gridaccesslock)
     end
@@ -124,12 +124,12 @@ function assemble_edges(
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
-    edge::Union{Nothing, Edge{Tc, Tp, Ti}} = nothing
+    edge::Union{Nothing, Edge{Tc, Ti}} = nothing
     lock(system.gridaccesslock)
     try
         # this may trigger building infrastructure in the grid, so this
         # cannot be run in multithreaded code
-        edge = Edge(system, time, λ, params; partition = part)
+        edge = Edge(system, time, λ; partition = part)
     finally
         unlock(system.gridaccesslock)
     end
@@ -323,7 +323,7 @@ function assemble_bnodes(
         UK[(nspecies + 1):end] .= params
         UKOld[(nspecies + 1):end] .= params
     end
-    bnode = BNode(system, time, λ, params; partition = part)
+    bnode = BNode(system, time, λ; partition = part)
 
     bsrc_evaluator = ResEvaluator(physics, data, :bsource, UK, bnode, nspecies)
     brea_evaluator = ResJacEvaluator(physics, data, :breaction, UK, bnode, nspecies)
@@ -431,12 +431,12 @@ function assemble_bedges(
         F::AbstractMatrix{Tv}
     ) where {Tv, Tc, Ti, Tm, Tp}
     physics = system.physics
-    bedge::Union{Nothing, BEdge{Tc, Tp, Ti}} = nothing
+    bedge::Union{Nothing, BEdge{Tc, Ti}} = nothing
     lock(system.gridaccesslock)
     try
         # this may trigger building infrastructure in the grid, so this
         # cannot be run in multithreaded code
-        bedge = BEdge(system, time, λ, params; partition = part)
+        bedge = BEdge(system, time, λ; partition = part)
     finally
         unlock(system.gridaccesslock)
     end

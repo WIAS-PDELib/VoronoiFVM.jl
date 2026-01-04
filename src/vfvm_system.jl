@@ -954,7 +954,7 @@ function _initialize_dirichlet!(
     nspecies = num_species(system)
 
     # set up bnode
-    bnode = BNode(system, time, λ, params)
+    bnode = BNode(system, time, λ)
 
     # setup unknowns to be passed
     UK = zeros(Tv, num_species(system) + length(params))
@@ -1211,7 +1211,7 @@ function Base.map!(
     isunknownsof(U, system) || error("U is not unknowns of system")
     _complete!(system)
     grid = system.grid
-    node = Node(system, 0, 0, Tv[])
+    node = Node(system, 0, 0)
     nspecies::Int = num_species(system)
     UK = Array{Tu, 1}(undef, nspecies)
 

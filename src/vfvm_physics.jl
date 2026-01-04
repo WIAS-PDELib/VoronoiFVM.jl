@@ -193,18 +193,13 @@ mutable struct Physics{
     """
     data::Data
 
-    """
-    Number of species including boundary species. Meaningless & deprecated.
-    """
-    num_species::Int8
 end
 
 ##########################################################
 
 """
 ````
-Physics(;num_species=0,
-         data=nothing,
+Physics(;data=nothing,
          flux,
          reaction,
          edgereaction,
@@ -222,7 +217,6 @@ Physics(;num_species=0,
 Constructor for physics data. For the meaning of the optional keyword arguments, see [`VoronoiFVM.System(grid::ExtendableGrid; kwargs...)`](@ref).
 """
 function Physics(;
-        num_species = 0,
         data = nothing,
         flux::Function = nofunc,
         reaction::Function = nofunc,
@@ -254,7 +248,6 @@ function Physics(;
         generic,
         generic_sparsity,
         data,
-        Int8(num_species)
     )
 end
 
@@ -274,7 +267,6 @@ function Physics(physics::Physics, data)
         physics.generic,
         physics.generic_sparsity,
         data,
-        physics.num_species
     )
 end
 
@@ -304,7 +296,7 @@ function Base.show(io::IO, physics::AbstractPhysics)
     # end
 
     for name in fieldnames(typeof(physics))
-        if (name != :num_species) && (name != :data)  && (name != :outflowboundaries)  && getfield(physics, name) != nofunc
+        if (name != :data)  && (name != :outflowboundaries)  && getfield(physics, name) != nofunc
             str = str * "$(name)=$(nameof(getfield(physics, name))), "
         end
     end

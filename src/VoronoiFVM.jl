@@ -89,7 +89,7 @@ VERSION >= v"1.11.0-DEV.469" && eval(Meta.parse("public check_allocs!"))
 
 Abstract type for geometry items (node,bnode,edge, bedge)
 """
-abstract type AbstractGeometryItem{Tc <: Number, Tp <: Number, Ti <: Integer} end
+abstract type AbstractGeometryItem{Tc <: Number, Ti <: Integer} end
 export AbstractGeometryItem
 
 """
