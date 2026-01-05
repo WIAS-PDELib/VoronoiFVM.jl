@@ -638,35 +638,3 @@ function project(edge::Edge, vec)
     end
     return vh
 end
-
-###############################################################
-# Deprecation warnings here ?
-# Wrapper struct for viewing unknowns passed to callback functions
-struct VectorUnknowns{Tv} <: AbstractVector{Tv}
-    val::Vector{Tv}
-    n::Int64
-    offset::Int64
-end
-
-unknowns(edge::AbstractEdge, u::AbstractVector{Tv}, i) where {Tv} = VectorUnknowns{Tv}(u, edge.nspec, (i - 1) * (edge.nspec))
-Base.getindex(u::VectorUnknowns, i) = @inbounds u.val[u.offset + i]
-Base.size(u::VectorUnknowns) = (u.n,)
-
-# For backward compatibility
-unknowns(edge, u::AbstractEdgeData) = u
-# For backward compatibility
-unknowns(edge::Edge, u::AbstractEdgeData{Tv}, i) where {Tv} = VectorUnknowns{Tv}(u.val, edge.nspec, (i - 1) * (edge.nspec))
-
-"""
-$(TYPEDSIGNATURES)
-
-Solution view on first edge node
-"""
-viewK(edge::AbstractEdge, u) = unknowns(edge, u, 1)
-
-"""
-$(TYPEDSIGNATURES)
-
-Solution view on second edge node
-"""
-viewL(edge::AbstractEdge, u) = unknowns(edge, u, 2)

@@ -1074,7 +1074,7 @@ $(SIGNATURES)
 Create a solution vector for system.
 If inival is not specified, the entries of the returned vector are undefined.
 """
-unknowns(system::AbstractSystem{Tv}; inival = undef, inifunc = nothing) where {Tv} = unknowns(Tv, system; inival, inifunc)
+unknowns(system::AbstractSystem{Tv}; inival = zero(Tv), inifunc = nothing) where {Tv} = unknowns(Tv, system; inival, inifunc)
 
 """
 $(SIGNATURES)
@@ -1082,9 +1082,9 @@ $(SIGNATURES)
 Create a solution vector for system with elements of type `Tu`.
 If inival is not specified, the entries of the returned vector are undefined.
 """
-function unknowns(Tu::Type, system::AbstractSystem; inival = undef, inifunc = nothing) end
+function unknowns(Tu::Type, system::AbstractSystem; inival = zero(Tu), inifunc = nothing) end
 
-function unknowns(Tu::Type, system::SparseSystem; inival = undef, inifunc = nothing)
+function unknowns(Tu::Type, system::SparseSystem; inival = zero(Tu), inifunc = nothing)
     a0 = Array{Tu}(undef, num_dof(system))
     if inival != undef
         fill!(a0, inival)
@@ -1169,7 +1169,7 @@ function partitioning(system::SparseSystem, ::Equationwise)
     return parts
 end
 
-function unknowns(Tu::Type, system::DenseSystem; inival = undef, inifunc = nothing)
+function unknowns(Tu::Type, system::DenseSystem; inival = zero(Tu), inifunc = nothing)
     a = DenseSolutionArray(Array{Tu, 2}(undef, size(system.node_dof)...))
     if isa(inival, Number)
         fill!(a, inival)

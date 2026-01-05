@@ -107,7 +107,7 @@ solutionarray(a::AbstractSolutionArray) = a
 export AbstractSolutionArray
 
 include("vfvm_physics.jl")
-@public Physics, AbstractPhysics, AbstractData
+@public Physics, AbstractPhysics, AbstractData, data
 
 include("vfvm_functions.jl")
 export fbernoulli
@@ -154,7 +154,6 @@ export physics!
 export history, history_summary, history_details
 export evaluate_residual_and_jacobian
 export edgelength
-export viewK, viewL, data
 export hasoutflownode, isoutflownode, outflownode
 export parameters
 

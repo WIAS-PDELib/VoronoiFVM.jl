@@ -17,31 +17,35 @@ and get a  prettyprinting show method.
 """
 abstract type AbstractData{Tv} end
 
-function _showstruct(io::IO, this::AbstractData)
-    myround(x; kwargs...) = round(Float64(value(x)); kwargs...)
-    myround(s::Symbol; kwargs...) = s
-    myround(i::Int; kwargs...) = i
-    myround(b::Bool; kwargs...) = b
-    println(io, typeof(this))
+"""
+    myround(x; kwargs...)
+
+Rounding for use in [`showstruct`](@ref).
+"""
+function myround end
+
+myround(x; kwargs...) = round(x; kwargs...)
+myround(x::Vector; kwargs...) = myround.(x; kwargs...)
+myround(s::Symbol; kwargs...) = ":$(s)"
+myround(i::Int; kwargs...) = i
+myround(b::Bool; kwargs...) = b
+myround(::Nothing; kwargs...) = "nothing"
+myround(f::Function; kwargs...) = string(f)
+
+"""
+    showstruct(io::IO, this)
+
+Print struct with field names and field values.
+"""
+function showstruct(io::IO, this::AbstractData)
+    println(io, "$(string(nameof(typeof(this))))(")
     for name in fieldnames(typeof(this))
-        println(io, "$(lpad(name, 20)) = $(myround.(getfield(this, name), sigdigits = 5))")
+        println(io, "$name = $(myround(getfield(this, name), sigdigits = 5)), ")
     end
-    return
+    println(io, ")")
+    return nothing
 end
 
-"""
-    copy!(to::AbstractData, from::AbstractData)
-
-Copy [`AbstractData`](@ref).
-"""
-function Base.copy!(vdata::AbstractData{Tv}, udata::AbstractData{Tu}) where {Tv, Tu}
-    vval(x::Any) = x
-    vval(x::Tu) = Tv(x)
-    for name in fieldnames(typeof(udata))
-        setproperty!(vdata, name, vval(getproperty(udata, name)))
-    end
-    return vdata
-end
 
 """
     $(TYPEDSIGNATURES)
@@ -50,12 +54,6 @@ Pretty print [`AbstractData`](@ref)
 """
 Base.show(io::IO, ::MIME"text/plain", this::AbstractData) = _showstruct(io, this)
 
-@doc """
-    value(x)
-
-Return the value of a dual number (for debugging in callback functions).
-Re-exported from ForwardDiff.
-""" value
 
 #
 # Dummy callbacks
