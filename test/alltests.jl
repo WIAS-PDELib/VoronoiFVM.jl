@@ -85,8 +85,41 @@ end
 
 @testset "ExplicitImports" begin
     @test ExplicitImports.check_no_implicit_imports(VoronoiFVM) === nothing
+    @test ExplicitImports.check_all_explicit_imports_via_owners(VoronoiFVM) === nothing
+    @test ExplicitImports.check_all_explicit_imports_are_public(
+        VoronoiFVM,
+        ignore = (
+            :AbstractExtendableSparseMatrixCSC,
+            :AbstractSparseMatrixCSC,
+            :solve,
+            :solve!,
+            :value,
+        )
+    ) === nothing
     @test ExplicitImports.check_no_stale_explicit_imports(VoronoiFVM) === nothing
+    @test ExplicitImports.check_all_qualified_accesses_via_owners(VoronoiFVM) === nothing
+    @test ExplicitImports.check_all_qualified_accesses_are_public(
+        VoronoiFVM,
+        ignore = (
+            :myround,
+            :Chunk,
+            :DiffResult,
+            :JLDFile,
+            :JacobianConfig,
+            :SciMLLinearSolveAlgorithm,
+            :getcolptr,
+            :getrowval,
+            :jacobian,
+            :jacobian!,
+            :lu!,
+            :solve,
+            :solve!,
+            :value,
+        )
+    ) === nothing
+    @test ExplicitImports.check_no_self_qualified_accesses(VoronoiFVM) === nothing
 end
+
 
 @testset "Aqua" begin
     Aqua.test_all(VoronoiFVM)

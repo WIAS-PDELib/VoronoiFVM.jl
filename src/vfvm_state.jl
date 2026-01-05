@@ -21,7 +21,7 @@ mutable struct SystemState{
     """
     Related finite volume system
     """
-    system::VoronoiFVM.System
+    system::System
 
     """
     User data 

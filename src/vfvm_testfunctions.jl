@@ -161,7 +161,7 @@ function integrate(
     )
     nsteps = length(U.t) - 1
     integral = [
-        VoronoiFVM.integrate(
+        integrate(
                 sys,
                 T,
                 U.u[istep + 1],
