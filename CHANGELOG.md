@@ -1,10 +1,17 @@
 # Changes
 
-## v3.0 Planned  (pending some improvements in LinearSolve)
-  - Remove VoronoiFVM solver strategies
-  - Stop re-exporting ForwardDiff.valuex
-  - Try to remove type piracies
-  - Remove `params` from edge, node structs (apparently never used)
+## v3.0.0 January 6, 2026
+  - Removed deprecated linear solver strategies
+  - Removed params from geometry items
+  - Changed default initialization of unknowns from undef to zero values
+  - Removed deprecated `Grid` function and `coordinates(grid)`
+  - Enhanced testing with comprehensive Aqua and ExplicitImports checks
+  - Updated to support ExtendableSparse v2
+  - Stop re-exporting ForwardDiff.value
+  - Make `data(system)` public instead of exporting it 
+  - Make `dof` public instead of exporting it
+  - Remove `viewK`, `viewL`, `unknowns(Edge, ...)`
+  - Remove `num_species? from physics
 
 ## v2.15 December 16, 2025
   - update to LinearSolve 3.52. Besides of Sparspak which is able to run with dual numbers,
