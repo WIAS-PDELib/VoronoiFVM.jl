@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>161: Bipolar drift-diffusion with different definition of current · VoronoiFVM.jl</title><meta name="title" content="161: Bipolar drift-diffusion with different definition of current · VoronoiFVM.jl"/><meta property="og:title" content="161: Bipolar drift-diffusion with different definition of current · VoronoiFVM.jl"/><meta property="twitter:title" content="161: Bipolar drift-diffusion with different definition of current · VoronoiFVM.jl"/><meta name="description" content="Documentation for VoronoiFVM.jl."/><meta property="og:description" content="Documentation for VoronoiFVM.jl."/><meta property="twitter:description" content="Documentation for VoronoiFVM.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">VoronoiFVM.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../changes/">Changelog</a></li><li><a class="tocitem" href="../../method/">The Voronoi finite volume method</a></li><li><span class="tocitem">API Documentation</span><ul><li><a class="tocitem" href="../../system/">System</a></li><li><a class="tocitem" href="../../physics/">Physics &amp; special functions</a></li><li><a class="tocitem" href="../../solutions/">Solution objects</a></li><li><a class="tocitem" href="../../solver/">Solvers</a></li><li><a class="tocitem" href="../../post/">Postprocessing</a></li><li><a class="tocitem" href="../../quantities/">Quantities</a></li><li><a class="tocitem" href="../../misc/">Miscellaneous</a></li><li><a class="tocitem" href="../../internal/">Internal API</a></li><li><a class="tocitem" href="../../allindex/">Index</a></li><li><a class="tocitem" href="../../extensions/"><code>ExtendableFEMBase</code> Extension</a></li><li><a class="tocitem" href="../../devel/">Development hints</a></li></ul></li><li><span class="tocitem">Tutorial Notebooks</span><ul><li><a class="tocitem" href="../../notebooks/">About the notebooks</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/ode-diffusion1d/">OrdinaryDiffEq.jl nonlinear diffusion</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/ode-wave1d/">OrdinaryDiffEq.jl 1D wave equation</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/ode-nlstorage1d/">OrdinaryDiffEq.jl changing mass matrix</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/heterogeneous-catalysis/">Coupling with Catalyst.jl</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/outflow/">Outflow boundary conditions</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/flux-reconstruction/">Obtaining vector fields</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/interfaces1d/">Internal interfaces (1D)</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/problemcase/">A case for caution</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/nonlinear-solvers/">Nonlinear solver control</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/bernoulli/">Bernoulli function test</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../runexamples/">About the examples</a></li><li><a class="tocitem" href="../Example101_Laplace1D/">101: 1D Laplace equation</a></li><li><a class="tocitem" href="../Example102_StationaryConvectionDiffusion1D/">102: 1D Stationary convection-diffusion equation</a></li><li><a class="tocitem" href="../Example103_ConvectionDiffusion1D/">103: 1D Transient convection-diffusion equation</a></li><li><a class="tocitem" href="../Example105_NonlinearPoisson1D/">105: 1D Nonlinear Poisson equation</a></li><li><a class="tocitem" href="../Example106_NonlinearDiffusion1D/">106: 1D Nonlinear Diffusion equation</a></li><li><a class="tocitem" href="../Example107_NonlinearStorage1D/">107: 1D Nonlinear Storage</a></li><li><a class="tocitem" href="../Example108_OrdinaryDiffEq1D/">108: 1D Nonlinear Diffusion equation with Rosenbrock method</a></li><li><a class="tocitem" href="../Example110_ReactionDiffusion1D_TwoSpecies/">110: 1D Reaction Diffusion equation with two species</a></li><li><a class="tocitem" href="../Example115_HeterogeneousCatalysis1D/">115: 1D heterogeneous catalysis</a></li><li><a class="tocitem" href="../Example120_ThreeRegions1D/">120: Differing Species Sets in Three Regions, 1D</a></li><li><a class="tocitem" href="../Example121_PoissonPointCharge1D/">121: 1D Poisson Equation with Point Charge</a></li><li><a class="tocitem" href="../Example125_TestFunctions1D/">125: Terminal Flux Calculation via Test Functions, 1D</a></li><li><a class="tocitem" href="../Example150_Impedance1D/">150: Impedance calculation</a></li><li><a class="tocitem" href="../Example151_Impedance1D/">151: Impedance calculation</a></li><li><a class="tocitem" href="../Example160_UnipolarDriftDiffusion1D/">160: Unipolar degenerate drift-diffusion</a></li><li class="is-active"><a class="tocitem" href>161: Bipolar drift-diffusion with different definition of current</a></li><li><a class="tocitem" href="../Example201_Laplace2D/">201: 2D Laplace equation</a></li><li><a class="tocitem" href="../Example203_CoordinateSystems/">203: Various coordinate systems</a></li><li><a class="tocitem" href="../Example204_HagenPoiseuille/">204: 2D Convection in Hagen-Poiseuille flow</a></li><li><a class="tocitem" href="../Example205_StagnationPoint/">205: Convection in axisymmetric stagnation point flow</a></li><li><a class="tocitem" href="../Example206_JouleHeat/">206: 2D Joule heating</a></li><li><a class="tocitem" href="../Example207_NonlinearPoisson2D/">207: 2D Nonlinear Poisson equation</a></li><li><a class="tocitem" href="../Example210_NonlinearPoisson2D_Reaction/">210: 2D Nonlinear Poisson with reaction</a></li><li><a class="tocitem" href="../Example215_NonlinearPoisson2D_BoundaryReaction/">215: 2D Nonlinear Poisson with boundary reaction</a></li><li><a class="tocitem" href="../Example220_NonlinearPoisson2D_BoundarySpecies/">220: 2D Nonlinear Poisson with boundary reaction and boundary species</a></li><li><a class="tocitem" href="../Example221_EquationBlockPrecon/">221: Equation block preconditioning</a></li><li><a class="tocitem" href="../Example225_TestFunctions2D/">225: Terminal flux calculation via test functions, nD</a></li><li><a class="tocitem" href="../Example226_BoundaryIntegral/">226: Terminal flux calculation via test functions, nD, boundary reaction</a></li><li><a class="tocitem" href="../Example230_BoundaryFlux/">103: Boundary flux</a></li><li><a class="tocitem" href="../Example240_FiniteElementVelocities/">240: 2D Convection in quadratic stagnation flow velocity field</a></li><li><a class="tocitem" href="../Example301_Laplace3D/">301: 3D Laplace equation</a></li><li><a class="tocitem" href="../Example311_HeatEquation_BoundaryDiffusion/">311: Heat Equation with boundary diffusion</a></li><li><a class="tocitem" href="../Example405_GenericOperator/">405: Generic operator</a></li><li><a class="tocitem" href="../Example406_WeirdReaction/">406: 1D Weird Surface Reaction</a></li><li><a class="tocitem" href="../Example410_ManySpecies/">410: Many Species</a></li><li><a class="tocitem" href="../Example420_DiscontinuousQuantities/">420: Discontinuous Quantities</a></li><li><a class="tocitem" href="../Example421_AbstractQuantities_TestFunctions/">421: Current Calculation for AbstractQuantities</a></li><li><a class="tocitem" href="../Example422_InterfaceQuantities/">422: Drift-Diffusion with Discontinuous and Interface Potentials</a></li><li><a class="tocitem" href="../Example424_AbstractQuantitiesInit/">424: Initialization of Abstract quantities</a></li><li><a class="tocitem" href="../Example430_ParameterDerivativesStationary/">430: Parameter Derivatives (stationary)</a></li><li><a class="tocitem" href="../Example435_HigherPrecision/">434: Higher precision</a></li><li><a class="tocitem" href="../Example440_ParallelState/">440: Parallel solves</a></li></ul></li><li><span class="tocitem">Development Examples</span><ul><li><a class="tocitem" href="../DevEx002_EdgeReaction/">002: check edge reaction</a></li><li><a class="tocitem" href="../DevEx003_Solvers/">003: New linear solver API</a></li><li><a class="tocitem" href="../DevEx004_EquationBlock3D/">004: 3D Nonlinear Reaction-Diffusion System with Coupled Species</a></li><li><a class="tocitem" href="../DevEx005_Mixture/">005: Mixture</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>161: Bipolar drift-diffusion with different definition of current</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>161: Bipolar drift-diffusion with different definition of current</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/VoronoiFVM.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/VoronoiFVM.jl/blob/master/docs/src/module_examples/Example161_BipolarDriftDiffusionCurrent.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="161:-Bipolar-drift-diffusion-with-different-definition-of-current"><a class="docs-heading-anchor" href="#161:-Bipolar-drift-diffusion-with-different-definition-of-current">161: Bipolar drift-diffusion with different definition of current</a><a id="161:-Bipolar-drift-diffusion-with-different-definition-of-current-1"></a><a class="docs-heading-anchor-permalink" href="#161:-Bipolar-drift-diffusion-with-different-definition-of-current" title="Permalink"></a></h1><p>(<a href="../Example161_BipolarDriftDiffusionCurrent.jl">source code</a>)</p><p>The problem consists of a Poisson equation for the electrostatic potential <span>$\psi$</span>:</p><p class="math-container">\[-\nabla \lambda^2 \nabla \psi = (p-n + C)\]</p><p>and drift-diffusion equations of the transport of electrons and holes:</p><p class="math-container">\[z_n \partial_t n  + \nabla\cdot j_n = z_n R(n, p),\\
+z_p \partial_t p  + \nabla\cdot j_p = z_p R(n, p).\]</p><p>In particular, this example explores different definitions of the carrier currents and also includes the displacement flux.</p><pre><code class="language-julia hljs">module Example161_BipolarDriftDiffusionCurrent
+
+using VoronoiFVM
+using ExtendableGrids
+using GridVisualize
+
+function main(;
+        n = 20, # number of nodes
+        Plotter = nothing,
+        verbose = false,
+        unknown_storage = :sparse,
+        assembly = :edgewise
+    )
+
+    ################################################################################
+    #### grid
+    ################################################################################
+    h1 = 0.5; h2 = 4.0; h3 = 0.5
+    h_total = h1 + h2 + h3</code></pre><p>region numbers</p><pre><code class="language-julia hljs">    region1 = 1
+    region2 = 2
+    region3 = 3
+    regions = [region1, region2, region3]</code></pre><p>boundary region numbers</p><pre><code class="language-julia hljs">    bregion1 = 1
+    bregion2 = 2</code></pre><p>558 nodes; spacing ≈ 0.0126;</p><pre><code class="language-julia hljs">    coord1 = collect(range(0.0; stop = h1, length = n))
+    coord2 = collect(range(h1; stop = h1 + h2, length = 4 * n))
+    coord3 = collect(range(h1 + h2; stop = h_total, length = 2 * n))
+    coord = glue(coord1, coord2)
+    coord = glue(coord, coord3)
+
+    grid = simplexgrid(coord)
+
+    cellmask!(grid, [0.0], [h1], region1)
+    cellmask!(grid, [h1], [h1 + h2], region2)
+    cellmask!(grid, [h1 + h2], [h_total], region3)</code></pre><p>specify outer regions</p><pre><code class="language-julia hljs">    bfacemask!(grid, [0.0], [0.0], bregion1)
+    bfacemask!(grid, [h_total], [h_total], bregion2)
+
+    ################################################################################
+    #########  system
+    ################################################################################
+
+    tPrecond = 5.0
+    tExt = 75.0
+    tRamp = 1.0e-5
+    tEnd = tPrecond + tRamp + tExt
+    Vprecond = 1.0
+    VExt = -3.0
+
+    # Define scan protocol function
+    function scanProtocol(t)
+        if 0.0 &lt;= t &amp;&amp; t &lt;= tPrecond
+            biasVal = Vprecond
+        elseif tPrecond &lt;= t  &amp;&amp; t &lt;= tPrecond + tRamp # ramping down
+            biasVal = Vprecond - (Vprecond - VExt) / tRamp * (t - tPrecond)
+        elseif tPrecond + tRamp &lt;= t  &amp;&amp; t &lt;= tEnd
+            biasVal = VExt
+        else
+            biasVal = 0.0
+        end
+
+        return biasVal
+    end
+
+    Cn = 10        # n-doped
+    Cp = 10        # p-doped
+    Ca = 0.0       # intrinsic
+    En = 1.0       # conduction band edge
+    Ep = 0.0       # valence band edge
+    μn = 1.0e1     # electron mobility
+    μp = 1.0e1     # hole mobility
+    lambda = 1.0e-1 # Debye length
+    DirichletVal = 0.0
+
+    sys = VoronoiFVM.System(grid; unknown_storage, assembly)
+    iphin = 1; zn = -1; enable_species!(sys, iphin, regions)
+    iphip = 2; zp = 1;  enable_species!(sys, iphip, regions)
+    ipsi = 3; enable_species!(sys, ipsi, regions)
+
+    function reaction!(f, u, node, data)
+
+        nn = exp(zn * (u[iphin] - u[ipsi] + En))
+        np = exp(zp * (u[iphip] - u[ipsi] + Ep))
+
+        if node.region == region1
+            C = Cn
+        elseif node.region == region2
+            C = Ca
+        elseif node.region == region3
+            C = -Cp
+        end
+
+        f[ipsi] = -(C + zn * nn + zp * np)
+        ########################
+        r0 = 1.0
+
+        recomb = (r0 + 1 / (nn + np)) * (nn * np * (1.0 - exp(u[iphin] - u[iphip])))
+
+        f[iphin] = zn * recomb
+        f[iphip] = zp * recomb
+
+        return nothing
+    end
+
+    function flux!(f, u, node, data)
+
+        f[ipsi] = - lambda^2 * (u[ipsi, 2] - u[ipsi, 1])
+
+        ########################
+        bp, bm = fbernoulli_pm(-(u[ipsi, 2] - u[ipsi, 1]))
+
+        nn1 = exp(zn * (u[iphin, 1] - u[ipsi, 1] + En))
+        np1 = exp(zp * (u[iphip, 1] - u[ipsi, 1] + Ep))
+
+        nn2 = exp(zn * (u[iphin, 2] - u[ipsi, 2] + En))
+        np2 = exp(zp * (u[iphip, 2] - u[ipsi, 2] + Ep))
+
+        f[iphin] = - zn * μn * (bm * nn2 - bp * nn1)
+        f[iphip] = - zp * μp * (bp * np2 - bm * np1)
+        return nothing
+    end
+
+    function breaction!(f, u, bnode, data)
+
+        boundary_dirichlet!(f, u, bnode, iphin, bregion1, 0.0)
+        boundary_dirichlet!(f, u, bnode, iphip, bregion1, 0.0)
+        boundary_dirichlet!(f, u, bnode, ipsi, bregion1, 0.5 * (En + Ep) + asinh(Cn / (2 * sqrt(exp(- (En - Ep))))))
+
+        boundary_dirichlet!(f, u, bnode, iphin, bregion2, DirichletVal + scanProtocol(bnode.time))
+        boundary_dirichlet!(f, u, bnode, iphip, bregion2, DirichletVal + scanProtocol(bnode.time))
+        boundary_dirichlet!(f, u, bnode, ipsi, bregion2, 0.5 * (En + Ep) + asinh(-Cp / (2 * sqrt(exp(- (En - Ep))))) + DirichletVal + scanProtocol(bnode.time))
+        return nothing
+    end
+
+    function storage!(f, u, node, data)
+        nn = exp(zn * (u[iphin] - u[ipsi] + En))
+        np = exp(zp * (u[iphip] - u[ipsi] + Ep))
+
+        f[iphin] = zn * nn
+        f[iphip] = zp * np
+        return nothing
+    end
+
+    physics!(
+        sys,
+        VoronoiFVM.Physics(;
+            flux = flux!,
+            reaction = reaction!,
+            breaction = breaction!,
+            storage = storage!
+        )
+    )
+
+    ################################################################################
+    #########  time loop
+    ################################################################################
+
+    control = SolverControl()
+    control.Δu_opt = Inf
+    control.max_round = 3
+    control.damp_initial = 0.9
+    control.damp_growth = 1.61 # &gt;= 1
+    control.verbose = verbose
+    control.abstol = 1.0e-5
+    control.reltol = 1.0e-5
+    control.tol_round = 1.0e-5
+
+    # Create a solution array
+    inival2 = unknowns(sys)
+
+    inival2[iphin, :] = 0.0 .+ DirichletVal ./ h_total .* coord
+    inival2[iphip, :] = 0.0 .+ DirichletVal ./ h_total .* coord
+    inival2[ipsi, :] = asinh(Cn / 2) .+ ((asinh(-Cp / 2) + DirichletVal) - asinh(Cn / 2)) ./ h_total .* coord
+
+    solPrecond = solve(sys, inival = inival2, times = (0.0, tPrecond), control = control)
+    control.Δt_min = 1.0e-8
+    control.Δt = 1.0e-8
+    solRamp = solve(sys, inival = solPrecond.u[end], times = (tPrecond, tPrecond + tRamp), control = control)
+    #####
+    control.Δt_min = 1.0e-10
+    control.Δt = 1.0e-10
+    control.Δt_grow = 1.7
+    solExt = solve(sys, inival = solRamp.u[end], times = (tPrecond + tRamp, tEnd), control = control)
+
+    ################################################################################
+    # Current calculation
+    ################################################################################</code></pre><p>for saving Current data</p><pre><code class="language-julia hljs">    I1 = zeros(0)
+    In1 = zeros(0); Ip1 = zeros(0)
+
+    I2 = zeros(0)
+    In2 = zeros(0); Ip2 = zeros(0); Iψ2 = zeros(0)
+
+    tvalues = solExt.t
+    number_tsteps = length(tvalues)
+
+    factory = TestFunctionFactory(sys)
+    tf = testfunction(factory, [bregion1], [bregion2])
+
+    for istep in 2:number_tsteps
+
+        Δt = tvalues[istep] - tvalues[istep - 1] # Time step size
+        inival = solExt.u[istep - 1]
+        solution = solExt.u[istep]
+
+        # Variant 1: Define current as sum of charge carrier currents without electric displacement
+        II = integrate(sys, tf, solution, inival, Δt)
+
+        push!(In1, II[iphin]); push!(Ip1, II[iphip])
+        push!(I1, In1[istep - 1] + Ip1[istep - 1])
+
+        # Variant 2: Define all current contributions as the edge integrals and add the dielectric displacement
+        IIEdge = VoronoiFVM.integrate_∇TxFlux(sys, tf, solution)
+        IIEdgeOld = VoronoiFVM.integrate_∇TxFlux(sys, tf, inival)
+
+        push!(In2, IIEdge[iphin])
+        push!(Ip2, IIEdge[iphip])
+        push!(Iψ2, (IIEdge[ipsi] - IIEdgeOld[ipsi]) / Δt)
+        push!(I2, In2[istep - 1] + Ip2[istep - 1] + Iψ2[istep - 1])
+
+    end
+
+    ################################################################################
+    #########  Plotting
+    ################################################################################
+
+    tvalues_shift = tvalues .- (tPrecond + tRamp)
+
+    if !isnothing(Plotter)
+
+        vis1 = GridVisualizer(; layout = (3, 1), xlabel = &quot;space&quot;, ylabel = &quot;potential&quot;, legend = :lt, Plotter = Plotter, fignumber = 1)
+
+        sol1 = solExt.u[1]
+        sol2 = solExt.u[end]
+
+        scalarplot!(vis1[1, 1], coord, sol1[iphin, :]; color = :darkgreen, label = &quot;phin (start)&quot;, linewidth = 5, clear = false)
+        scalarplot!(vis1[1, 1], coord, sol2[iphin, :]; color = :lightgreen, label = &quot;phin (end)&quot;, linewidth = 5, clear = false)
+        ####
+        scalarplot!(vis1[2, 1], coord, sol1[iphip, :]; color = :darkred, label = &quot;phip (start)&quot;, linewidth = 5, clear = false)
+        scalarplot!(vis1[2, 1], coord, sol2[iphip, :]; color = :red, label = &quot;phip (end)&quot;, linewidth = 5, clear = false)
+        ####
+        scalarplot!(vis1[3, 1], coord, sol1[ipsi, :]; color = :darkblue, label = &quot;psi (start)&quot;, linewidth = 5, clear = false)
+        scalarplot!(vis1[3, 1], coord, sol2[ipsi, :]; color = :lightblue, label = &quot;psi (end)&quot;, linewidth = 5, clear = false)
+
+        ###################
+        vis2 = GridVisualizer(; layout = (3, 1), xlabel = &quot;time&quot;, ylabel = &quot;current&quot;, legend = :lt, xscale = :log, yscale = :log, Plotter = Plotter, fignumber = 2)
+
+        scalarplot!(vis2[1, 1], tvalues_shift[2:end], abs.(In1); color = :darkgreen, label = &quot;Jn&quot;, linewidth = 5, clear = false)
+        scalarplot!(vis2[1, 1], tvalues_shift[2:end], abs.(Ip1); color = :darkred, label = &quot;Jp&quot;, clear = false)
+        scalarplot!(vis2[1, 1], tvalues_shift[2:end], abs.(I1); color = :black, linestyle = :dash, label = &quot;Jtot&quot;, clear = false)
+        ####
+        scalarplot!(vis2[2, 1], tvalues_shift[2:end], abs.(In2); color = :darkgreen, label = &quot;Jn&quot;, linewidth = 5, clear = false)
+        scalarplot!(vis2[2, 1], tvalues_shift[2:end], abs.(Ip2); color = :darkred, label = &quot;Jp&quot;, clear = false)
+        scalarplot!(vis2[2, 1], tvalues_shift[2:end], abs.(Iψ2); color = :darkblue, label = &quot;Jdisp&quot;, clear = false)
+        scalarplot!(vis2[2, 1], tvalues_shift[2:end], abs.(I2); color = :black, linestyle = :dash, label = &quot;Jtot&quot;, clear = false)
+        #####
+        scalarplot!(vis2[3, 1], tvalues_shift[2:end], abs.(I1); color = :red, linestyle = :solid, linewidth = 5, label = &quot;Jtot (#1)&quot;, clear = false)
+        scalarplot!(vis2[3, 1], tvalues_shift[2:end], abs.(I2); color = :green, linestyle = :dash, label = &quot;Jtot (#2)&quot;, clear = false)
+
+    end
+
+    return sum(I2)
+end # main
+
+using Test
+function runtests()
+    testval = -965.3101329657035
+    for assembly in [:edgewise, :cellwise]
+        for unknown_storage in [:dense, :sparse]
+            @test main(; assembly, unknown_storage) ≈ testval
+        end
+    end
+    return nothing
+end
+
+end # module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example160_UnipolarDriftDiffusion1D/">« 160: Unipolar degenerate drift-diffusion</a><a class="docs-footer-nextpage" href="../Example201_Laplace2D/">201: 2D Laplace equation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Tuesday 6 January 2026 20:26">Tuesday 6 January 2026</span>. Using Julia version 1.12.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
