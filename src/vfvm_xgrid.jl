@@ -1,33 +1,4 @@
 """
-````
-Grid=ExtendableGrids.simplexgrid
-````
-Re-Export of ExtendableGrids.simplexgrid
-!!! compat 
-    Deprecated as of v1.20
-"""
-const Grid = ExtendableGrids.simplexgrid
-
-@deprecate Grid ExtendableGrids.simplexgrid
-
-cellregions(grid::ExtendableGrid) = grid[CellRegions]
-bfaceregions(grid::ExtendableGrid) = grid[BFaceRegions]
-cellnodes(grid::ExtendableGrid) = grid[CellNodes]
-bfacenodes(grid::ExtendableGrid) = grid[BFaceNodes]
-
-"""
-    coordinates(grid::ExtendableGrid)
-
-Return coordinate array of grid. 
-
-!!! compat 
-    Deprecated as of v1.20
-"""
-coordinates(grid::ExtendableGrid) = grid[Coordinates]
-
-@deprecate coordinates(grid) grid[Coordinates]
-
-"""
    $(SIGNATURES)
 
 Set coordinate system in grid to cartesian.

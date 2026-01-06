@@ -161,7 +161,7 @@ function integrate(
     )
     nsteps = length(U.t) - 1
     integral = [
-        VoronoiFVM.integrate(
+        integrate(
                 sys,
                 T,
                 U.u[istep + 1],
@@ -229,7 +229,7 @@ function integrate_TxFunc(
     @assert nparams == length(params)
 
     physics = system.physics
-    node = Node(system, 0.0, 1.0, params)
+    node = Node(system, 0.0, 1.0)
 
     UK = Array{Tv, 1}(undef, nspecies + nparams)
     YK = Array{Tv, 1}(undef, nspecies)
@@ -272,7 +272,7 @@ function integrate_TxSrc(
     @assert nparams == length(params)
 
     physics = system.physics
-    node = Node(system, 0.0, 1.0, params)
+    node = Node(system, 0.0, 1.0)
 
     YK = Array{Tv, 1}(undef, nspecies)
 
@@ -310,7 +310,7 @@ function integrate_∇TxFlux(
     nparams = system.num_parameters
     @assert nparams == length(params)
 
-    edge = Edge(system, 0.0, 1.0, params)
+    edge = Edge(system, 0.0, 1.0)
     UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
     YK = Array{Tv, 1}(undef, nspecies)
 
@@ -360,7 +360,7 @@ function integrate_TxEdgefunc(
     nparams = system.num_parameters
     @assert nparams == length(params)
 
-    edge = Edge(system, 0.0, 1.0, params)
+    edge = Edge(system, 0.0, 1.0)
     UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
     YK = Array{Tv, 1}(undef, nspecies)
 

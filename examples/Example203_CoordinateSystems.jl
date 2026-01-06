@@ -46,7 +46,7 @@ function maindisk(; nref = 0, r2 = 5.0, Plotter = nothing, assembly = :edgewise)
     sys = VoronoiFVM.System(grid; source, flux, species = [1], assembly = assembly)
     boundary_dirichlet!(sys; species = 1, region = 2, value = 0.0)
     sol = solve(sys)
-    exact = symlapdisk.(coordinates(grid)[1, :], r2)
+    exact = symlapdisk.(grid[Coordinates][1, :], r2)
     plot(grid, sol, exact, Plotter)
     return norm(sol[1, :] - exact, Inf) < 1.0e-14
 end
@@ -76,7 +76,7 @@ function maincylinder(;
     sys = VoronoiFVM.System(grid; source, flux, species = [1], assembly = assembly)
     boundary_dirichlet!(sys; species = 1, region = 2, value = 0.0)
     sol = solve(sys)
-    exact = symlapdisk.(coordinates(grid)[1, :], r2)
+    exact = symlapdisk.(grid[Coordinates][1, :], r2)
     plot(grid, sol, exact, Plotter)
     return norm(sol[1, :] - exact, Inf) < 1.0e-14
 end
@@ -108,7 +108,7 @@ function maincylinder_unstruct(;
     sys = VoronoiFVM.System(grid; source, flux, species = [1], assembly = assembly)
     boundary_dirichlet!(sys; species = 1, region = 2, value = 0.0)
     sol = solve(sys)
-    exact = symlapdisk.(coordinates(grid)[1, :], r2)
+    exact = symlapdisk.(grid[Coordinates][1, :], r2)
     plot(grid, sol, exact, Plotter)
     return norm(sol[1, :] - exact, Inf) < 0.0012
 end
@@ -137,7 +137,7 @@ function mainring(; nref = 0, r1 = 1.0, r2 = 5.0, Plotter = nothing, assembly = 
     boundary_dirichlet!(sys; species = 1, region = 1, value = 1.0)
     boundary_dirichlet!(sys; species = 1, region = 2, value = 0.0)
     sol = solve(sys)
-    exact = symlapring.(coordinates(grid)[1, :], r1, r2)
+    exact = symlapring.(grid[Coordinates][1, :], r1, r2)
     plot(grid, sol, exact, Plotter)
     return norm(sol[1, :] - exact, Inf) / h^2 < 0.01
 end
@@ -167,7 +167,7 @@ function maincylindershell(;
     boundary_dirichlet!(sys; species = 1, region = 4, value = 1.0)
     boundary_dirichlet!(sys; species = 1, region = 2, value = 0.0)
     sol = solve(sys)
-    exact = symlapring.(coordinates(grid)[1, :], r1, r2)
+    exact = symlapring.(grid[Coordinates][1, :], r1, r2)
     plot(grid, sol, exact, Plotter)
     return norm(sol[1, :] - exact, Inf) / h^2 < 0.01
 end
@@ -196,7 +196,7 @@ function mainsphere(; nref = 0, r2 = 5.0, Plotter = nothing, assembly = :edgewis
     sys = VoronoiFVM.System(grid; source, flux, species = [1], assembly = assembly)
     boundary_dirichlet!(sys; species = 1, region = 2, value = 0.0)
     sol = solve(sys)
-    exact = symlapsphere.(coordinates(grid)[1, :], r2)
+    exact = symlapsphere.(grid[Coordinates][1, :], r2)
     plot(grid, sol, exact, Plotter)
     return norm(sol[1, :] - exact, Inf) < 1.0e-14
 end
@@ -231,7 +231,7 @@ function mainsphereshell(;
     boundary_dirichlet!(sys; species = 1, region = 1, value = 1.0)
     boundary_dirichlet!(sys; species = 1, region = 2, value = 0.0)
     sol = solve(sys)
-    exact = symlapsphereshell.(coordinates(grid)[1, :], r1, r2)
+    exact = symlapsphereshell.(grid[Coordinates][1, :], r1, r2)
     plot(grid, sol, exact, Plotter)
     return norm(sol[1, :] - exact, Inf) / h^2 < 0.04
 end

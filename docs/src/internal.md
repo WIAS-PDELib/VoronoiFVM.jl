@@ -103,7 +103,6 @@ VoronoiFVM.NodeRHS
 ## Global assembly & helpers
 
 ```@docs 
-VoronoiFVM.factorizationstrategy
 VoronoiFVM.solve_step!
 VoronoiFVM.solve_transient!
 VoronoiFVM.eval_and_assemble

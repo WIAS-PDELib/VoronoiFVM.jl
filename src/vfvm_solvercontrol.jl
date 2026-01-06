@@ -1,15 +1,3 @@
-# Deprecated. TODO: remove with v3.0
-const FactorizationStrategy = Union{
-    Nothing, Function, Type, ExtendableSparse.AbstractFactorization,
-    LinearSolve.AbstractFactorization, LinearSolve.SciMLLinearSolveAlgorithm,
-}
-
-## Deprecated. TODO: remove with v3.0
-struct Identity end
-Identity(A) = Identity()
-LinearAlgebra.ldiv!(u, I::Identity, v) = u .= v
-LinearAlgebra.ldiv!(I::Identity, u) = nothing
-
 """
     SolverControl
     SolverControl(;kwargs...)
@@ -104,9 +92,8 @@ Base.@kwdef mutable struct SolverControl
     - `UMFPACKFactorization()` for sparse matrices with Float64 
     - `SparspakFactorization()` for sparse matrices with  general number types.
     -  Defaults from LinearSolve.jl for tridiagonal and banded matrices 
-    Users should experiment with what works best for their problem.
 
-    For an overeview on possible alternatives, see [`VoronoiFVM.LinearSolverStrategy`](@ref).
+    Any sparse direct and iterative solver available via [LinearSolve.jl](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/#Sparse-Matrices) can be chosen.
 
     """
     method_linear::Union{Nothing, LinearSolve.SciMLLinearSolveAlgorithm} = nothing
@@ -125,19 +112,6 @@ Base.@kwdef mutable struct SolverControl
     Maximum number of iterations of linear solver
     """
     maxiters_linear::Int = 100
-
-    """
-    Constructor for preconditioner for linear systems.
-    This should work as a function `precon_linear(A)` which
-    takes an AbstractSparseMatrixCSC (e.g. an ExtendableSparseMatrix)
-    and returns a preconditioner object in the sense of `LinearSolve.jl`, i.e. which
-    has an `ldiv!(u,A,v)` method. Useful examples:
-    - `ExtendableSparse.ILUZero`
-    - `ExtendableSparse.Jacobi`
-
-    For easy access to this functionality, see see also [`VoronoiFVM.LinearSolverStrategy`](@ref).
-    """
-    precon_linear::FactorizationStrategy = A -> Identity()
 
     """
     Update preconditioner in each Newton step ?

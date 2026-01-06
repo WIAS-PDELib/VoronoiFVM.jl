@@ -2,13 +2,13 @@ module VoronoiFVMExtendableFEMBaseExt
 
 using StaticArrays: @MVector
 using VoronoiFVM
-using ExtendableFEMBase: CellFinder, evaluate_bary!,
+using ExtendableFEMBase: evaluate_bary!,
     FEVectorBlock, initialize!, Identity,
     PointEvaluator, SegmentIntegrator
 
 using ExtendableGrids: ExtendableGrid, Cartesian2D, CoordinateSystem, Cylindrical2D,
     Edge1D, eval_trafo!, gFindLocal!,
-    mapderiv!, postprocess_xreftest!, update_trafo!
+    mapderiv!, postprocess_xreftest!, update_trafo!, CellFinder
 
 using LinearAlgebra: dot
 

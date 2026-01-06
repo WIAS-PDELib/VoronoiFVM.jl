@@ -8,7 +8,6 @@ VoronoiFVM.Physics(;kwargs...)
 Base.show(io::IO,physics::VoronoiFVM.AbstractPhysics)
 VoronoiFVM.AbstractData
 Base.show(::IO, ::MIME{Symbol("text/plain")}, ::VoronoiFVM.AbstractData)
-Base.copy!(::VoronoiFVM.AbstractData{Tv}, ::VoronoiFVM.AbstractData{Tu}) where {Tv,Tu}
 ```
 ## Handling boundary conditions
 Boundary conditions are handled in the  `bcondition` callback passed to the system constructor.

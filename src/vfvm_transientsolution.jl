@@ -150,6 +150,11 @@ function Base.append!(s::AbstractTransientSolution{T, N, VectorOfDiskArrays{T}, 
     return push!(s.t, t), push!(s.u, sol)
 end
 
+function Base.append!(s::AbstractTransientSolution{T, N, VectorOfDiskArrays{T}, B}, t::Real, sol::AbstractSolutionArray) where {T, N, B}
+    return append!(s, t, sol.u)
+end
+
+
 """
 ````
 TransientSolution(t0,inival;

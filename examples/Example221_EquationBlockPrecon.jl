@@ -8,7 +8,7 @@
 module Example221_EquationBlockPrecon
 
 using VoronoiFVM, GridVisualize, ExtendableGrids, Printf
-using AMGCLWrap, ExtendableSparse
+using LinearSolve, AMGCLWrap, ExtendableSparse
 using Test
 
 function main(;
@@ -47,8 +47,8 @@ function main(;
         return gridplot(grid; Plotter = Plotter)
     end
 
-    eps = [1, 1, 1]
-    k = [1, 1, 1]
+    eps::Vector{Float64} = [1, 1, 1]
+    k::Vector{Float64} = [1, 1, 1]
 
     function reaction(f, u, node, data)
         if node.region == 1
@@ -70,7 +70,7 @@ function main(;
         return nothing
     end
 
-    flux = function (f, u, edge, data)
+    function flux(f, u, edge, data)
         if edge.region == 1
             f[1] = eps[1] * (u[1, 1] - u[1, 2])
             f[2] = eps[2] * (u[2, 1] - u[2, 2])
@@ -83,7 +83,7 @@ function main(;
         return nothing
     end
 
-    storage = function (f, u, node, data)
+    function storage(f, u, node, data)
         if node.region == 1
             f[1] = u[1]
             f[2] = u[2]
@@ -107,9 +107,8 @@ function main(;
 
     boundary_dirichlet!(sys, 3, 2, 0.0)
 
-    control = SolverControl(strategy, sys)
+    control = SolverControl(method_linear = strategy)
     U = solve(sys; control)
-    @info num_dof(U)
 
     p = GridVisualizer(;
         Plotter = Plotter, layout = (3, 1),
@@ -129,7 +128,7 @@ function main(;
 end
 
 function runtests()
-    strategy = BICGstabIteration(AMGCL_AMGPreconditioner())
+    strategy = KrylovJL_BICGSTAB(precs = BlockPreconBuilder(precs = AMGPreconBuilder()))
     @test sum(main(; dim = 1, strategy, unknown_storage = :dense)[2, :]) ≈ 0.014101758266210086
     @test sum(main(; dim = 1, strategy, unknown_storage = :sparse)[2, :]) ≈ 0.014101758266210086
     @test sum(main(; dim = 2, strategy, unknown_storage = :dense)[2, :]) ≈ 0.12691582439590407
