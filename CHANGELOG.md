@@ -11,7 +11,7 @@
   - Make `data(system)` public instead of exporting it 
   - Make `dof` public instead of exporting it
   - Remove `viewK`, `viewL`, `unknowns(Edge, ...)`
-  - Remove `num_species? from physics
+  - Remove `num_species` from physics
 
 ## v2.15 December 16, 2025
   - update to LinearSolve 3.52. Besides of Sparspak which is able to run with dual numbers,
