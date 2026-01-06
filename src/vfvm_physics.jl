@@ -17,13 +17,6 @@ and get a  prettyprinting show method.
 """
 abstract type AbstractData{Tv} end
 
-"""
-    myround(x; kwargs...)
-
-Rounding for use in [`showstruct`](@ref).
-"""
-function myround end
-
 myround(x; kwargs...) = round(x; kwargs...)
 myround(x::Vector; kwargs...) = myround.(x; kwargs...)
 myround(s::Symbol; kwargs...) = ":$(s)"
@@ -32,11 +25,6 @@ myround(b::Bool; kwargs...) = b
 myround(::Nothing; kwargs...) = "nothing"
 myround(f::Function; kwargs...) = string(f)
 
-"""
-    showstruct(io::IO, this)
-
-Print struct with field names and field values.
-"""
 function showstruct(io::IO, this::AbstractData)
     println(io, "$(string(nameof(typeof(this))))(")
     for name in fieldnames(typeof(this))
