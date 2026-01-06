@@ -13,7 +13,7 @@ using ExtendableGrids
 using GridVisualize
 using LinearSolve
 using ExtendableSparse
-using ExtendableSparse: ILUZeroPreconBuilder, JacobiPreconBuilder, SmoothedAggregationPreconBuilder
+using ExtendableSparse: ILUZeroPreconBuilder, JacobiPreconBuilder
 using SparseArrays
 using AMGCLWrap
 using AlgebraicMultigrid
