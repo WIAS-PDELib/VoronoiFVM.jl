@@ -94,6 +94,7 @@ end
             :solve,
             :solve!,
             :value,
+            :postprocess_xreftest!,
         )
     ) === nothing
     @test ExplicitImports.check_no_stale_explicit_imports(VoronoiFVM) === nothing
