@@ -86,38 +86,42 @@ end
 @testset "ExplicitImports" begin
     @test ExplicitImports.check_no_implicit_imports(VoronoiFVM) === nothing
     @test ExplicitImports.check_all_explicit_imports_via_owners(VoronoiFVM) === nothing
-    @test ExplicitImports.check_all_explicit_imports_are_public(
-        VoronoiFVM,
-        ignore = (
-            :AbstractExtendableSparseMatrixCSC,
-            :AbstractSparseMatrixCSC,
-            :solve,
-            :solve!,
-            :value,
-            :postprocess_xreftest!,
-        )
-    ) === nothing
+    @static if VERSION >= v"1.11.0"
+        @test ExplicitImports.check_all_explicit_imports_are_public(
+            VoronoiFVM,
+            ignore = (
+                :AbstractExtendableSparseMatrixCSC,
+                :AbstractSparseMatrixCSC,
+                :solve,
+                :solve!,
+                :value,
+                :postprocess_xreftest!,
+            )
+        ) === nothing
+    end
     @test ExplicitImports.check_no_stale_explicit_imports(VoronoiFVM) === nothing
     @test ExplicitImports.check_all_qualified_accesses_via_owners(VoronoiFVM) === nothing
-    @test ExplicitImports.check_all_qualified_accesses_are_public(
-        VoronoiFVM,
-        ignore = (
-            :myround,
-            :Chunk,
-            :DiffResult,
-            :JLDFile,
-            :JacobianConfig,
-            :SciMLLinearSolveAlgorithm,
-            :getcolptr,
-            :getrowval,
-            :jacobian,
-            :jacobian!,
-            :lu!,
-            :solve,
-            :solve!,
-            :value,
-        )
-    ) === nothing
+    @static if VERSION >= v"1.11.0"
+        @test ExplicitImports.check_all_qualified_accesses_are_public(
+            VoronoiFVM,
+            ignore = (
+                :myround,
+                :Chunk,
+                :DiffResult,
+                :JLDFile,
+                :JacobianConfig,
+                :SciMLLinearSolveAlgorithm,
+                :getcolptr,
+                :getrowval,
+                :jacobian,
+                :jacobian!,
+                :lu!,
+                :solve,
+                :solve!,
+                :value,
+            )
+        ) === nothing
+    end
     @test ExplicitImports.check_no_self_qualified_accesses(VoronoiFVM) === nothing
 end
 
