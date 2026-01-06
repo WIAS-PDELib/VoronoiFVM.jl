@@ -52,7 +52,7 @@ end
 
 Pretty print [`AbstractData`](@ref)
 """
-Base.show(io::IO, ::MIME"text/plain", this::AbstractData) = _showstruct(io, this)
+Base.show(io::IO, ::MIME"text/plain", this::AbstractData) = showstruct(io, this)
 
 
 #

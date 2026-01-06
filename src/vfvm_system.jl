@@ -1069,18 +1069,20 @@ isunknownsof(u::DenseSolutionArray, sys::DenseSystem) = size(u) == size(sys.node
 isunknownsof(u::SparseSolutionArray, sys::SparseSystem) = size(u) == size(sys.node_dof)
 
 """
-$(SIGNATURES)
+    unknowns(system; inival=0, inifunc = nothing)
 
 Create a solution vector for system.
-If inival is not specified, the entries of the returned vector are undefined.
+`inival` can be  specified as `undef`. `inifunc` should have the same signature
+as a source term.
 """
 unknowns(system::AbstractSystem{Tv}; inival = zero(Tv), inifunc = nothing) where {Tv} = unknowns(Tv, system; inival, inifunc)
 
 """
-$(SIGNATURES)
+    unknowns(Tu, system; inival=0, inifunc = nothing)
 
 Create a solution vector for system with elements of type `Tu`.
-If inival is not specified, the entries of the returned vector are undefined.
+`inival` can be  specified as `undef`. `inifunc` should have the same signature
+as a source term.
 """
 function unknowns(Tu::Type, system::AbstractSystem; inival = zero(Tu), inifunc = nothing) end
 

@@ -239,7 +239,7 @@ md"""
 krydel_sol = solve(
     sys0;
     inival = 0.1,
-    method_linear = KrylovJL_BICGSTAB(; precs = precs = LinearSolvePreconBuilder(SparspakFactorization())),
+    method_linear = KrylovJL_BICGSTAB(; precs = LinearSolvePreconBuilder(SparspakFactorization())),
     verbose = "nlad",
 )
 

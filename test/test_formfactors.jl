@@ -4,7 +4,7 @@ using Random
 using ExtendableGrids
 using VoronoiFVM: cellfactors!, bfacefactors!
 
-randpoint = rand(-10:0.01:10, 2)
+
 function ttri(; ntest = 100)
     Random.seed!(12345)
     cellnodes = [1 2 3;]'

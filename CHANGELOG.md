@@ -1,6 +1,6 @@
 # Changes
 
-## v3.0 Planned
+## v3.0.0 January 6, 2026
   - Fix type piracies, ambiguities, pass all Aqua tests
   - Zero initialize unknowns by default
   - Remove VoronoiFVM solver strategies

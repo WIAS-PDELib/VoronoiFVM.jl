@@ -83,7 +83,7 @@ function check_allocs!(v::Bool)
     return _check_allocs
 end
 
-@public check_allocs
+@public check_allocs, check_allocs!
 
 """
    $(TYPEDEF)
