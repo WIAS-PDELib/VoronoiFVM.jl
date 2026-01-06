@@ -510,11 +510,11 @@ Mutates the state and returns the solution.
 For the keyword argumentsm see [`VoronoiFVM.solve`](@ref).
 """
 function CommonSolve.solve!(
-        state::VoronoiFVM.SystemState;
+        state::SystemState;
         inival = 0,
         data = nothing,
         params = zeros(0),
-        control = VoronoiFVM.SolverControl(),
+        control = SolverControl(),
         time = 0.0,
         tstep = Inf,
         kwargs...,
@@ -524,7 +524,7 @@ function CommonSolve.solve!(
         inival = unknowns(state.system; inival = inival)
     elseif !isdensesystem(state.system) && isa(inival, SparseMatrixCSC)
         inival = SparseSolutionArray(inival)
-    elseif !VoronoiFVM.isunknownsof(inival, state.system)
+    elseif !isunknownsof(inival, state.system)
         @error "wrong type of inival: $(typeof(inival))"
     end
 
@@ -622,7 +622,7 @@ Keyword arguments:
   - `tstep`: time step
   Returns a [`DenseSolutionArray`](@ref) or [`SparseSolutionArray`](@ref)
 """
-function CommonSolve.solve(sys::VoronoiFVM.AbstractSystem; data = sys.physics.data, kwargs...)
+function CommonSolve.solve(sys::AbstractSystem; data = sys.physics.data, kwargs...)
     state = SystemState(sys; data)
     return solve!(state; kwargs...)
 end

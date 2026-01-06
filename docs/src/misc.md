@@ -1,14 +1,5 @@
 # Miscellaneous
 
-
-## Useful helpers
-```@docs
-value
-```
-
-## Form factor calculatione
-
-
 ## Additional grid methods
 ```@autodocs
 Modules = [VoronoiFVM]

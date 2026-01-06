@@ -128,7 +128,7 @@ For more documentation, see [`SciMLBase.ODEFunction(state::VoronoiFVM.SystemStat
 
 Defined in VoronoiFVM.jl.
 """
-function SciMLBase.ODEFunction(state::VoronoiFVM.SystemState; jacval = unknowns(sys, 0), tjac = 0)
+function SciMLBase.ODEFunction(state::SystemState; jacval = unknowns(sys, 0), tjac = 0)
     return SciMLBase.ODEFunction(
         eval_rhs!;
         jac = eval_jacobian!,
@@ -154,7 +154,7 @@ the sparsity pattern which is passed to the solver.
 
 Defined in VoronoiFVM.jl.
 """
-SciMLBase.ODEFunction(sys::VoronoiFVM.System; kwargs...) = SciMLBase.ODEFunction(SystemState(sys); kwargs...)
+SciMLBase.ODEFunction(sys::System; kwargs...) = SciMLBase.ODEFunction(SystemState(sys); kwargs...)
 
 """
     ODEProblem(state,inival,tspan,callback=SciMLBase.CallbackSet())
@@ -166,7 +166,7 @@ for more documentation.
 Defined in VoronoiFVM.jl.
 """
 function SciMLBase.ODEProblem(
-        state::VoronoiFVM.SystemState, inival, tspan;
+        state::SystemState, inival, tspan;
         params = state.params, callback = SciMLBase.CallbackSet()
     )
     state.params .= params
@@ -193,7 +193,7 @@ by [solve()](https://diffeq.sciml.ai/stable/basics/common_solver_opts/).
 Defined in VoronoiFVM.jl.
 """
 function SciMLBase.ODEProblem(
-        sys::VoronoiFVM.System, inival, tspan;
+        sys::System, inival, tspan;
         params = zeros(sys.num_parameters), kwargs...
     )
     return SciMLBase.ODEProblem(SystemState(sys), inival, tspan; params, kwargs...)
@@ -210,7 +210,7 @@ If `times` is specified, the (possibly higher order) interpolated solution at th
 
 Defined in VoronoiFVM.jl.
 """
-function Base.reshape(sol::AbstractDiffEqArray, sys::VoronoiFVM.AbstractSystem; times = nothing, state = nothing)
+function Base.reshape(sol::AbstractDiffEqArray, sys::AbstractSystem; times = nothing, state = nothing)
     if isnothing(times)
         tsol = TransientSolution([reshape(sol.u[i], sys) for i in 1:length(sol.u)], sol.t)
     else

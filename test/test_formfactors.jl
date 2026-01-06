@@ -1,10 +1,12 @@
 module test_formfactors
 using Test
+using Random
 using ExtendableGrids
 using VoronoiFVM: cellfactors!, bfacefactors!
 
-randpoint = rand(-10:0.01:10, 2)
+
 function ttri(; ntest = 100)
+    Random.seed!(12345)
     cellnodes = [1 2 3;]'
     icell = 1
     epar2d = zeros(3)

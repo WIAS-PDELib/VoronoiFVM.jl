@@ -85,20 +85,49 @@ end
 
 @testset "ExplicitImports" begin
     @test ExplicitImports.check_no_implicit_imports(VoronoiFVM) === nothing
+    @test ExplicitImports.check_all_explicit_imports_via_owners(VoronoiFVM) === nothing
+    @static if VERSION >= v"1.11.0"
+        @test ExplicitImports.check_all_explicit_imports_are_public(
+            VoronoiFVM,
+            ignore = (
+                :AbstractExtendableSparseMatrixCSC,
+                :AbstractSparseMatrixCSC,
+                :solve,
+                :solve!,
+                :value,
+                :postprocess_xreftest!,
+            )
+        ) === nothing
+    end
     @test ExplicitImports.check_no_stale_explicit_imports(VoronoiFVM) === nothing
+    @test ExplicitImports.check_all_qualified_accesses_via_owners(VoronoiFVM) === nothing
+    @static if VERSION >= v"1.11.0"
+        @test ExplicitImports.check_all_qualified_accesses_are_public(
+            VoronoiFVM,
+            ignore = (
+                :myround,
+                :Chunk,
+                :DiffResult,
+                :JLDFile,
+                :JacobianConfig,
+                :SciMLLinearSolveAlgorithm,
+                :getcolptr,
+                :getrowval,
+                :jacobian,
+                :jacobian!,
+                :lu!,
+                :solve,
+                :solve!,
+                :value,
+            )
+        ) === nothing
+    end
+    @test ExplicitImports.check_no_self_qualified_accesses(VoronoiFVM) === nothing
 end
 
+
 @testset "Aqua" begin
-    Aqua.test_ambiguities(VoronoiFVM, broken = true)
-    Aqua.test_unbound_args(VoronoiFVM)
-    Aqua.test_undefined_exports(VoronoiFVM)
-    Aqua.test_project_extras(VoronoiFVM)
-    Aqua.test_stale_deps(VoronoiFVM)
-    Aqua.test_deps_compat(VoronoiFVM)
-    Aqua.test_piracies(VoronoiFVM, broken = true)
-    if !Sys.iswindows()
-        Aqua.test_persistent_tasks(VoronoiFVM)
-    end
+    Aqua.test_all(VoronoiFVM)
 end
 
 @testset "UndocumentedNames" begin

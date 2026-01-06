@@ -14,31 +14,30 @@ function main(; n = 3)
     sys = VoronoiFVM.System(g; flux, species = 1:n)
     time = 0.0
     λ = 0.0
-    params = zeros(3)
 
     utest = zeros(Dual64, 2 * n)
-    node = VoronoiFVM.Node(sys, time, λ, params)
+    node = VoronoiFVM.Node(sys, time, λ)
     u = unknowns(node, utest)
     @test typeof(u[1]) == eltype(u)
     @test typeof(copy(u)[1]) == eltype(u)
     @test length(u) == n
     @test size(u) == (n,)
 
-    bnode = VoronoiFVM.BNode(sys, time, λ, params)
+    bnode = VoronoiFVM.BNode(sys, time, λ)
     u = unknowns(bnode, utest)
     @test typeof(u[1]) == eltype(u)
     @test typeof(copy(u)[1]) == eltype(u)
     @test length(u) == n
     @test size(u) == (n,)
 
-    edge = VoronoiFVM.Edge(sys, time, λ, params)
+    edge = VoronoiFVM.Edge(sys, time, λ)
     u = unknowns(edge, utest)
     @test typeof(u[1]) == eltype(u)
     @test typeof(copy(u)[1]) == eltype(u)
     @test length(u) == 2 * n
     @test size(u) == (n, 2)
 
-    bedge = VoronoiFVM.BEdge(sys, time, λ, params)
+    bedge = VoronoiFVM.BEdge(sys, time, λ)
     u = unknowns(bedge, utest)
     @test typeof(u[1]) == eltype(u)
     @test typeof(copy(u)[1]) == eltype(u)
@@ -47,28 +46,28 @@ function main(; n = 3)
 
 
     ftest = zeros(Dual64, 2 * n)
-    node = VoronoiFVM.Node(sys, time, λ, params)
+    node = VoronoiFVM.Node(sys, time, λ)
     f = VoronoiFVM.rhs(node, ftest)
     @test typeof(f[1]) == eltype(f)
     @test typeof(copy(f)[1]) == eltype(f)
     @test length(f) == n
     @test size(f) == (n,)
 
-    bnode = VoronoiFVM.BNode(sys, time, λ, params)
+    bnode = VoronoiFVM.BNode(sys, time, λ)
     f = VoronoiFVM.rhs(bnode, ftest)
     @test typeof(f[1]) == eltype(f)
     @test typeof(copy(f)[1]) == eltype(f)
     @test length(f) == n
     @test size(f) == (n,)
 
-    edge = VoronoiFVM.Edge(sys, time, λ, params)
+    edge = VoronoiFVM.Edge(sys, time, λ)
     f = VoronoiFVM.rhs(edge, ftest)
     @test typeof(f[1]) == eltype(f)
     @test typeof(copy(f)[1]) == eltype(f)
     @test length(f) == n
     @test size(f) == (n,)
 
-    bedge = VoronoiFVM.BEdge(sys, time, λ, params)
+    bedge = VoronoiFVM.BEdge(sys, time, λ)
     f = VoronoiFVM.rhs(bedge, ftest)
     @test typeof(f[1]) == eltype(f)
     @test typeof(copy(f)[1]) == eltype(f)

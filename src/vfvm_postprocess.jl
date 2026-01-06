@@ -3,8 +3,8 @@ struct SolutionIntegral{T} <: AbstractMatrix{T}
 end
 
 Base.size(I::SolutionIntegral) = size(I.value)
-Base.getindex(I::SolutionIntegral, ispec::Integer, ireg) = I.value[ispec, ireg]
-Base.setindex!(I::SolutionIntegral, v, ispec::Integer, ireg) = I.value[ispec, ireg] = v
+Base.getindex(I::SolutionIntegral, ispec::Integer, ireg::Integer) = I.value[ispec, ireg]
+Base.setindex!(I::SolutionIntegral, v, ispec::Integer, ireg::Integer) = I.value[ispec, ireg] = v
 
 ################################################################
 """
@@ -251,14 +251,23 @@ end
 
 Calculate Euklidean norm of the degree of freedom vector.
 """
-function LinearAlgebra.norm(system::AbstractSystem, u, p::Number = 2) end
-
-function LinearAlgebra.norm(system::DenseSystem, u, p::Number = 2)
+function LinearAlgebra.norm(system::DenseSystem, u::DenseSolutionArray, p::Number = 2)
     _initialize_inactive_dof!(u, system)
     _complete!(system)
     return norm(u, p)
 end
 
+function LinearAlgebra.norm(system::DenseSystem, u::Matrix, p::Number = 2)
+    _initialize_inactive_dof!(u, system)
+    _complete!(system)
+    return norm(u, p)
+end
+
+"""
+    $(SIGNATURES)
+
+Calculate Euklidean norm of the degree of freedom vector.
+"""
 LinearAlgebra.norm(system::SparseSystem, u::SparseSolutionArray, p::Number = 2) = LinearAlgebra.norm(u.u.nzval, p)
 
 """

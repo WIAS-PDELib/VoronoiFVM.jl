@@ -38,7 +38,7 @@ automatically.
 
 Unless specified by `id`, the quantity ID is generated automatically.
 """
-function ContinuousQuantity(sys::AbstractSystem{Tv, Tc, Ti, Tm}, regions; ispec = 0, id = 0) where {Tv, Tc, Ti, Tm}
+function ContinuousQuantity(sys::AbstractSystem, regions::AbstractVector; ispec = 0, id = 0)
     if ispec == 0
         nspec = num_species(sys)
         nspec = nspec + 1
@@ -50,7 +50,8 @@ function ContinuousQuantity(sys::AbstractSystem{Tv, Tc, Ti, Tm}, regions; ispec 
         id = sys.num_quantities
     end
     enable_species!(sys, nspec, regions)
-    return ContinuousQuantity{Ti}(nspec, id)
+    Ti = promote_type(typeof(nspec), typeof(id))
+    return ContinuousQuantity(Ti(nspec), Ti(id))
 end
 
 ##########################################################
@@ -312,8 +313,8 @@ function boundary_robin!(sys::AbstractSystem, q::ContinuousQuantity, ibc, α, v)
 end
 
 """
-    node[quantity]
-    edge[quantity]
+    quantity[node]
+    quantity[edge]
 Return species number on [`AbstractNode`](@ref) or [`AbstractEdge`](@ref)
 """
 Base.getindex(q::ContinuousQuantity, node::AbstractNode) = q.ispec
@@ -325,14 +326,14 @@ Base.getindex(q::DiscontinuousQuantity, edge::BEdge) = nothing
 Base.getindex(q::DiscontinuousQuantity, node::Node) = @inbounds q.regionspec[node.region]
 
 """
-    bnode[quantity]
+    quantity[bnode]
 Return species number of discontinuous quantity region `ireg`  adjacent
 to  [`BNode`](@ref) for outer boundary nodes.
 """
 Base.getindex(q::DiscontinuousQuantity, bnode::BNode) = @inbounds q.regionspec[bnode.cellregions[1]]
 
 """
-    bnode[quantity,ireg]
+    quantity[bnode,ireg]
 Return species number of discontinuous quantity region `ireg`  adjacent
 to  [`BNode`](@ref).
 """
@@ -375,7 +376,7 @@ Base.setindex!(f::BNodeRHS, v, q::DiscontinuousQuantity, j) = @inbounds f[q[f.ge
 Access columns  `M` using id of quantity `q`.
 This is meant for nspecies x  nregions matrices e.g. defining parameters.
 """
-Base.getindex(m::AbstractMatrix, q::AbstractQuantity, j) = m[q.id, j]
+Base.getindex(m::Matrix, q::AbstractQuantity, j) = m[q.id, j]
 
 """
     M[q,i]
@@ -383,7 +384,7 @@ Base.getindex(m::AbstractMatrix, q::AbstractQuantity, j) = m[q.id, j]
 Set element of `M` using id of quantity `q`.
 This is meant for nspecies x  nregions matrices  e.g. defining parameters.
 """
-Base.setindex!(m::AbstractMatrix, v, q::AbstractQuantity, j) = m[q.id, j] = v
+Base.setindex!(m::Matrix, v, q::AbstractQuantity, j) = m[q.id, j] = v
 
 """
     A[q]
@@ -391,7 +392,7 @@ Base.setindex!(m::AbstractMatrix, v, q::AbstractQuantity, j) = m[q.id, j] = v
 Access columns  of vectors `A` using id of quantity `q`.
 This is meant for vectors indexed by species.
 """
-Base.getindex(A::AbstractArray, q::AbstractQuantity) = A[q.id]
+Base.getindex(A::Vector, q::AbstractQuantity) = A[q.id]
 
 """
     A[q]
@@ -399,7 +400,7 @@ Base.getindex(A::AbstractArray, q::AbstractQuantity) = A[q.id]
 Set element of `A` using id of quantity `q`
 This is meant for vectors indexed by species.
 """
-Base.setindex!(A::AbstractArray, v, q::AbstractQuantity) = A[q.id] = v
+Base.setindex!(A::Vector, v, q::AbstractQuantity) = A[q.id] = v
 
 Base.getindex(I::SolutionIntegral, cspec::ContinuousQuantity, ireg) = I[cspec.id, ireg]
 Base.getindex(I::SolutionIntegral, dspec::DiscontinuousQuantity, ireg) = I[dspec.regionspec[ireg], ireg]

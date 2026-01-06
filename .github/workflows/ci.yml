@@ -3,7 +3,6 @@ on:
   pull_request:
     branches:
       - master
-      - releases/3.0
   push:
     branches:
       - master

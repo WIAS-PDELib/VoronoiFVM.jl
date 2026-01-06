@@ -33,7 +33,7 @@ Abstract type for nodes.
 
 `node[idim]` gives the the corresponding coordinate.
 """
-abstract type AbstractNode{Tc <: Number, Tp <: Number, Ti <: Integer} <: AbstractGeometryItem{Tc, Tp, Ti} end
+abstract type AbstractNode{Tc <: Number, Ti <: Integer} <: AbstractGeometryItem{Tc, Ti} end
 Base.size(node::AbstractNode) = (size(node.coord)[1],)
 Base.getindex(node::AbstractNode, idim) = @inbounds node.coord[idim, node.index]
 
@@ -73,7 +73,7 @@ Abstract type for edges
 
 `edge[idim,inode]` gives coordinate of node.
 """
-abstract type AbstractEdge{Tv <: Number, Tp <: Number, Ti <: Integer} <: AbstractGeometryItem{Tv, Tp, Ti} end
+abstract type AbstractEdge{Tv <: Number, Ti <: Integer} <: AbstractGeometryItem{Tv, Ti} end
 Base.size(edge::AbstractEdge) = (size(edge.coord)[1], 2)
 Base.getindex(edge::AbstractEdge, idim, inode) = @inbounds edge.coord[idim, edge.node[inode]]
 
@@ -85,7 +85,7 @@ Abstract type for data on edges.
 """
 abstract type AbstractEdgeData{Tv <: Number} <: AbstractMatrix{Tv} end
 Base.size(u::AbstractEdgeData) = (u.n1, 2)
-Base.getindex(u::AbstractEdgeData, i, j) = @inbounds u.val[(j - 1) * u.n1 + i]
+Base.getindex(u::AbstractEdgeData, i::Integer, j::Integer) = @inbounds u.val[(j - 1) * u.n1 + i]
 
 function parameters(u::AbstractEdgeData)
     return DParameters(u.val, u.n1 + u.n1)
@@ -99,7 +99,7 @@ Structure holding local node information.
 
 $(TYPEDFIELDS)
 """
-mutable struct Node{Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
+mutable struct Node{Tc, Ti} <: AbstractNode{Tc, Ti}
     """
     Index in grid
 
@@ -151,11 +151,6 @@ mutable struct Node{Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     embedparam::Float64
 
     """
-    parameters (deprecated)
-    """
-    params::Vector{Tp}
-
-    """
     Form factor
     """
     fac::Float64
@@ -165,42 +160,42 @@ mutable struct Node{Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     """
     _idx::Ti
 
-    function Node{Tc, Tp, Ti}(
+    function Node{Tc, Ti}(
             sys::AbstractSystem{Tv, Tc, Ti, Tm},
-            time, embedparam, params::Vector{Tp};
+            time, embedparam;
             partition = 1
-        ) where {Tv, Tc, Tp, Ti, Tm}
+        ) where {Tv, Tc, Ti, Tm}
         return new(
             zero(Ti), 0,
             partition,
             num_species(sys), 0,
-            coordinates(sys.grid),
+            sys.grid[Coordinates],
             sys.grid[CellNodes],
             sys.grid[CellRegions],
-            time, embedparam, params, 0.0, 0
+            time, embedparam, 0.0, 0
         )
     end
 end
 
-function Node(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}; partition = 1) where {Tv, Tc, Tp, Ti, Tm}
-    return Node{Tc, Tp, Ti}(sys, time, embedparam, params; partition)
+function Node(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition = 1) where {Tv, Tc, Ti, Tm}
+    return Node{Tc, Ti}(sys, time, embedparam; partition)
 end
 
-Node(sys) = Node(sys, 0, 0, zeros(0))
+Node(sys) = Node(sys, 0, 0)
 
 """
     $(TYPEDEF)
 
 Unknown data on node. 
 """
-struct NodeUnknowns{Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
+struct NodeUnknowns{Tv, Tc, Ti} <: AbstractNodeData{Tv}
     val::Vector{Tv}
     nspec::Ti
-    geom::Node{Tc, Tp, Ti}
+    geom::Node{Tc, Ti}
 end
 
-@inline function unknowns(node::Node{Tc, Tp, Ti}, u::AbstractVector{Tv}) where {Tv, Tc, Tp, Ti}
-    return NodeUnknowns{Tv, Tc, Tp, Ti}(u, node.nspec, node)
+@inline function unknowns(node::Node{Tc, Ti}, u::AbstractVector{Tv}) where {Tv, Tc, Ti}
+    return NodeUnknowns{Tv, Tc, Ti}(u, node.nspec, node)
 end
 
 """
@@ -208,13 +203,13 @@ end
 
 RHS data on node. 
 """
-struct NodeRHS{Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
+struct NodeRHS{Tv, Tc, Ti} <: AbstractNodeData{Tv}
     val::Vector{Tv}
     nspec::Ti
-    geom::Node{Tc, Tp, Ti}
+    geom::Node{Tc, Ti}
 end
 
-@inline rhs(node::Node{Tc, Tp, Ti}, f::AbstractVector{Tv}) where {Tv, Tc, Tp, Ti} = NodeRHS{Tv, Tc, Tp, Ti}(f, node.nspec, node)
+@inline rhs(node::Node{Tc, Ti}, f::AbstractVector{Tv}) where {Tv, Tc, Ti} = NodeRHS{Tv, Tc, Ti}(f, node.nspec, node)
 
 ##################################################################
 """
@@ -224,7 +219,7 @@ Structure holding local boundary  node information.
 
 $(TYPEDFIELDS)
 """
-mutable struct BNode{Td, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
+mutable struct BNode{Td, Tc, Ti} <: AbstractNode{Tc, Ti}
     """
     Index in grid
     """
@@ -282,60 +277,53 @@ mutable struct BNode{Td, Tc, Tp, Ti} <: AbstractNode{Tc, Tp, Ti}
     """
     embedparam::Float64
 
-    """
-    Parameters (deprecated)
-    """
-    params::Vector{Tp}
-
     dirichlet_value::Vector{Td}
 
     fac::Float64
 
-    function BNode{Td, Tc, Tp, Ti}(
-            sys::Ts, time, embedparam,
-            params::Vector{Tp};
+    function BNode{Td, Tc, Ti}(
+            sys::Ts, time, embedparam;
             partition = 1
-        ) where {Td, Tc, Tp, Ti, Ts <: AbstractSystem}
+        ) where {Td, Tc, Ti, Ts <: AbstractSystem}
         return new(
             0, 0, 0, 0, partition, zeros(Ti, 2),
             num_species(sys),
-            coordinates(sys.grid),
+            sys.grid[Coordinates],
             sys.grid[BFaceNodes],
             sys.grid[BFaceRegions],
             sys.grid[CellRegions],
             sys.grid[BFaceCells],
-            Dirichlet(Td), time, embedparam, params,
+            Dirichlet(Td), time, embedparam,
             zeros(Td, num_species(sys)), 0.0
         )
     end
 end
 
 # JF: We need to be able to distinguish bwetween dirichlet type and value type.
-# So far we will use Tp for the dirichlet type instead of the valuetype.
-# Maybe this even allows derivatives wrt. Dirichlet data.
-function BNode(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}; partition = 1) where {Tv, Tc, Tp, Ti, Tm}
-    return BNode{Tp, Tc, Tp, Ti}(sys, time, embedparam, params; partition)
+# So far we will use Tc for the dirichlet type instead of the valuetype.
+function BNode(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition = 1) where {Tv, Tc, Ti, Tm}
+    return BNode{Tc, Tc, Ti}(sys, time, embedparam; partition)
 end
-BNode(sys) = BNode(sys, 0, 0, zeros(0))
+BNode(sys) = BNode(sys, 0, 0)
 
-struct BNodeUnknowns{Tv, Td, Tc, Tp, Ti} <: AbstractNodeData{Tv}
+struct BNodeUnknowns{Tv, Td, Tc, Ti} <: AbstractNodeData{Tv}
     val::Vector{Tv}
     nspec::Ti
-    geom::BNode{Td, Tc, Tp, Ti}
+    geom::BNode{Td, Tc, Ti}
 end
 
-@inline function unknowns(bnode::BNode{Td, Tc, Tp, Ti}, u::AbstractVector{Tv}) where {Tv, Td, Tc, Tp, Ti}
-    return BNodeUnknowns{Tv, Td, Tc, Tp, Ti}(u, bnode.nspec, bnode)
+@inline function unknowns(bnode::BNode{Td, Tc, Ti}, u::AbstractVector{Tv}) where {Td, Tv, Tc, Ti}
+    return BNodeUnknowns{Tv, Td, Tc, Ti}(u, bnode.nspec, bnode)
 end
 
-struct BNodeRHS{Tv, Td, Tc, Tp, Ti} <: AbstractNodeData{Tv}
+struct BNodeRHS{Tv, Td, Tc, Ti} <: AbstractNodeData{Tv}
     val::Vector{Tv}
     nspec::Ti
-    geom::BNode{Td, Tc, Tp, Ti}
+    geom::BNode{Td, Tc, Ti}
 end
 
-@inline function rhs(bnode::BNode{Td, Tc, Tp, Ti}, f::AbstractVector{Tv}) where {Tv, Td, Tc, Tp, Ti}
-    return BNodeRHS{Tv, Td, Tc, Tp, Ti}(f, bnode.nspec, bnode)
+@inline function rhs(bnode::BNode{Td, Tc, Ti}, f::AbstractVector{Tv}) where {Td, Tv, Tc, Ti}
+    return BNodeRHS{Tv, Td, Tc, Ti}(f, bnode.nspec, bnode)
 end
 
 ##################################################################
@@ -346,7 +334,7 @@ Structure holding local edge information.
 
 $(TYPEDFIELDS)
 """
-mutable struct Edge{Tc, Tp, Ti} <: AbstractEdge{Tc, Tp, Ti}
+mutable struct Edge{Tc, Ti} <: AbstractEdge{Tc, Ti}
     """
     Index in grid
     """
@@ -398,11 +386,6 @@ mutable struct Edge{Tc, Tp, Ti} <: AbstractEdge{Tc, Tp, Ti}
     embedparam::Float64
 
     """
-    Parameters (deprecated)
-    """
-    params::Vector{Tp}
-
-    """
     Form factor
     """
     fac::Float64
@@ -419,13 +402,13 @@ mutable struct Edge{Tc, Tp, Ti} <: AbstractEdge{Tc, Tp, Ti}
     """
     outflownode::Int
 
-    Edge{Tc, Tp, Ti}(::Nothing) where {Tc, Tp, Ti} = new()
+    Edge{Tc, Ti}(::Nothing) where {Tc, Ti} = new()
 end
 
-Edge(sys) = Edge(sys, 0, 0, zeros(0))
+Edge(sys) = Edge(sys, 0, 0)
 
-function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}; partition = 1) where {Tv, Tc, Tp, Ti, Tm}
-    edge = Edge{Tc, Tp, Ti}(nothing)
+function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition = 1) where {Tv, Tc, Ti, Tm}
+    edge = Edge{Tc, Ti}(nothing)
 
     edge.index = 0
     edge.node = [0, 0]
@@ -433,7 +416,7 @@ function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vec
     edge.partition = partition
     edge.nspec = num_species(sys)
     edge.icell = 0
-    edge.coord = coordinates(sys.grid)
+    edge.coord = sys.grid[Coordinates]
     geom = sys.grid[CellGeometries][1]
     if haskey(sys.grid, CellEdges)
         edge.cellx = sys.grid[CellEdges]
@@ -447,7 +430,6 @@ function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vec
     edge.cellregions = sys.grid[CellRegions]
     edge.time = time
     edge.embedparam = embedparam
-    edge.params = params
     edge.fac = 0
     edge.outflownode = 0
     edge._idx = 0
@@ -455,23 +437,23 @@ function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vec
     return edge
 end
 
-struct EdgeUnknowns{Tv, Tc, Tp, Ti} <: AbstractEdgeData{Tv}
+struct EdgeUnknowns{Tv, Tc, Ti} <: AbstractEdgeData{Tv}
     val::Vector{Tv}
     n1::Ti
-    geom::Edge{Tc, Tp, Ti}
+    geom::Edge{Tc, Ti}
 end
 
-@inline function unknowns(edge::Edge{Tc, Tp, Ti}, u::AbstractVector{Tv}) where {Tv, Tc, Tp, Ti}
-    return EdgeUnknowns{Tv, Tc, Tp, Ti}(u, edge.nspec, edge)
+@inline function unknowns(edge::Edge{Tc, Ti}, u::AbstractVector{Tv}) where {Tv, Tc, Ti}
+    return EdgeUnknowns{Tv, Tc, Ti}(u, edge.nspec, edge)
 end
 
-struct EdgeRHS{Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
+struct EdgeRHS{Tv, Tc, Ti} <: AbstractNodeData{Tv}
     val::Vector{Tv}
     nspec::Ti
-    geom::Edge{Tc, Tp, Ti}
+    geom::Edge{Tc, Ti}
 end
 
-@inline rhs(edge::Edge{Tc, Tp, Ti}, f::AbstractVector{Tv}) where {Tv, Tc, Tp, Ti} = EdgeRHS{Tv, Tc, Tp, Ti}(f, edge.nspec, edge)
+@inline rhs(edge::Edge{Tc, Ti}, f::AbstractVector{Tv}) where {Tv, Tc, Ti} = EdgeRHS{Tv, Tc, Ti}(f, edge.nspec, edge)
 
 """
     hasoutflownode(edge)
@@ -519,7 +501,7 @@ Structure holding local edge information.
 
 $(TYPEDFIELDS)
 """
-mutable struct BEdge{Tc, Tp, Ti} <: AbstractEdge{Tc, Tp, Ti}
+mutable struct BEdge{Tc, Ti} <: AbstractEdge{Tc, Ti}
     """
     Index in grid
     """
@@ -569,19 +551,14 @@ mutable struct BEdge{Tc, Tp, Ti} <: AbstractEdge{Tc, Tp, Ti}
     """
     embedparam::Float64
 
-    """
-    Parameters (deprecated)
-    """
-    params::Vector{Tp}
-
     fac::Float64
-    BEdge{Tc, Tp, Ti}(::Nothing) where {Tc, Tp, Ti} = new()
+    BEdge{Tc, Ti}(::Nothing) where {Tc, Ti} = new()
 end
 
-BEdge(sys) = BEdge(sys, 0, 0, zeros(0))
+BEdge(sys) = BEdge(sys, 0, 0)
 
-function BEdge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Vector{Tp}; partition = 1) where {Tv, Tc, Tp, Ti, Tm}
-    bedge = BEdge{Tc, Tp, Ti}(nothing)
+function BEdge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition = 1) where {Tv, Tc, Ti, Tm}
+    bedge = BEdge{Tc, Ti}(nothing)
 
     bedge.index = 0
     bedge.node = [0, 0]
@@ -589,35 +566,34 @@ function BEdge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam, params::Ve
     bedge.partition = 1
     bedge.nspec = num_species(sys)
     bedge.icell = 0
-    bedge.coord = coordinates(sys.grid)
+    bedge.coord = sys.grid[Coordinates]
 
     bedge.bfaceedges = sys.grid[BFaceEdges] # !!! another bug in ExtendableGrids
     bedge.bedgenodes = sys.grid[BEdgeNodes]
     bedge.bfaceregions = sys.grid[BFaceRegions]
     bedge.time = time
     bedge.embedparam = embedparam
-    bedge.params = params
     bedge.fac = 0.0
     return bedge
 end
 
-struct BEdgeUnknowns{Tv, Tc, Tp, Ti} <: AbstractEdgeData{Tv}
+struct BEdgeUnknowns{Tv, Tc, Ti} <: AbstractEdgeData{Tv}
     val::Vector{Tv}
     n1::Ti
-    geom::BEdge{Tc, Tp, Ti}
+    geom::BEdge{Tc, Ti}
 end
 
-@inline function unknowns(edge::BEdge{Tc, Tp, Ti}, u::AbstractVector{Tv}) where {Tv, Tc, Tp, Ti}
-    return BEdgeUnknowns{Tv, Tc, Tp, Ti}(u, edge.nspec, edge)
+@inline function unknowns(edge::BEdge{Tc, Ti}, u::AbstractVector{Tv}) where {Tv, Tc, Ti}
+    return BEdgeUnknowns{Tv, Tc, Ti}(u, edge.nspec, edge)
 end
 
-struct BEdgeRHS{Tv, Tc, Tp, Ti} <: AbstractNodeData{Tv}
+struct BEdgeRHS{Tv, Tc, Ti} <: AbstractNodeData{Tv}
     val::Vector{Tv}
     nspec::Ti
-    geom::BEdge{Tc, Tp, Ti}
+    geom::BEdge{Tc, Ti}
 end
 
-@inline rhs(edge::BEdge{Tc, Tp, Ti}, f::AbstractVector{Tv}) where {Tv, Tc, Tp, Ti} = BEdgeRHS{Tv, Tc, Tp, Ti}(f, edge.nspec, edge)
+@inline rhs(edge::BEdge{Tc, Ti}, f::AbstractVector{Tv}) where {Tv, Tc, Ti} = BEdgeRHS{Tv, Tc, Ti}(f, edge.nspec, edge)
 
 ##################################################################
 """
@@ -662,35 +638,3 @@ function project(edge::Edge, vec)
     end
     return vh
 end
-
-###############################################################
-# Deprecation warnings here ?
-# Wrapper struct for viewing unknowns passed to callback functions
-struct VectorUnknowns{Tv} <: AbstractVector{Tv}
-    val::Vector{Tv}
-    n::Int64
-    offset::Int64
-end
-
-unknowns(edge::AbstractEdge, u::AbstractVector{Tv}, i) where {Tv} = VectorUnknowns{Tv}(u, edge.nspec, (i - 1) * (edge.nspec))
-Base.getindex(u::VectorUnknowns, i) = @inbounds u.val[u.offset + i]
-Base.size(u::VectorUnknowns) = (u.n,)
-
-# For backward compatibility
-unknowns(edge, u::AbstractEdgeData) = u
-# For backward compatibility
-unknowns(edge::Edge, u::AbstractEdgeData{Tv}, i) where {Tv} = VectorUnknowns{Tv}(u.val, edge.nspec, (i - 1) * (edge.nspec))
-
-"""
-$(TYPEDSIGNATURES)
-
-Solution view on first edge node
-"""
-viewK(edge::AbstractEdge, u) = unknowns(edge, u, 1)
-
-"""
-$(TYPEDSIGNATURES)
-
-Solution view on second edge node
-"""
-viewL(edge::AbstractEdge, u) = unknowns(edge, u, 2)

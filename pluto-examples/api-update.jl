@@ -24,6 +24,7 @@ begin
     using VoronoiFVM
     using ExtendableGrids
     using ExtendableSparse
+    using ExtendableSparse: ILUZeroPreconBuilder
     using Test
     using PlutoUI
     using GridVisualize
@@ -222,8 +223,7 @@ The Jacobi preconditioner is defined in ExtendableSparse.jl.
 krydiag_sol = solve(
     sys0;
     inival = 0.1,
-    method_linear = KrylovJL_BICGSTAB(),
-    precon_linear = JacobiPreconditioner,
+    method_linear = KrylovJL_BICGSTAB(; precs = JacobiPreconBuilder()),
     verbose = true,
 )
 
@@ -239,8 +239,7 @@ md"""
 krydel_sol = solve(
     sys0;
     inival = 0.1,
-    method_linear = KrylovJL_BICGSTAB(),
-    precon_linear = SparspakFactorization(),
+    method_linear = KrylovJL_BICGSTAB(; precs = LinearSolvePreconBuilder(SparspakFactorization())),
     verbose = "nlad",
 )
 
@@ -258,8 +257,7 @@ wraps the predonditioner defined in  ILUZero.jl .
 kryilu0_sol = solve(
     sys0;
     inival = 0.5,
-    method_linear = KrylovJL_BICGSTAB(),
-    precon_linear = ILUZeroPreconditioner,
+    method_linear = KrylovJL_BICGSTAB(; precs = ILUZeroPreconBuilder()),
     verbose = true,
 )
 
