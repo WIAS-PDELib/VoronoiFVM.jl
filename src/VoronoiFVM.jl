@@ -36,7 +36,7 @@ using ExtendableSparse: ExtendableSparse,
     ExtendableSparseMatrixCSC,
     MTExtendableSparseMatrixCSC,
     AbstractExtendableSparseMatrixCSC,
-    flush!, nnz, rawupdateindex!, updateindex!, nnznew
+    flush!, rawupdateindex!, updateindex!, nnznew
 
 using ForwardDiff: ForwardDiff, value
 using GridVisualize: GridVisualize, GridVisualizer
@@ -52,7 +52,7 @@ import RecursiveFactorization
 using SciMLBase: SciMLBase
 using SciMLPublic: @public
 using SparseArrays: SparseArrays, SparseMatrixCSC, AbstractSparseMatrixCSC, dropzeros!, nonzeros,
-    nzrange, spzeros, issparse
+    nzrange, spzeros, issparse, nnz
 using SparseConnectivityTracer: SparseConnectivityTracer, TracerSparsityDetector
 using SparseMatrixColorings: GreedyColoringAlgorithm, sparsity_pattern
 using StaticArrays: StaticArrays, @MVector, @SArray, @SMatrix
