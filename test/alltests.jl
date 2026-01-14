@@ -127,7 +127,13 @@ end
 
 
 @testset "Aqua" begin
-    Aqua.test_all(VoronoiFVM)
+    persistent_tasks = true
+    if VERSION >= v"1.12.0" && VERSION < v"1.13.0-alpha1"
+        if Sys.iswindows() || Sys.apple()
+            persistent_tasks = false
+        end
+    end
+    Aqua.test_all(VoronoiFVM; persistent_tasks)
 end
 
 @testset "UndocumentedNames" begin
