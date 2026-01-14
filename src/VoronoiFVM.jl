@@ -47,7 +47,7 @@ using LinearAlgebra: LinearAlgebra, Diagonal, Tridiagonal, isdiag, ldiv!, norm
 using LinearSolve: LinearSolve, KrylovJL_BICGSTAB,
     KrylovJL_CG, KrylovJL_GMRES, LinearProblem,
     SparspakFactorization, UMFPACKFactorization, init, reinit!
-using Printf: Printf, @printf, @sprintf
+using Printf: Printf, @sprintf
 using Random: Random, AbstractRNG
 using RecursiveArrayTools: RecursiveArrayTools, AbstractDiffEqArray, DiffEqArray
 import RecursiveFactorization
@@ -56,7 +56,7 @@ using SparseArrays: SparseArrays, SparseMatrixCSC, dropzeros!, nonzeros,
     nzrange, spzeros, issparse
 using SparseConnectivityTracer: SparseConnectivityTracer, TracerSparsityDetector
 using SparseMatrixColorings: GreedyColoringAlgorithm, sparsity_pattern
-using StaticArrays: StaticArrays, @MVector, @SArray, @SMatrix
+using StaticArrays: StaticArrays, @SArray, @SMatrix
 using Statistics: Statistics, mean
 using TextWrap: print_wrapped
 
