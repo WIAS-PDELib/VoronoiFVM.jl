@@ -45,7 +45,7 @@ using JLD2: JLD2, jldopen
 using LinearAlgebra: LinearAlgebra, Diagonal, Tridiagonal, isdiag, ldiv!, norm
 using LinearSolve: LinearSolve, LinearProblem,
     SparspakFactorization, UMFPACKFactorization, init, reinit!
-using Printf: Printf, @printf, @sprintf
+using Printf: Printf, @sprintf
 using Random: Random
 using RecursiveArrayTools: RecursiveArrayTools, AbstractDiffEqArray, DiffEqArray
 import RecursiveFactorization
@@ -55,7 +55,7 @@ using SparseArrays: SparseArrays, SparseMatrixCSC, AbstractSparseMatrixCSC, drop
     nzrange, spzeros, issparse, nnz
 using SparseConnectivityTracer: SparseConnectivityTracer, TracerSparsityDetector
 using SparseMatrixColorings: GreedyColoringAlgorithm, sparsity_pattern
-using StaticArrays: StaticArrays, @MVector, @SArray, @SMatrix
+using StaticArrays: StaticArrays, @SArray, @SMatrix
 using Statistics: Statistics, mean
 using TextWrap: print_wrapped
 

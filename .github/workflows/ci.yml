@@ -21,7 +21,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macOS-14 # arm
+          - macOS-latest # arm
         arch:
           - x64
           - aarch64
@@ -30,7 +30,7 @@ jobs:
             arch: aarch64
           - os: windows-latest
             arch: aarch64
-          - os: macOS-14
+          - os: macOS-latest
             arch: x64
     steps:
       - uses: actions/checkout@v6
