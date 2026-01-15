@@ -57,7 +57,7 @@ function make(;
             "Internal interfaces (1D)" => "interfaces1d.jl",
             "A case for caution" => "problemcase.jl",
             "Nonlinear solver control" => "nonlinear-solvers.jl",
-            "Bernoulli function test" => "bernoulli.jl",
+            #            "Bernoulli function test" => "bernoulli.jl",
             #            "API Updates" => "api-update.jl",
         ]
         ENV["PLUTO_PROJECT"] = @__DIR__
