@@ -129,7 +129,7 @@ end
 @testset "Aqua" begin
     persistent_tasks = true
     if VERSION >= v"1.12.0" && VERSION < v"1.13.0-alpha1"
-        if Sys.iswindows() || Sys.apple()
+        if Sys.iswindows() || Sys.isapple()
             persistent_tasks = false
         end
     end
