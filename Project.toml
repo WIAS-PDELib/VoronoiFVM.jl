@@ -99,7 +99,7 @@ Test = "1"
 TextWrap = "1.0.2"
 Triangulate = "2.4.0, 3"
 UUIDs = "1"
-julia = "1.9"
+julia = "1.10"
 
 [extras]
 AMGCLWrap = "4f76b812-4ba5-496d-b042-d70715554288"
