@@ -1,4 +1,10 @@
 # Changes
+## v3.1.0 February 17, 2026
+  - Better control of factorizations during evolution
+    - new `solvercontrol.factorize_every_timestep`
+    - deprecated `keepcurrent_linear` in favor of `factorize_every_newtonstep`
+    - see Example210
+
 
 ## v3.0.0 January 6, 2026
   - Removed deprecated linear solver strategies
