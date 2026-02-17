@@ -103,7 +103,7 @@ function main(n = 1; assembly = :edgewise)
     control = VoronoiFVM.SolverControl()
     control.verbose = false
     control.reltol_linear = 1.0e-5
-    control.keepcurrent_linear = false
+    control.factorize_every_newtonstep = false
 
     tstep = 0.1
     time = 0.0

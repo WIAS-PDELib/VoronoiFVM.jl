@@ -125,7 +125,7 @@ function main(; n = 10, Plotter = nothing, assembly = :edgwwise, kwargs...)
         sys;
         inival = 0.5,
         method_linear = KrylovJL_BICGSTAB(; precs = LinearSolvePreconBuilder(SparspakFactorization())),
-        keepcurrent_linear = false,
+        factorize_every_newtonstep = false,
         log = true,
         kwargs...
     )
@@ -137,7 +137,7 @@ function main(; n = 10, Plotter = nothing, assembly = :edgwwise, kwargs...)
         sys;
         inival = 0.5,
         method_linear = KrylovJL_BICGSTAB(; precs = JacobiPreconBuilder()),
-        keepcurrent_linear = true, log = true,
+        factorize_every_newtonstep = true, log = true,
         kwargs...
     )
     @test norm(sol - umf_sol, Inf) < 1.0e-7
@@ -148,7 +148,7 @@ function main(; n = 10, Plotter = nothing, assembly = :edgwwise, kwargs...)
         sys;
         inival = 0.5,
         method_linear = KrylovJL_BICGSTAB(; precs = SmoothedAggregationPreconBuilder()),
-        keepcurrent_linear = true,
+        factorize_every_newtonstep = true,
         kwargs...
     )
     @test norm(sol - umf_sol, Inf) < 1.0e-7
@@ -158,7 +158,7 @@ function main(; n = 10, Plotter = nothing, assembly = :edgwwise, kwargs...)
         sys;
         inival = 0.5,
         method_linear = KrylovJL_BICGSTAB(; precs = AMGPreconBuilder()),
-        keepcurrent_linear = true,
+        factorize_every_newtonstep = true,
         kwargs...
     )
     @test norm(sol - umf_sol, Inf) < 1.0e-7
@@ -168,7 +168,7 @@ function main(; n = 10, Plotter = nothing, assembly = :edgwwise, kwargs...)
         sys;
         inival = 0.5,
         method_linear = KrylovJL_BICGSTAB(; precs = RLXPreconBuilder()),
-        keepcurrent_linear = true,
+        factorize_every_newtonstep = true,
         kwargs...
     )
     return @test norm(sol - umf_sol, Inf) < 1.0e-7
