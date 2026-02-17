@@ -18,7 +18,8 @@ function solve_step!(
         time,
         tstep,
         embedparam,
-        params
+        params,
+        istep_factorize
     )
     nlhistory = NewtonSolverHistory()
     tasm = 0.0
@@ -88,6 +89,9 @@ function solve_step!(
                 end
             end
 
+
+            reuse_precs = (!control.factorize_every_newtonstep && niter > 1) || (istep_factorize % control.factorize_every_timestep != 0)
+
             tlinsolve += @elapsed _solve_linear!(
                 dofs(update),
                 state,
@@ -96,7 +100,7 @@ function solve_step!(
                 method_linear,
                 state.matrix,
                 dofs(residual),
-                niter
+                reuse_precs
             )
 
             dofs(solution) .-= damp * dofs(update)
@@ -274,7 +278,7 @@ function solve_transient!(
 
     solution = copy(inival)
     oldsolution = copy(inival) # we need a copy as it is later overwritten
-
+    istep_factorize = 0
     t0 = 0.0
     if transient
         # Initialize transient solution struct
@@ -293,7 +297,8 @@ function solve_transient!(
             time,
             Inf,
             Float64(lambdas[1]),
-            params
+            params,
+            istep_factorize
         )
 
         control.post(solution, oldsolution, lambdas[1], 0)
@@ -356,7 +361,8 @@ function solve_transient!(
                         _time,
                         _tstep,
                         _embedparam,
-                        params
+                        params,
+                        istep
                     )
                 catch err
                     err = "Problem at $(λstr)=$(λ |> rd), Δ$(λstr)=$(Δλ |> rd):\n$(err)"
@@ -373,6 +379,7 @@ function solve_transient!(
                     if Δu > Δu_max_factor * Δu_opt
                         solved = false
                     end
+                    istep_factorize = istep_factorize + 1
                 end
                 if !solved
                     if Δλ ≈ Δλ_min
@@ -406,6 +413,8 @@ function solve_transient!(
                     else
                         # reduce time step
                         Δλ = max(Δλ_min, Δλ * Δλ_decrease)
+                        # force factorization
+                        istep_factorize = 0
                         if doprint(control, 'e')
                             out = @sprintf("[e]volution:  Δu/Δu_opt=%.3e => retry: Δ%s=%.3e\n", Δu / Δu_opt, λstr, Δλ)
                             _info(out)
@@ -571,7 +580,8 @@ function CommonSolve.solve!(
             time,
             tstep,
             0.0,
-            params
+            params,
+            0
         )
     end
 end

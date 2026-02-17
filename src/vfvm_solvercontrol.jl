@@ -115,9 +115,13 @@ Base.@kwdef mutable struct SolverControl
 
     """
     Update preconditioner in each Newton step ?
-    Translates to `reuse_precs=!keepcurrent_linear` for LinearSolve.
     """
-    keepcurrent_linear::Bool = false
+    factorize_every_newtonstep::Bool = false
+
+    """
+    Update preconditioner in every i-th timestep
+    """
+    factorize_every_timestep::Int = 1
 
     """
     Initial parameter step for embedding.
@@ -255,6 +259,7 @@ Base.@kwdef mutable struct SolverControl
     max_lureuse::Union{Int, Nothing} = nothing
     mynorm::Union{Function, Nothing} = nothing
     myrnorm::Union{Function, Nothing} = nothing
+    keepcurrent_linear::Union{Bool, Nothing} = nothing
 end
 
 doprint(s::String, a::Char) = contains(s, a)
@@ -272,7 +277,8 @@ const key_replacements = Dict(
     :tol_linear => :reltol_linear,
     :mynorm => :unorm,
     :myrnorm => :rnorm,
-    :max_lureuse => nothing
+    :max_lureuse => nothing,
+    :keepcurrent_linear => :factorize_every_newtonstep
 )
 
 function fix_deprecations!(control)
