@@ -6,13 +6,13 @@
 Species $A$ and $B$ exist in the interior of the domain. We assume a heterogeneous reaction scheme
 where $A$ reacts to $B$ with a rate depending on $\nabla A$ near the surface.
 
-function generic_operator!(f, u, sys)
-        f .= 0
-        idx = unknown_indices(unknowns(sys))
-        f[idx[problem_data.iC, 1]] = u[idx[problem_data.iC, 1]] +
-            0.1 * (u[idx[problem_data.iA, 1]] - u[idx[problem_data.iA, 2]]) / (problem_data.X[2] - problem_data.X[1])
+    function generic_operator!(f0, u0, sys, data)
+        f = reshape(f0, sys)
+        u = reshape(u0, sys)
+        f[problem_data.iC, 1] = u[problem_data.iC, 1] +
+            0.1 * (u[problem_data.iA, 1] - u[problem_data.iA, 2]) / (problem_data.X[2] - problem_data.X[1])
         return nothing
-end
+    end
 
     # If we know the sparsity pattern, we can here create a
     # sparse matrix with values set to 1 in the nonzero
@@ -138,15 +138,15 @@ function main(;
     end
 
     ## This generic operator works on the full solution seen as linear vector, and indexing
-    ## into it needs to be performed with the help of idx (defined below for a solution vector)
+    ## shall be done  by reshaping it into a solution vector of the system.
     ## Its sparsity is detected automatically using SparsityDetection.jl
     ## Here, we calculate the gradient of u_A at the boundary and store the value in u_C which
     ## is then used as a parameter in the boundary reaction
-    function generic_operator!(f, u, sys, data)
-        f .= 0
-        idx = unknown_indices(unknowns(sys))
-        f[idx[problem_data.iC, 1]] = u[idx[problem_data.iC, 1]] +
-            0.1 * (u[idx[problem_data.iA, 1]] - u[idx[problem_data.iA, 2]]) / (problem_data.X[2] - problem_data.X[1])
+    function generic_operator!(f0, u0, sys, data)
+        f = reshape(f0, sys)
+        u = reshape(u0, sys)
+        f[problem_data.iC, 1] = u[problem_data.iC, 1] +
+            0.1 * (u[problem_data.iA, 1] - u[problem_data.iA, 2]) / (problem_data.X[2] - problem_data.X[1])
         return nothing
     end
 
@@ -234,10 +234,10 @@ end
 using Test
 function runtests()
     testval = 0.007027597470502758
-    @test main(; unknown_storage = :sparse) ≈ testval &&
-        main(; unknown_storage = :dense) ≈ testval &&
-        main(; unknown_storage = :sparse, autodetect_sparsity = false) ≈ testval &&
-        main(; unknown_storage = :dense, autodetect_sparsity = false) ≈ testval
+    @test main(; unknown_storage = :sparse) ≈ testval
+    @test main(; unknown_storage = :dense) ≈ testval
+    @test main(; unknown_storage = :sparse, autodetect_sparsity = false) ≈ testval
+    @test main(; unknown_storage = :dense, autodetect_sparsity = false) ≈ testval
     return nothing
 end
 

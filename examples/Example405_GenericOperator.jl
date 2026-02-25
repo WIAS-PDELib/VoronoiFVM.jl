@@ -26,17 +26,18 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     v = 1.0
 
     ## This generic operator works on the full solution seen as linear vector, and indexing
-    ## into it needs to be performed with the help of idx (defined below for a solution vector)
+    ## shall be done  by reshaping it into a solution vector of the system.
     ## Here, instead of the flux function we provide a "generic operator"
     ## which provides the stiffness part of the problem. Its sparsity is detected automatically
     ## using Symbolics.jl
-    function generic_operator!(f, u, sys, data)
-        f .= 0.0
+    function generic_operator!(f0, u0, sys, data)
+        f = reshape(f0, sys)
+        u = reshape(u0, sys)
         for i in 1:(length(X) - 1)
-            du = D * (u[idx[1, i]] - u[idx[1, i + 1]]) / (X[i + 1] - X[i]) +
-                v * (v > 0 ? u[idx[1, i]] : u[idx[1, i + 1]])
-            f[idx[1, i]] += du
-            f[idx[1, i + 1]] -= du
+            du = D * (u[1, i] - u[1, i + 1]) / (X[i + 1] - X[i]) +
+                v * (v > 0 ? u[1, i] : u[1, i + 1])
+            f[1, i] += du
+            f[1, i + 1] -= du
         end
         return nothing
     end
@@ -62,7 +63,6 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     inival = unknowns(sys; inival = 0.5)
     solution = unknowns(sys)
 
-    idx = unknown_indices(solution)
 
     ## Stationary solution of the problem
     solution = solve(sys; inival = 0.5, verbose)
