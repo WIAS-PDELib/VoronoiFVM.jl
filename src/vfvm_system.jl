@@ -591,6 +591,7 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
     finally
         unlock(sysmutatelock)
     end
+
     return system.is_complete = true
 end
 
@@ -1247,13 +1248,13 @@ Base.reshape(v::DenseSolutionArray, system::DenseSystem) = v
 
 Base.reshape(v::SparseSolutionArray, sys::SparseSystem) = v
 
-function Base.reshape(v::AbstractVector, sys::DenseSystem)
+function Base.reshape(v::Vector, sys::DenseSystem)
     @assert length(v) == num_dof(sys)
     nspec = num_species(sys)
     return DenseSolutionArray(reshape(v, Int64(nspec), Int64(length(v) / nspec)))
 end
 
-function Base.reshape(v::AbstractVector, system::SparseSystem)
+function Base.reshape(v::Vector, system::SparseSystem)
     @assert length(v) == num_dof(system)
     return SparseSolutionArray(
         SparseMatrixCSC(
@@ -1261,7 +1262,7 @@ function Base.reshape(v::AbstractVector, system::SparseSystem)
             system.node_dof.n,
             system.node_dof.colptr,
             system.node_dof.rowval,
-            Vector(v)
+            v
         )
     )
 end
