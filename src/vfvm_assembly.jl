@@ -646,6 +646,7 @@ function _eval_and_assemble_generic_operator(system::AbstractSystem, matrix, gen
     vecF = dofs(F)
     vecU = dofs(U)
     y = similar(vecF)
+    dofs(y) .= 0
     DifferentiationInterface.value_and_jacobian!(
         applicable(system.physics.generic_operator, vecF, vecU, system, data) ?
             (f, u) -> system.physics.generic_operator(f, u, system, data) :
