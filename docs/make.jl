@@ -47,16 +47,17 @@ function make(;
     if with_notebooks
         @info "Start notebook evaluation"
         notebooks = [
-            "OrdinaryDiffEq.jl nonlinear diffusion" => "ode-diffusion1d.jl",
-            "OrdinaryDiffEq.jl 1D wave equation" => "ode-wave1d.jl",
-            "OrdinaryDiffEq.jl changing mass matrix" => "ode-nlstorage1d.jl",
+            "nbproto.jl" => "nbproto.jl",
+            # "OrdinaryDiffEq.jl nonlinear diffusion" => "ode-diffusion1d.jl",
+            # "OrdinaryDiffEq.jl 1D wave equation" => "ode-wave1d.jl",
+            # "OrdinaryDiffEq.jl changing mass matrix" => "ode-nlstorage1d.jl",
             #           "OrdinaryDiffEq.jl brusselator" => "ode-brusselator.jl",
-            "Coupling with Catalyst.jl" => "heterogeneous-catalysis.jl",
-            "Outflow boundary conditions" => "outflow.jl",
-            "Obtaining vector fields" => "flux-reconstruction.jl",
-            "Internal interfaces (1D)" => "interfaces1d.jl",
-            "A case for caution" => "problemcase.jl",
-            "Nonlinear solver control" => "nonlinear-solvers.jl",
+            # "Coupling with Catalyst.jl" => "heterogeneous-catalysis.jl",
+            # "Outflow boundary conditions" => "outflow.jl",
+            # "Obtaining vector fields" => "flux-reconstruction.jl",
+            # "Internal interfaces (1D)" => "interfaces1d.jl",
+            # "A case for caution" => "problemcase.jl",
+            # "Nonlinear solver control" => "nonlinear-solvers.jl",
             #            "Bernoulli function test" => "bernoulli.jl",
             #            "API Updates" => "api-update.jl",
         ]
@@ -68,7 +69,7 @@ function make(;
         @info "Notebook evaluation finished"
     end
 
-    if false && with_examples
+    if with_examples
         @info "Start example evaluation"
         modules = filter(
             ex -> splitext(ex)[2] == ".jl"
