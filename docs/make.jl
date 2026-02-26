@@ -44,7 +44,7 @@ function make(;
     ]
 
 
-    if with_notebooks
+    if false && with_notebooks
         @info "Start notebook evaluation"
         notebooks = [
             "OrdinaryDiffEq.jl nonlinear diffusion" => "ode-diffusion1d.jl",
@@ -68,7 +68,7 @@ function make(;
         @info "Notebook evaluation finished"
     end
 
-    if with_examples
+    if false && with_examples
         @info "Start example evaluation"
         modules = filter(
             ex -> splitext(ex)[2] == ".jl"
