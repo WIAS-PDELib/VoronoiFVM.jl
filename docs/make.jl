@@ -44,7 +44,7 @@ function make(;
     ]
 
 
-    if false && with_notebooks
+    if with_notebooks
         @info "Start notebook evaluation"
         notebooks = [
             "OrdinaryDiffEq.jl nonlinear diffusion" => "ode-diffusion1d.jl",
