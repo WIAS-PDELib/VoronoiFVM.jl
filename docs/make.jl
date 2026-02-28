@@ -89,7 +89,7 @@ function make(;
         GC.gc()
     end
 
-    makedocs(
+    makedocs(;
         sitename = "VoronoiFVM.jl",
         modules = [
             VoronoiFVM,

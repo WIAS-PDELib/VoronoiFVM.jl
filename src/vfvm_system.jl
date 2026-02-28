@@ -531,9 +531,9 @@ function _complete!(system::AbstractSystem{Tv, Tc, Ti, Tm}) where {Tv, Tc, Ti, T
     if system.is_complete
         return
     end
-    update_grid!(system)
-
     lock(sysmutatelock)
+
+    update_grid!(system)
 
     try
         system.species_homogeneous = true
