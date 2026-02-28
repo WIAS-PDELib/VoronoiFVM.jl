@@ -44,30 +44,6 @@ function make(;
     ]
 
 
-    if with_notebooks
-        @info "Start notebook evaluation"
-        notebooks = [
-            "OrdinaryDiffEq.jl nonlinear diffusion" => "ode-diffusion1d.jl",
-            "OrdinaryDiffEq.jl 1D wave equation" => "ode-wave1d.jl",
-            "OrdinaryDiffEq.jl changing mass matrix" => "ode-nlstorage1d.jl",
-            #           "OrdinaryDiffEq.jl brusselator" => "ode-brusselator.jl",
-            "Coupling with Catalyst.jl" => "heterogeneous-catalysis.jl",
-            "Outflow boundary conditions" => "outflow.jl",
-            "Obtaining vector fields" => "flux-reconstruction.jl",
-            "Internal interfaces (1D)" => "interfaces1d.jl",
-            "A case for caution" => "problemcase.jl",
-            "Nonlinear solver control" => "nonlinear-solvers.jl",
-            "Bernoulli function test" => "bernoulli.jl",
-            #            "API Updates" => "api-update.jl",
-        ]
-        ENV["PLUTO_PROJECT"] = @__DIR__
-        notebook_examples = @docplutonotebooks(notebookdir, notebooks, iframe = false, append_build_context = false)
-        notebook_examples = vcat(["About the notebooks" => "notebooks.md"], notebook_examples)
-        size_threshold_ignore = last.(notebook_examples)
-        push!(pages, "Tutorial Notebooks" => notebook_examples)
-        @info "Notebook evaluation finished"
-    end
-
     if with_examples
         @info "Start example documentation"
         modules = filter(
@@ -84,9 +60,36 @@ function make(;
         dev_examples = @docmodules(exampledir, devmodules, use_module_titles = true)
         push!(pages, "Development Examples" => dev_examples)
         @info "Example evaluation finished"
+        GC.gc()
     end
 
-    makedocs(;
+
+    if with_notebooks
+        @info "Start notebook evaluation"
+        notebooks = [
+            "OrdinaryDiffEq.jl nonlinear diffusion" => "ode-diffusion1d.jl",
+            "OrdinaryDiffEq.jl 1D wave equation" => "ode-wave1d.jl",
+            "OrdinaryDiffEq.jl changing mass matrix" => "ode-nlstorage1d.jl",
+            #           "OrdinaryDiffEq.jl brusselator" => "ode-brusselator.jl",
+            "Coupling with Catalyst.jl" => "heterogeneous-catalysis.jl",
+            "Outflow boundary conditions" => "outflow.jl",
+            "Obtaining vector fields" => "flux-reconstruction.jl",
+            "Internal interfaces (1D)" => "interfaces1d.jl",
+            "A case for caution" => "problemcase.jl",
+            "Nonlinear solver control" => "nonlinear-solvers.jl",
+            # "Bernoulli function test" => "bernoulli.jl",
+            #            "API Updates" => "api-update.jl",
+        ]
+        ENV["PLUTO_PROJECT"] = @__DIR__
+        notebook_examples = @docplutonotebooks(notebookdir, notebooks, iframe = false, append_build_context = false)
+        notebook_examples = vcat(["About the notebooks" => "notebooks.md"], notebook_examples)
+        size_threshold_ignore = last.(notebook_examples)
+        push!(pages, "Tutorial Notebooks" => notebook_examples)
+        @info "Notebook evaluation finished"
+        GC.gc()
+    end
+
+    makedocs(
         sitename = "VoronoiFVM.jl",
         modules = [
             VoronoiFVM,

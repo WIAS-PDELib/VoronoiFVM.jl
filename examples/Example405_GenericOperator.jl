@@ -77,8 +77,8 @@ end
 using Test
 function runtests()
     testval = 1.099999999614456
-    @test main(; unknown_storage = :sparse) ≈ testval &&
-        main(; unknown_storage = :dense) ≈ testval
+    @test main(; unknown_storage = :sparse) ≈ testval
+    @test main(; unknown_storage = :dense) ≈ testval
     return nothing
 end
 
