@@ -18,7 +18,7 @@ end
 
 # ╔═╡ 19b6cb30-26f5-4262-b324-379e316826de
 # Convert this cell to markdown in order to enable Pluto's inbuilt package manager
-begin
+if isdefined(Main, :PlutoRunner)
     using Pkg
     docsdir = joinpath(@__DIR__, "..", "docs")
     if isdir(docsdir)
@@ -200,7 +200,7 @@ md"""
 """
 
 # ╔═╡ 00634dc4-e9c7-4165-a9ac-f3ffc8007e76
-umf_sol = solve(sys0; inival = 0.1, method_linear = UMFPACKFactorization(), verbose = true)
+umf_sol = solve(sys0; inival = 0.1, method_linear = UMFPACKFactorization(), verbose = false)
 
 # ╔═╡ d6c88c3e-6b8a-45e9-9344-71f0de3fff51
 @test isapprox(umf_sol, sol0, atol = 1.0e-7)
@@ -211,7 +211,7 @@ md"""
 """
 
 # ╔═╡ 5908ae1d-b3b5-4681-a0b8-080f052af40f
-sppk_sol = solve(sys0; inival = 0.1, method_linear = SparspakFactorization(), verbose = true)
+sppk_sol = solve(sys0; inival = 0.1, method_linear = SparspakFactorization(), verbose = false)
 
 # ╔═╡ 22c3cecc-12d2-4f7d-8a53-894a5ea513f0
 @test isapprox(sppk_sol, sol0, atol = 1.0e-7)
@@ -232,7 +232,7 @@ krydiag_sol = solve(
     sys0;
     inival = 0.1,
     method_linear = KrylovJL_BICGSTAB(; precs = JacobiPreconBuilder()),
-    verbose = true,
+    verbose = false,
 )
 
 # ╔═╡ d21d3236-b3d7-4cf8-ab9d-b0be44c9970b
@@ -248,7 +248,7 @@ krydel_sol = solve(
     sys0;
     inival = 0.1,
     method_linear = KrylovJL_BICGSTAB(; precs = LinearSolvePreconBuilder(SparspakFactorization())),
-    verbose = "nlad",
+    verbose = "false",
 )
 
 # ╔═╡ 4fa1c608-19b2-4eaa-8c0a-5881b373807c
@@ -266,7 +266,7 @@ kryilu0_sol = solve(
     sys0;
     inival = 0.5,
     method_linear = KrylovJL_BICGSTAB(; precs = ILUZeroPreconBuilder()),
-    verbose = true,
+    verbose = false,
 )
 
 # ╔═╡ d341f60e-191d-4cf9-9df9-fbe25c84a7da

@@ -18,7 +18,7 @@ end
 
 # ╔═╡ f7c86694-ca5c-48fa-a83c-88a7fb359396
 # Convert this cell to markdown in order to enable Pluto's inbuilt package manager
-begin
+if isdefined(Main, :PlutoRunner)
     using Pkg
     docsdir = joinpath(@__DIR__, "..", "docs")
     if isdir(docsdir)
