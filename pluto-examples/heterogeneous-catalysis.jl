@@ -24,16 +24,11 @@ if isdefined(Main, :PlutoRunner)
     if isdir(docsdir)
         Pkg.activate(docsdir)
     end
+    using Revise
 end
 
 # ╔═╡ f75a3225-c7bf-4031-89c7-a792a592f639
-# Some tricks helping to run the notebook during VoronoiFVM.jl CI
-begin
-    doplots = isdefined(Main, :PlutoRunner)
-    import Pkg as _Pkg
-    haskey(ENV, "PLUTO_PROJECT") && _Pkg.activate(ENV["PLUTO_PROJECT"])
-    using Revise
-end
+doplots = isdefined(Main, :PlutoRunner)
 
 # ╔═╡ e04d9162-e6ed-4e9f-86ce-51b5175f8103
 begin

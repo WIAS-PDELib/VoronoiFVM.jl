@@ -4,14 +4,18 @@
 using Markdown
 using InteractiveUtils
 
+# ╔═╡ db16b596-82c4-4dad-87f8-a17b2a6f75e3
+# Convert this cell to markdown in order to enable Pluto's inbuilt package manager
+if isdefined(Main, :PlutoRunner)
+    using Pkg
+    docsdir = joinpath(@__DIR__, "..", "docs")
+    if isdir(docsdir)
+        Pkg.activate(docsdir)
+    end
+end
+
 # ╔═╡ b285aca3-dee5-4b77-9276-537563e8643b
 begin
-    using Pkg
-    if haskey(ENV, "PLUTO_PROJECT")
-        Pkg.activate(ENV["PLUTO_PROJECT"])
-    else
-        println("using Pluto's built-in package manager")
-    end
     using Revise
     using VoronoiFVM
     using ExtendableGrids
@@ -61,6 +65,7 @@ end
 
 
 # ╔═╡ Cell order:
+# ╠═db16b596-82c4-4dad-87f8-a17b2a6f75e3
 # ╠═b285aca3-dee5-4b77-9276-537563e8643b
 # ╟─4ed0c302-26e4-468a-a40d-0e6406f802d0
 # ╟─7a104243-d3b9-421a-b494-5607c494b106
