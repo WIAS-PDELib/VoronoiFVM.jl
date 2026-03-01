@@ -25,7 +25,6 @@ one obtains a list of all possible testsets.
 
 
 ## Pluto notebooks
-The pluto notebooks in this package are "triple use":
-- As typical Pluto notebooks, they are self-contained in the senses that they contain their own Project and Manifest files. So users can just download and execute them.
-- If they run with the environment variable `PLUTO_PROJECT` set to some julia environment, this environment will activated at the start of the notebook. In particular, they use `Revise.jl` so they can be run during development of VoronoiFVM.jl. See also  https://github.com/fonsp/Pluto.jl/issues/1788 .
+The pluto notebooks in this package are "dual use":
+- If started from their position in the package hierarchy, they activate the `docs` environment, and thus automatically disable the Pluto package manager. This in particular is done during documentation generation where the PlutoStaticHTML package is used to run them and to generate HTML output from the result. Converting the package activation cell to Markdown re-enables the Pluto package manager, and triggers the creation of the typical Pluto inbuilt project and manifest files. However, at the moment, in this case, no package version compatibility check is performed.
 - During CI tests (including ReTest), they are run as scripts. For this purpose they are wrapped into temporary modules, and @test macros can be used in the notebooks.
