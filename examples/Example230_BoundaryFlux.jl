@@ -1,6 +1,6 @@
 #=
 
-# 103: Boundary flux
+# 203: Boundary flux
 ([source code](@__SOURCE_URL__))
 
 We consider two test problems.
@@ -204,10 +204,10 @@ end # main
 
 using Test
 function runtests()
-    @test main(; unknown_storage = :dense, assembly = :edgewise) < 1.0e-14 &&
-        main(; unknown_storage = :sparse, assembly = :edgewise) < 1.0e-14 &&
-        main(; unknown_storage = :dense, assembly = :cellwise) < 1.0e-14 &&
-        main(; unknown_storage = :sparse, assembly = :cellwise) < 1.0e-14
+    @test main(; unknown_storage = :dense, assembly = :edgewise) < 1.0e-14
+    @test main(; unknown_storage = :sparse, assembly = :edgewise) < 1.0e-14
+    @test main(; unknown_storage = :dense, assembly = :cellwise) < 1.0e-14
+    @test main(; unknown_storage = :sparse, assembly = :cellwise) < 1.0e-14
     return nothing
 end
 
