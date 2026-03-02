@@ -76,7 +76,7 @@ function make(;
             "Obtaining vector fields" => "flux-reconstruction.jl",
             "Internal interfaces (1D)" => "interfaces1d.jl",
             "A case for caution" => "problemcase.jl",
-            "Nonlinear solver control" => "nonlinear-solvers.jl",
+            # "Nonlinear solver control" => "nonlinear-solvers.jl",
             # "Bernoulli function test" => "bernoulli.jl",
             #            "API Updates" => "api-update.jl",
         ]
