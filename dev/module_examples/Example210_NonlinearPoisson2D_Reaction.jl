@@ -7,12 +7,16 @@ using Printf
 using VoronoiFVM
 using ExtendableGrids
 using GridVisualize
+using LinearSolve, ExtendableSparse
 import Metis
 
-function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :sparse, assembly = :edgewise)
-    h = 1.0 / convert(Float64, n)
-    X = collect(0.0:h:1.0)
-    Y = collect(0.0:h:1.0)
+function main(;
+        n = 10, Plotter = nothing, verbose = false,
+        unknown_storage = :sparse, assembly = :edgewise, tstep = 0.01
+    )
+
+    X = range(0, 1, length = n + 1)
+    Y = range(0, 1, length = n + 1)
 
     grid = simplexgrid(X, Y)
 
@@ -24,6 +28,7 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
         f[1] = data.k * (u[1] - u[2])
         f[2] = data.k * (u[2] - u[1])
         return nothing
+
     end
 
     function flux!(f, u, edge, data)
@@ -45,15 +50,15 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
         return nothing
     end
 
-    physics = VoronoiFVM.Physics(;
-        data = data,
+    sys = VoronoiFVM.System(
+        grid;
+        data,
         flux = flux!,
         storage = storage!,
         reaction = reaction!,
-        source = source!
+        source = source!,
+        unknown_storage = unknown_storage, assembly = assembly
     )
-
-    sys = VoronoiFVM.System(grid, physics; unknown_storage = unknown_storage, assembly = assembly)
 
     enable_species!(sys, 1, [1])
     enable_species!(sys, 2, [1])
@@ -61,23 +66,25 @@ function main(; n = 10, Plotter = nothing, verbose = false, unknown_storage = :s
     inival = unknowns(sys)
     inival .= 0.0
 
-    control = VoronoiFVM.SolverControl()
-    control.verbose = verbose
-    tstep = 0.01
-    time = 0.0
-    istep = 0
-    testval = 0
+    control = VoronoiFVM.SolverControl(;
+        verbose,
+        Δt = tstep,
+        Δt_min = tstep,
+        Δt_max = tstep,
+        Δu_opt = 1.0e5,
+        method_linear = KrylovJL_BICGSTAB(precs = LinearSolvePreconBuilder(UMFPACKFactorization())),
+        factorize_every_timestep = 2
+    )
+
     p = GridVisualizer(; Plotter = Plotter, layout = (2, 1))
-    @time    while time < 1
-        time = time + tstep
-        U = solve(sys; inival, control, tstep)
-        inival .= U
-        testval = sum(U)
-        tstep *= 1.0
-        istep = istep + 1
+    function post(U, Uold, t, Δt)
         scalarplot!(p[1, 1], grid, U[1, :]; clear = true, limits = (0, 0.5))
         scalarplot!(p[2, 1], grid, U[2, :]; show = true, limits = (0, 0.5))
+        return
     end
+
+    tsol = solve(sys; inival, times = (0, 1), control, post)
+    testval = sum(tsol.u[end])
     return testval
 end
 

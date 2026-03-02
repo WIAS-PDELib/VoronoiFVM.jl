@@ -185,7 +185,7 @@ function main(; nref = 0, Plotter = nothing, npart = 20, assembly = :edgewise, t
     @time "ilu0-gmres" ilu0_sol = solve(
         sys; inival = 0.5,
         method_linear = KrylovJL_GMRES(precs = ILUZeroPreconBuilder(blocksize = 3)),
-        keepcurrent_linear = false,
+        factorize_every_newtonstep = false,
         kwargs...
     )
     @show n = norm(ilu0_sol - direct_sol, Inf)
@@ -197,7 +197,7 @@ function main(; nref = 0, Plotter = nothing, npart = 20, assembly = :edgewise, t
     @time "Direct-gmres" pgmres_sol = solve(
         sys; inival = 0.5,
         method_linear = KrylovJL_GMRES(precs = LinearSolvePreconBuilder(direct_solver)),
-        keepcurrent_linear = false,
+        factorize_every_newtonstep = false,
         kwargs...
     )
     @show n = norm(pgmres_sol - direct_sol, Inf)
@@ -215,7 +215,7 @@ function main(; nref = 0, Plotter = nothing, npart = 20, assembly = :edgewise, t
                 partitioning = A -> [1:3:size(A, 1), 2:3:size(A, 1), 3:3:size(A, 1)]
             )
         ),
-        keepcurrent_linear = false,
+        factorize_every_newtonstep = false,
         kwargs...
     )
     @show n = norm(pbgmres_sol - direct_sol, Inf)
@@ -234,7 +234,7 @@ function main(; nref = 0, Plotter = nothing, npart = 20, assembly = :edgewise, t
                     partitioning = A -> [1:3:size(A, 1), 2:3:size(A, 1), 3:3:size(A, 1)]
                 )
             ),
-            keepcurrent_linear = false,
+            factorize_every_newtonstep = false,
             kwargs...
         )
         @show n = norm(amgclbgmres_sol - direct_sol, Inf)
@@ -252,7 +252,7 @@ function main(; nref = 0, Plotter = nothing, npart = 20, assembly = :edgewise, t
                 partitioning = A -> [1:3:size(A, 1), 2:3:size(A, 1), 3:3:size(A, 1)]
             )
         ),
-        keepcurrent_linear = false,
+        factorize_every_newtonstep = false,
         kwargs...
     )
     @show n = norm(amgbgmres_sol - direct_sol, Inf)
