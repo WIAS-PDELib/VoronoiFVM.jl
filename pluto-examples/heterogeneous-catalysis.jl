@@ -27,9 +27,6 @@ if isdefined(Main, :PlutoRunner)
     using Revise
 end
 
-# ╔═╡ f75a3225-c7bf-4031-89c7-a792a592f639
-doplots = isdefined(Main, :PlutoRunner)
-
 # ╔═╡ e04d9162-e6ed-4e9f-86ce-51b5175f8103
 begin
     using SciMLBase: ODEProblem, solve
@@ -41,7 +38,8 @@ begin
     using VoronoiFVM: ramp, boundary_dirichlet!
     using ExtendableGrids: simplexgrid
     using GridVisualize: GridVisualize, GridVisualizer, reveal, scalarplot!, gridplot, available_kwargs
-    if doplots # defined in the Appendix
+    doplots = isdefined(Main, :PlutoRunner)
+    if doplots
         using Plots: Plots, plot, theme
         using PlotThemes
         Plots.gr()
@@ -753,12 +751,6 @@ let
     reveal(vis)
 end
 
-# ╔═╡ 7f083626-e1de-4028-a389-1cc09588fbf0
-md"""
-## Appendix
-"""
-
-
 # ╔═╡ Cell order:
 # ╠═973f24a9-df94-46a9-8c54-34ea8e7e824c
 # ╠═e04d9162-e6ed-4e9f-86ce-51b5175f8103
@@ -882,5 +874,3 @@ md"""
 # ╠═8f8e2294-cb51-4649-a543-f6ef39384dad
 # ╠═a83e969e-ba25-4b6b-83e4-6febed1e8602
 # ╠═2eeb7d1a-25bc-4c09-bc86-a998a7bf3ca7
-# ╟─7f083626-e1de-4028-a389-1cc09588fbf0
-# ╠═f75a3225-c7bf-4031-89c7-a792a592f639
