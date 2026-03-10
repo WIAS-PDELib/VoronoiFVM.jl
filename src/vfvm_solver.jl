@@ -365,7 +365,7 @@ function solve_transient!(
                         istep
                     )
                 catch err
-                    err = "Problem at $(λstr)=$(λ |> rd), Δ$(λstr)=$(Δλ |> rd):\n$(err)"
+                    err = "Solver problem at $(λstr)=$(λ |> rd), Δ$(λstr)=$(Δλ |> rd):\n$(err) \nRetrying with smaller step size."
                     if (control.handle_exceptions)
                         _warn(err, stacktrace(catch_backtrace()))
                     else
