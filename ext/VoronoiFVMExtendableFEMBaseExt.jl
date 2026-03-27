@@ -81,6 +81,7 @@ function prepare_segment_integration(vel; axisymmetric = false, reconst = false,
     flowgrid = vel.FES.xgrid
 
     # reference mappings not implemented for other coord types
+    old_coordsystem = flowgrid[CoordinateSystem]
     cartesian!(flowgrid)
 
     if axisymmetric
@@ -98,9 +99,7 @@ function prepare_segment_integration(vel; axisymmetric = false, reconst = false,
 
     cellfinder = CellFinder(flowgrid)
 
-    if axisymmetric
-        circular_symmetric!(flowgrid)
-    end
+    flowgrid[CoordinateSystem] = old_coordsystem
 
     return seg_integrator, point_evaluator, cellfinder, flowgrid
 end
@@ -119,10 +118,6 @@ function VoronoiFVM.edgevelocities(grid::ExtendableGrid, vel::FEVectorBlock; kwa
     aug_fevec_block = AugmentedFEVectorBlock(vel, seg_integrator, point_evaluator, cf, flowgrid)
     velovec = VoronoiFVM.edgevelocities(grid, aug_fevec_block; axisymmetric, kwargs...)
 
-    if axisymmetric
-        circular_symmetric!(flowgrid)
-    end
-
     return velovec
 end
 
@@ -138,10 +133,6 @@ function VoronoiFVM.bfacevelocities(grid::ExtendableGrid, vel::FEVectorBlock; kw
     aug_fevec_block = AugmentedFEVectorBlock(vel, seg_integrator, point_evaluator, cf, flowgrid)
 
     velovec = VoronoiFVM.bfacevelocities(grid, aug_fevec_block; axisymmetric, kwargs...)
-
-    if axisymmetric
-        circular_symmetric!(flowgrid)
-    end
 
     return velovec
 end
