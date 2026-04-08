@@ -118,6 +118,16 @@ function Base.getindex(v::VectorOfDiskArrays, i)
     end
 end
 
+function Base.getindex(v::VectorOfDiskArrays, i::Colon)
+    return if isnothing(v.file)
+        jldopen(v.fname, "r") do file
+            [file[string(j)] for j in 1:v.n]
+        end
+    else
+        [v.file[string(j)] for j in 1:v.n]
+    end
+end
+
 _tempname() = Base.VERSION < v"1.4" ? tempname() : tempname(pwd()) * ".jld2"
 
 """
