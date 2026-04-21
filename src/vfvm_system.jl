@@ -954,9 +954,16 @@ function _initialize_dirichlet!(
 
     _complete!(system)
     nspecies = num_species(system)
+    bnode::Union{Nothing, BNode{Tc, Tc, Ti}} = nothing
 
-    # set up bnode
-    bnode = BNode(system, time, λ)
+    lock(system.gridaccesslock)
+    try
+        # this may trigger building infrastructure in the grid, so this
+        # cannot be run in multithreaded code
+        bnode = BNode(system, time, λ)
+    finally
+        unlock(system.gridaccesslock)
+    end
 
     # setup unknowns to be passed
     UK = zeros(Tv, num_species(system) + length(params))
