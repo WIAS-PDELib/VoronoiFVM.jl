@@ -558,7 +558,7 @@ function eval_and_assemble(
 
     hasbflux = getproperty(physics, :bflux) != nofunc
 
-    if num_partitions(system.assembly_data) == 1
+    if true # num_partitions(system.assembly_data) == 1
         part = 1
         ncalloc = assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
         ncalloc += assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
