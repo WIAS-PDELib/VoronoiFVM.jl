@@ -316,11 +316,11 @@ function assemble_edges(
 end
 
 function assemble_bnodes(
-        system, matrix, dudp, time, tstepinv, λ, data, params, part,
+        system::AbstractSystem{Tv, Tc, Ti, Tm}, matrix, dudp, time, tstepinv, λ, data, params, part,
         U::AbstractMatrix{Tv}, # Actual solution iteration
         UOld::AbstractMatrix{Tv}, # Old timestep solution
         F::AbstractMatrix{Tv}
-    ) where {Tv}
+    ) where {Tv, Tc, Ti, Tm}
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
@@ -329,6 +329,7 @@ function assemble_bnodes(
     has_legacy_bc = !iszero(boundary_factors) || !iszero(boundary_values)
     UK = Array{Tv, 1}(undef, nspecies + nparams)
     UKOld = Array{Tv, 1}(undef, nspecies + nparams)
+    bnode::Union{Nothing, BNode{Tc, Tc, Ti}} = nothing
 
     if nparams > 0
         UK[(nspecies + 1):end] .= params
