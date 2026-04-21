@@ -334,8 +334,14 @@ function assemble_bnodes(
         UK[(nspecies + 1):end] .= params
         UKOld[(nspecies + 1):end] .= params
     end
-    bnode = BNode(system, time, λ; partition = part)
-
+    lock(system.gridaccesslock)
+    try
+        # this may trigger building infrastructure in the grid, so this
+        # cannot be run in multithreaded code
+        bnode = BNode(system, time, λ; partition = part)
+    finally
+        unlock(system.gridaccesslock)
+    end
     bsrc_evaluator = ResEvaluator(physics, data, :bsource, UK, bnode, nspecies)
     brea_evaluator = ResJacEvaluator(physics, data, :breaction, UK, bnode, nspecies)
     bstor_evaluator = ResJacEvaluator(physics, data, :bstorage, UK, bnode, nspecies)
