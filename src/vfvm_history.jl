@@ -20,8 +20,14 @@ Base.@kwdef mutable struct NewtonSolverHistory <: AbstractVector{Float64}
     """ Elapsed time for assembly """
     tasm::Float64 = 0.0
 
-    """ Elapsed time for linear solve """
-    tlinsolve::Float64 = 0.0
+    """ Elapsed time for linear solve: total """
+    tlinsolve_total::Float64 = 0.0
+
+    """ Elapsed time for linear solve: assembly step """
+    tlinsolve_asm::Float64 = 0.0
+
+    """ Elapsed time for linear solve: solve step """
+    tlinsolve_solve::Float64 = 0.0
 
     """ History of norms of ``||u_{i+1}-u_i||``"""
     updatenorm = zeros(0)
