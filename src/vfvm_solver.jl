@@ -23,7 +23,7 @@ function solve_step!(
     )
     nlhistory = NewtonSolverHistory()
     tasm = 0.0
-    tlinsolve_total = 0.0
+    tlinsolve = 0.0
     t = @elapsed begin
         solution .= oldsol
         residual = state.residual
@@ -92,7 +92,7 @@ function solve_step!(
 
             reuse_precs = (!control.factorize_every_newtonstep && niter > 1) || (istep_factorize % control.factorize_every_timestep != 0)
 
-            tlinsolve_total += @elapsed _solve_linear!(
+            tlinsolve += @elapsed _solve_linear!(
                 dofs(update),
                 state,
                 nlhistory,
@@ -176,7 +176,7 @@ function solve_step!(
     end
     if control.log
         nlhistory.time = t
-        nlhistory.tlinsolve_total = tlinsolve_total
+        nlhistory.tlinsolve = tlinsolve
         nlhistory.tasm = tasm
     end
 
@@ -187,7 +187,7 @@ function solve_step!(
     end
 
     if doprint(control, 'n') && !state.system.is_linear
-        _info("  [n]ewton: $(round(t, sigdigits = 3)) seconds asm: $(round(100 * tasm / t, sigdigits = 3))%, linsolve: $(round(100 * tlinsolve_total / t, sigdigits = 3))%")
+        _info("  [n]ewton: $(round(t, sigdigits = 3)) seconds asm: $(round(100 * tasm / t, sigdigits = 3))%, linsolve: $(round(100 * tlinsolve / t, sigdigits = 3))%")
     end
 
     if doprint(control, 'l') && state.system.is_linear

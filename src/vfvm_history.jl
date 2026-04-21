@@ -21,7 +21,7 @@ Base.@kwdef mutable struct NewtonSolverHistory <: AbstractVector{Float64}
     tasm::Float64 = 0.0
 
     """ Elapsed time for linear solve: total """
-    tlinsolve_total::Float64 = 0.0
+    tlinsolve::Float64 = 0.0
 
     """ Elapsed time for linear solve: assembly step """
     tlinsolve_asm::Float64 = 0.0
