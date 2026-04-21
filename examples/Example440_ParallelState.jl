@@ -30,7 +30,6 @@ function main(; nref = 5, Plotter = nothing)
 
     ## Initial state. First solution creates the matrix
     state0 = VoronoiFVM.SystemState(sys)
-    sol = solve!(state0; inival = 0.1)
 
     ## Prepare parameter and result data
     influxes = range(0.0, 10.0, length = 100)
@@ -40,6 +39,7 @@ function main(; nref = 5, Plotter = nothing)
     Threads.@threads for indexes in chunks(1:length(influxes); n = Threads.nthreads())
         ## Create a new state sharing the system - one for each chunk
         state = similar(state0)
+        @show indexes
         ## Solve for all data values in chunk
         for iflux in indexes
             data = (influx = influxes[iflux],)
