@@ -1,8 +1,8 @@
 # Changes
 
-## v3.2.0 April 21, 2026
+## v3.2.0 April 27, 2026
   - Add detailed timing breakdown for linear solver in `NewtonSolverHistory`
-    - new `tlinsolve_asm` (assembly time, incl. preconditioner setup)
+    - new `tlinsolve_setup` (assembly time, incl. preconditioner setup)
     - new `tlinsolve_solve` (solve time)
 
 ## v3.1.0 February 17, 2026

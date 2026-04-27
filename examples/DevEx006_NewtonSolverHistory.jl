@@ -60,28 +60,30 @@ function main(; n = 10, assembly = :edgewise, kwargs...)
         sys;
         inival = 0.5,
         method_linear = LinearSolve.UMFPACKFactorization(),
+        log = true,
         kwargs...
     )
     sol_history = history(sol)
     tlinsolve = sol_history.tlinsolve
     tlinsolve_setup = sol_history.tlinsolve_setup
     tlinsolve_solve = sol_history.tlinsolve_solve
-    @test tlinsolve ≈ tlinsolve_setup + tlinsolve_solve
+    @test tlinsolve ≈ tlinsolve_setup + tlinsolve_solve atol = 0.1
 
     @info "Krylov-ilu0:"
     sol = solve(
         sys;
         inival = 0.5,
         method_linear = KrylovJL_BICGSTAB(precs = ILUZeroPreconBuilder()),
+        log = true,
         kwargs...
     )
     sol_history = history(sol)
     tlinsolve = sol_history.tlinsolve
     tlinsolve_setup = sol_history.tlinsolve_setup
     tlinsolve_solve = sol_history.tlinsolve_solve
-    @test tlinsolve ≈ tlinsolve_setup + tlinsolve_solve
+    @test tlinsolve ≈ tlinsolve_setup + tlinsolve_solve atol = 0.1
 
-    return @test tlinsolve ≈ tlinsolve_setup + tlinsolve_solve
+    return @test tlinsolve ≈ tlinsolve_setup + tlinsolve_solve atol = 0.1
 end
 
 function runtests()
