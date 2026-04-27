@@ -1,4 +1,10 @@
 # Changes
+
+## v3.2.0 April 27, 2026
+  - Add detailed timing breakdown for linear solver in `NewtonSolverHistory`
+    - new `tlinsolve_setup` (assembly time, incl. preconditioner setup)
+    - new `tlinsolve_solve` (solve time)
+
 ## v3.1.0 February 17, 2026
   - Better control of factorizations during evolution
     - new `solvercontrol.factorize_every_timestep`

@@ -19,17 +19,15 @@ using AMGCLWrap
 using AlgebraicMultigrid
 using LinearAlgebra
 
-
 using Test
 
 
-function main(; n = 10, Plotter = nothing, assembly = :edgwwise, kwargs...)
+function main(; n = 10, Plotter = nothing, assembly = :edgewise, kwargs...)
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
     Y = collect(0.0:h:1.0)
 
     grid = simplexgrid(X, Y)
-    nn = num_nodes(grid)
 
     eps = 1.0e-2
 
