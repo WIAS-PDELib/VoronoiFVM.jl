@@ -728,7 +728,7 @@ end
 Ctotalv = tsol[iC, 1, :] + tsol[iCA, 1, :] + tsol[iCB, 1, :] + tsol[iCAB2, 1, :]
 
 # ╔═╡ a83e969e-ba25-4b6b-83e4-6febed1e8602
-@test Ctotalv ≈ ones(length(tsol))
+@test Ctotalv ≈ ones(length(tsol.t))
 
 # ╔═╡ 2eeb7d1a-25bc-4c09-bc86-a998a7bf3ca7
 let
