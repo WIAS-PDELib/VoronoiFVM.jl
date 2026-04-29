@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.23
+# v0.20.24
 
 using Markdown
 using InteractiveUtils
@@ -47,6 +47,7 @@ begin
         GridVisualize.default_plotter!(Plots)
     end
     import PlutoUI
+    import Latexify
     using Test
     PlutoUI.TableOfContents(; depth = 4)
 end
@@ -221,7 +222,7 @@ The corresponding ODE system is:
 """
 
 # ╔═╡ e0203c0d-9866-407a-b680-5a0d3f0a1ecc
-convert(ODESystem, rn1)
+ode1n = complete(ode_model(rn1))
 
 # ╔═╡ 4f1fa3bf-c3c9-49c3-8ddf-936fe0b38e70
 md"""
@@ -229,7 +230,7 @@ Catalyst.jl adds a new method  to the ODEProblem constructor which allows to pas
 """
 
 # ╔═╡ 5baeeab7-570d-4094-b92a-027678165e15
-prob1n = ODEProblem(rn1, u1_ini, (0, 10.0), Dict(pairs(p1)))
+prob1n = ODEProblem(ode1n, u1_ini, (0, 10.0), Dict(pairs(p1)))
 
 # ╔═╡ 3f0f2f0f-2931-403b-8c06-aabc0280a3ab
 sol1n = solve(prob1n, Rosenbrock23())
@@ -278,10 +279,10 @@ Once we are here, the rest remains the same.
 """
 
 # ╔═╡ 720fa225-3572-4ced-a44e-61d7adbe083b
-convert(ODESystem, rn1x)
+ode1x = ode_model(rn1x) |> complete
 
 # ╔═╡ b44ece71-09b2-4c47-a799-7c62bd3f0e28
-prob1x = ODEProblem(rn1x, u1_ini, (0, 10.0), Dict(pairs(p1)))
+prob1x = ODEProblem(ode1x, u1_ini, (0, 10.0), Dict(pairs(p1)))
 
 # ╔═╡ cf56fe28-fb31-42c8-b3a2-003fe1aa11b9
 sol1x = solve(prob1x, Rosenbrock23())
@@ -303,7 +304,7 @@ rn2 = @reaction_network rn2 begin
 end
 
 # ╔═╡ 4de8b3cd-9e9d-4952-a330-1aa467e44fa2
-convert(ODESystem, rn2)
+ode1 = ode_model(rn2) |> complete
 
 # ╔═╡ 7fb5e877-659c-45ac-92c8-ce0c0b35a515
 p2 = (k_0A = 0.5, k_0B = 1, k_1p = 0.1, k_1m = 1.0e-5)
@@ -344,7 +345,7 @@ rn3 = @reaction_network rn3 begin
 end
 
 # ╔═╡ 7430aa42-1db3-445c-a547-961157de0d1a
-convert(ODESystem, rn3)
+ode3 = ode_model(rn3) |> complete
 
 # ╔═╡ 5cb92c3c-299f-4077-9ff8-012e24d3f9e8
 p3 = (
@@ -475,7 +476,7 @@ rnv = @reaction_network rnv begin
 end
 
 # ╔═╡ f0501240-75e9-425b-8690-81a8284aef28
-odesys = convert(ODESystem, rnv)
+odesys = ode_model(rnv)
 
 # ╔═╡ 68a4d03f-a526-4d37-a45e-c951432e20e7
 eqns = equations(odesys);
