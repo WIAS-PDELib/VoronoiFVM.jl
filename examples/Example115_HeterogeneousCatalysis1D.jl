@@ -200,7 +200,7 @@ function main(;
     end
 
     p = GridVisualizer(; Plotter = Plotter, layout = (3, 1), fast = true)
-    for it in 1:length(tsol.t)
+    for it in 1:length(tsol)
         time = tsol.t[it]
         scalarplot!(
             p[1, 1], grid, tsol[problem_data.iA, :, it]; clear = true,

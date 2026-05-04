@@ -97,7 +97,7 @@ function main(;
 
     if Plotter != nothing
         p = GridVisualizer(; Plotter = Plotter, layout = (1, 1), fast = true)
-        for i in 1:length(tsol.t)
+        for i in 1:length(tsol)
             time = tsol.t[i]
             scalarplot!(
                 p[1, 1], grid, tsol[1, :, i]; title = @sprintf("t=%.3g", time),

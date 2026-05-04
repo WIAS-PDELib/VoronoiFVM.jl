@@ -4,33 +4,28 @@ canonical_matrix(A) = A
 canonical_matrix(A::AbstractExtendableSparseMatrixCSC) = SparseMatrixCSC(A)
 
 function _solve_linear!(u, state, nlhistory, control, method_linear, A, b, reuse_precs)
-
     if isnothing(state.linear_cache)
         if !isa(method_linear, LinearSolve.SciMLLinearSolveAlgorithm)
             @warn "use of $(typeof(method_linear)) is deprecated, use an algorithm from LinearSolve"
         end
+        Pl = nothing
         nlhistory.nlu += 1
-        nlhistory.tlinsolve_setup += @elapsed begin
-            Pl = nothing
-            p = LinearProblem(canonical_matrix(A), b)
-            state.linear_cache = init(
-                p,
-                method_linear;
-                abstol = control.abstol_linear,
-                reltol = control.reltol_linear,
-                maxiters = control.maxiters_linear,
-                verbose = doprint(control, 'l'),
-                Pl,
-            )
-        end
+        p = LinearProblem(canonical_matrix(A), b)
+        state.linear_cache = init(
+            p,
+            method_linear;
+            abstol = control.abstol_linear,
+            reltol = control.reltol_linear,
+            maxiters = control.maxiters_linear,
+            verbose = doprint(control, 'l'),
+            Pl,
+        )
         if doprint(control, 'l')
             out = @sprintf("    [l]inear: factorize #%d\n", nlhistory.nlu)
             _info(out)
         end
     else
-        nlhistory.tlinsolve_setup += @elapsed begin
-            reinit!(state.linear_cache; A = canonical_matrix(A), b, reuse_precs)
-        end
+        reinit!(state.linear_cache; A = canonical_matrix(A), b, reuse_precs)
         if !reuse_precs
             nlhistory.nlu += 1
             if doprint(control, 'l')
@@ -41,11 +36,9 @@ function _solve_linear!(u, state, nlhistory, control, method_linear, A, b, reuse
     end
 
     try
-        local sol
-        nlhistory.tlinsolve_solve += @elapsed begin
-            sol = LinearSolve.solve!(state.linear_cache)
-        end
+        sol = LinearSolve.solve!(state.linear_cache)
         u .= sol.u
+        nliniter = sol.iters
         nlhistory.nlin = sol.iters
     catch err
         if (control.handle_exceptions)
