@@ -18,6 +18,7 @@ ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 GridVisualize = "5eed8a63-0fb0-45eb-886d-8d5a387d12b8"
 HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
 ILUZero = "88f59080-6952-5380-9ea5-54057fb9a43f"
+Latexify = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -48,7 +49,10 @@ Triangulate = "f7e6ffb2-c36d-4f8f-a77e-16e897189344"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 VoronoiFVM = "82b139dc-5afc-11e9-35da-9b9bdfd336f3"
 
+[sources]
+VoronoiFVM = {path = ".."}
+
 [compat]
-Catalyst = "14, 15"
+Catalyst = "16"
 Documenter = "1.6"
 ExampleJuggler = "2"

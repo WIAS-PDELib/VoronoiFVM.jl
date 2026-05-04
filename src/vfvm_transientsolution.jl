@@ -20,7 +20,7 @@ Object of this type adhere to the `AbstractDiffEqArray`  interface.
 For indexing and interpolation, see [https://diffeq.sciml.ai/stable/basics/solution/](https://diffeq.sciml.ai/stable/basics/solution/).
 
 In particular, a TransientSolution `sol` can be accessed as follows:
-- `sol[i]` contains the solution for timestep `i`
+- `sol.u[i]` contains the solution for timestep `i`
 - `sol[ispec,:,i]` contains the solution for component `ispec` at timestep `i`
 - `sol(t)` returns a (linearly) interpolated solution value for `t`.
 - `sol.t[i]` is the corresponding time for timestep `i`
@@ -71,7 +71,7 @@ Base.append!(s::AbstractTransientSolution, t::Real, sol::AbstractSolutionArray) 
 
 function _interpolate(sol, t)
     if isapprox(t, sol.t[1]; atol = 1.0e-10 * abs(sol.t[2] - sol.t[1]))
-        return sol[1]
+        return sol.u[1]
     end
     idx = searchsortedfirst(sol.t, t)
     if idx == 1 || idx > length(sol)
@@ -115,6 +115,16 @@ function Base.getindex(v::VectorOfDiskArrays, i)
         end
     else
         v.file[string(i)]
+    end
+end
+
+function Base.getindex(v::VectorOfDiskArrays, i::Colon)
+    return if isnothing(v.file)
+        jldopen(v.fname, "r") do file
+            [file[string(j)] for j in 1:v.n]
+        end
+    else
+        [v.file[string(j)] for j in 1:v.n]
     end
 end
 

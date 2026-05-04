@@ -1,4 +1,19 @@
 # Changes
+
+## v3.3.0 April 27, 2026
+  - Add detailed timing breakdown for linear solver in `NewtonSolverHistory`
+    - new `tlinsolve_setup` (assembly time, incl. preconditioner setup)
+    - new `tlinsolve_solve` (solve time)
+  - Compatibility to RecursiveArrayTools v4, SciMLBase v3 and OrdinaryDiffEq v7
+  - Fix parallel simulations with multiple states
+  
+## v3.2.0 March 2, 2026
+  - Fix and improve generic operator handling (#258)
+    - initialize generic operator result with zero
+    - Removed design error caused by the assumption that we could
+      reshape AbstractVector which resulte in essentially returning a copy.
+    - Recommend `reshape` in generic operator callback functions instead of using u[idx[i,j]]
+
 ## v3.1.0 February 17, 2026
   - Better control of factorizations during evolution
     - new `solvercontrol.factorize_every_timestep`

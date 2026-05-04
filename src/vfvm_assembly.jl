@@ -316,11 +316,11 @@ function assemble_edges(
 end
 
 function assemble_bnodes(
-        system, matrix, dudp, time, tstepinv, λ, data, params, part,
+        system::AbstractSystem{Tv, Tc, Ti, Tm}, matrix, dudp, time, tstepinv, λ, data, params, part,
         U::AbstractMatrix{Tv}, # Actual solution iteration
         UOld::AbstractMatrix{Tv}, # Old timestep solution
         F::AbstractMatrix{Tv}
-    ) where {Tv}
+    ) where {Tv, Tc, Ti, Tm}
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
@@ -329,13 +329,20 @@ function assemble_bnodes(
     has_legacy_bc = !iszero(boundary_factors) || !iszero(boundary_values)
     UK = Array{Tv, 1}(undef, nspecies + nparams)
     UKOld = Array{Tv, 1}(undef, nspecies + nparams)
+    bnode::Union{Nothing, BNode{Tc, Tc, Ti}} = nothing
 
     if nparams > 0
         UK[(nspecies + 1):end] .= params
         UKOld[(nspecies + 1):end] .= params
     end
-    bnode = BNode(system, time, λ; partition = part)
-
+    lock(system.gridaccesslock)
+    try
+        # this may trigger building infrastructure in the grid, so this
+        # cannot be run in multithreaded code
+        bnode = BNode(system, time, λ; partition = part)
+    finally
+        unlock(system.gridaccesslock)
+    end
     bsrc_evaluator = ResEvaluator(physics, data, :bsource, UK, bnode, nspecies)
     brea_evaluator = ResJacEvaluator(physics, data, :breaction, UK, bnode, nspecies)
     bstor_evaluator = ResJacEvaluator(physics, data, :bstorage, UK, bnode, nspecies)

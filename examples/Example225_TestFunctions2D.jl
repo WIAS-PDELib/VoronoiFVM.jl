@@ -222,7 +222,7 @@ function main(;
         fignumber = 4
     )
 
-    for i in 1:length(tsol)
+    for i in 1:length(tsol.t)
         sol = tsol.u[i]
         scalarplot!(vis1[1, 1], grid, sol[1, :]; flimits = (0, 1.5), clear = true)
         scalarplot!(vis1[1, 2], grid, sol[2, :]; flimits = (0, 1.5), show = true)
@@ -238,7 +238,7 @@ function main(;
     scalarplot!(vis2[1, 1], tsol.t[2:end], -outflow_rate[2, :]; label = "transient", clear = false, show = true, color = :blue)
 
     all_outflow = 0.0
-    for i in 1:(length(tsol) - 1)
+    for i in 1:(length(tsol.t) - 1)
         all_outflow -= outflow_rate[2, i] * (tsol.t[i + 1] - tsol.t[i])
     end
 
