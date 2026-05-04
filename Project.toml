@@ -67,7 +67,6 @@ HypertextLiteral = "0.9.5, 1"
 ILUZero = "0.2.0"
 InteractiveUtils = "1.9"
 JLD2 = "0.4.29, 0.5, 0.6"
-JumpProcesses = "< 9.21"
 Latexify = "0.16.10"
 LinearAlgebra = "1.9"
 LinearSolve = "3.52.0"
@@ -116,7 +115,6 @@ ExtendableFEM = "a722555e-65e0-4074-a036-ca7ce79a4aed"
 ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
 HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
 ILUZero = "88f59080-6952-5380-9ea5-54057fb9a43f"
-JumpProcesses = "ccbc3e58-028d-4f4c-8cd5-9ae44345cda5"
 Latexify = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 Metis = "2679e427-3c69-5b7f-982b-ece356f1e94b"
@@ -138,4 +136,4 @@ UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [targets]
 
-test = ["AMGCLWrap", "AlgebraicMultigrid", "Aqua", "Catalyst", "ChunkSplitters", "DataStructures", "ExampleJuggler", "ExplicitImports", "ExtendableFEM", "ExtendableFEMBase", "HypertextLiteral", "ILUZero", "JumpProcesses", "Latexify", "Markdown", "Metis", "OrdinaryDiffEqBDF", "OrdinaryDiffEqLowOrderRK", "OrdinaryDiffEqRosenbrock", "OrdinaryDiffEqSDIRK", "OrdinaryDiffEqTsit5", "Pardiso", "Pkg", "PlutoUI", "PreallocationTools", "Revise", "SimplexGridFactory", "StrideArraysCore", "Test", "Triangulate", "UUIDs"]
+test = ["AMGCLWrap", "AlgebraicMultigrid", "Aqua", "Catalyst", "ChunkSplitters", "DataStructures", "ExampleJuggler", "ExplicitImports", "ExtendableFEM", "ExtendableFEMBase", "HypertextLiteral", "ILUZero", "Latexify", "Markdown", "Metis", "OrdinaryDiffEqBDF", "OrdinaryDiffEqLowOrderRK", "OrdinaryDiffEqRosenbrock", "OrdinaryDiffEqSDIRK", "OrdinaryDiffEqTsit5", "Pardiso", "Pkg", "PlutoUI", "PreallocationTools", "Revise", "SimplexGridFactory", "StrideArraysCore", "Test", "Triangulate", "UUIDs"]
