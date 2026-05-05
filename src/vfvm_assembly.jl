@@ -113,9 +113,9 @@ function assemble_nodes(
                 )
             end
 
-            @inline function asm_param(idof, ispec, iparam)
+            @inline function asm_param(icell, ispec, iparam)
                 jparam = nspecies + iparam
-                dudp[iparam][ispec, idof] += (jac_react[ispec, jparam] + jac_stor[ispec, jparam] * tstepinv) *
+                dudp[iparam][ispec, icell] += (jac_react[ispec, jparam] + jac_stor[ispec, jparam] * tstepinv) *
                     node.fac
             end
 
@@ -191,10 +191,10 @@ function assemble_edges(
                 )
             end
 
-            @inline function asm_param(idofK, idofL, ispec, iparam)
+            @inline function asm_param(icellK, icellL, ispec, iparam)
                 jparam = 2 * nspecies + iparam
-                dudp[iparam][ispec, idofK] += edge.fac * jac_flux[ispec, jparam]
-                dudp[iparam][ispec, idofL] -= edge.fac * jac_flux[ispec, jparam]
+                dudp[iparam][ispec, icellK] += edge.fac * jac_flux[ispec, jparam]
+                dudp[iparam][ispec, icellL] -= edge.fac * jac_flux[ispec, jparam]
             end
 
             assemble_res_jac(edge, system, asm_res, asm_jac, asm_param)

@@ -43,7 +43,7 @@ function main(;
 
     X = geomspace(0, L, h0, h1)
 
-    # Create discretitzation grid
+    # Create discretization grid
     grid = simplexgrid(X)
 
     # Create and fill data
@@ -107,7 +107,7 @@ function main(;
     dmeas_stdy = measurement_derivative(sys, meas_stdy, steadystate)
     dmeas_tran = measurement_derivative(sys, meas_tran, steadystate)
 
-    # Create Impeadancs system from steady state
+    # Create impedance system from steady state
     isys = VoronoiFVM.ImpedanceSystem(sys, steadystate, excited_spec, excited_bc)
 
     # Prepare recording of impedance results

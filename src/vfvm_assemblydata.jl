@@ -240,7 +240,7 @@ Assemble residual and jacobian for node functions. Parameters:
 - `node`: node
 
 - `asm_jac(idof,jdof,ispec,jspec)`: e.g.  assemble entry `ispec,jspec` of local jacobian into entry `idof,jdof` of global matrix
-- `asm_param(idof,ispec,iparam)` shall assemble parameter derivatives
+- `asm_param(K,ispec,iparam)` shall assemble parameter derivatives
 """
 @inline function assemble_res_jac(
         node::Node,
@@ -262,7 +262,7 @@ Assemble residual and jacobian for node functions. Parameters:
                 end
             end
             for iparam in 1:(system.num_parameters)
-                asm_param(idof, ispec, iparam)
+                asm_param(K, ispec, iparam)
             end
         end
     end
@@ -292,9 +292,9 @@ See [`assemble_res_jac`](@ref) for more explanations.
                 if isnodespecies(system, jspec, K)
                     asm_jac(idof, jdof, ispec, jspec)
                 end
-                for iparam in 1:(system.num_parameters)
-                    asm_param(idof, ispec, iparam)
-                end
+            end
+            for iparam in 1:(system.num_parameters)
+                asm_param(K, ispec, iparam)
             end
         end
     end
@@ -345,7 +345,7 @@ Assemble residual and jacobian for edge (flux) functions. Parameters:
 - `edge`: edge
 - `asm_res(idofK,idofL,ispec)`: e.g. assemble local ispec to global degrees of freedom in unknowns
 - `asm_jac(idofK,jdofK,idofL,jdofL,ispec,jspec)`: e.g.  assemble entry `ispec,jspec` of local jacobian into entry four entries defined by `idofK` and `idofL` of global matrix
-- `asm_param(idofK,idofL,ispec,iparam)` shall assemble parameter derivatives
+- `asm_param(icellK,icellL,ispec,iparam)` shall assemble parameter derivatives
 """
 @inline function assemble_res_jac(
         edge::Edge,
@@ -373,7 +373,7 @@ Assemble residual and jacobian for edge (flux) functions. Parameters:
                     end
                 end
                 for iparam in 1:(system.num_parameters)
-                    asm_param(idofK, idofL, ispec, iparam)
+                    asm_param(K, L, ispec, iparam)
                 end
             end
         end
@@ -436,7 +436,7 @@ See [`assemble_res_jac`](@ref) for more explanations.
                     end
                 end
                 for iparam in 1:(system.num_parameters)
-                    asm_param(idofK, idofL, ispec, iparam)
+                    asm_param(K, L, ispec, iparam)
                 end
             end
         end

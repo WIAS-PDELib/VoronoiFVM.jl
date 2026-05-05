@@ -1,5 +1,9 @@
 # Changes
 
+## v3.3.1 May 5, 2026
+  - Fix bug handling parameters which prevented impedance calculation 
+    from working in the multispecies case, added Example152
+    
 ## v3.3.0 April 27, 2026
   - Add detailed timing breakdown for linear solver in `NewtonSolverHistory`
     - new `tlinsolve_setup` (assembly time, incl. preconditioner setup)
