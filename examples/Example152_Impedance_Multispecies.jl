@@ -27,10 +27,10 @@ function main(;
         N_preliminary_periods::I = 2,
         Ndt::I = 300,
         fdtest::Bool = false
-    ) where I<:Integer
+    ) where {I <: Integer}
     @assert N_preliminary_periods >= 0 "preliminary periods should be non-negative"
     @assert Ndt > 10 "Ndt should be at least 10 to have a reasonable sampling of the period"
-    
+
     # Create array which is refined close to 0
     h0 = 0.005 / 2.0^nref
     h1 = 0.1 / 2.0^nref
@@ -202,7 +202,7 @@ function main(;
             enable_species!(sys_sin, 1, [1])
             enable_species!(sys_sin, 2, [1])
 
-            dt = (2 * π / ω) / (Ndt-1.e-8) # without the perturbation we end up sometimes with one extra time step at the end.
+            dt = (2 * π / ω) / (Ndt - 1.0e-8) # without the perturbation we end up sometimes with one extra time step at the end.
             tend = (N_preliminary_periods + 1) * 2 * π / ω
 
             # Compute a sufficiently long transient and evaluate the impedance on the last period.
@@ -249,7 +249,7 @@ function main(;
             end
             IxL = length(time_impedance) / sum(time_impedance)
             if verbose
-                 ratio = IL / IxL
+                ratio = IL / IxL
 
                 @printf(
                     "Finite difference approximation of impedance at ω = %10.5g: %10.5g%+10.5gi, calculated impedance: %10.5g%+10.5gi, ratio distance to one: %10.5g\n",
