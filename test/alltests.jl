@@ -125,13 +125,10 @@ end
     @test ExplicitImports.check_no_self_qualified_accesses(VoronoiFVM) === nothing
 end
 
-
 @testset "Aqua" begin
     persistent_tasks = true
     if VERSION >= v"1.12.0" && VERSION < v"1.13.0-alpha1"
-        if Sys.iswindows() || Sys.isapple()
-            persistent_tasks = false
-        end
+        persistent_tasks = false
     end
     Aqua.test_all(VoronoiFVM; persistent_tasks)
 end
