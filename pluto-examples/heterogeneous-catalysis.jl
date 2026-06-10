@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.24
+# v1.0.1
 
 using Markdown
 using InteractiveUtils
@@ -230,7 +230,10 @@ Catalyst.jl adds a new method  to the ODEProblem constructor which allows to pas
 """
 
 # ╔═╡ 5baeeab7-570d-4094-b92a-027678165e15
-prob1n = ODEProblem(ode1n, u1_ini, (0, 10.0), Dict(pairs(p1)))
+prob1n = ODEProblem(
+    ode1n, Dict((unknowns(ode1n) .=> u1_ini)..., pairs(p1)...),
+    (0, 10.0)
+)
 
 # ╔═╡ 3f0f2f0f-2931-403b-8c06-aabc0280a3ab
 sol1n = solve(prob1n, Rosenbrock23())
@@ -282,7 +285,7 @@ Once we are here, the rest remains the same.
 ode1x = ode_model(rn1x) |> complete
 
 # ╔═╡ b44ece71-09b2-4c47-a799-7c62bd3f0e28
-prob1x = ODEProblem(ode1x, u1_ini, (0, 10.0), Dict(pairs(p1)))
+prob1x = ODEProblem(ode1x, merge(Dict(unknowns(ode1x) .=> u1_ini), Dict(pairs(p1))), (0, 10.0))
 
 # ╔═╡ cf56fe28-fb31-42c8-b3a2-003fe1aa11b9
 sol1x = solve(prob1x, Rosenbrock23())
@@ -381,7 +384,7 @@ ctotal = rn3.C + rn3.CA + rn3.CB + rn3.CAB2
 sol3[ctotal]
 
 # ╔═╡ 58a527cf-2873-4d2d-ae8f-ffbfe6b10e22
-@test sol3[ctotal] ≈ fill(Cini, length(sol3))
+@test sol3[ctotal] ≈ fill(Cini, length(sol3.t))
 
 # ╔═╡ 907c5c4d-e052-49ee-b96c-adcd37a9cf42
 md"""
