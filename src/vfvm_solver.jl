@@ -81,7 +81,9 @@ function solve_step!(
                 nballoc += nba
                 neval += nev
             catch err
-                if (control.handle_exceptions)
+                if isa(err, InterruptException)
+                    rethrow(err)
+                elseif (control.handle_exceptions)
                     _warn(err, stacktrace(catch_backtrace()))
                     throw(AssemblyError())
                 else
@@ -322,6 +324,7 @@ function solve_transient!(
     λ0 = 0
     istep = 0
     solved = false
+    interrupted = false
     # Outer loop over embedding params/ time values
     t1 = @elapsed for i in 1:(length(lambdas) - 1)
         Δλ = max(Δλ, Δλ_min)
@@ -365,11 +368,16 @@ function solve_transient!(
                         istep
                     )
                 catch err
-                    err = "Solver problem at $(λstr)=$(λ |> rd), Δ$(λstr)=$(Δλ |> rd):\n$(err) \nRetrying with smaller step size."
+                    errmsg = "Solver problem at $(λstr)=$(λ |> rd), Δ$(λstr)=$(Δλ |> rd):\n$(err) \nRetrying with smaller step size."
                     if (control.handle_exceptions)
-                        _warn(err, stacktrace(catch_backtrace()))
+                        if isa(err, InterruptException)
+                            _warn("Interrupted", stacktrace(catch_backtrace()))
+                            interrupted = true
+                        else
+                            _warn(errmsg, stacktrace(catch_backtrace()))
+                        end
                     else
-                        rethrow(err)
+                        throw(ErrorException(errmsg))
                     end
                     solved = false
                     errored = true
@@ -384,14 +392,14 @@ function solve_transient!(
                 if !solved
                     if Δλ ≈ Δλ_min
                         if !(control.force_first_step && istep == 0)
-                            err = """
+                            errmsg = """
                             At $(λstr)=$(λ |> rd): Δ$(λstr)_min=$(Δλ_min |> rd) reached while Δu/Δu_opt=$(Δu / Δu_opt |> rd).
                             Returning prematurely before $(λstr)[end]=$(lambdas[end] |> rd) 
                             """
                             if control.handle_exceptions
-                                _warn(err)
+                                _warn(errmsg)
                             else
-                                throw(ErrorException(err))
+                                throw(ErrorException(errmsg))
                             end
                             break # give up lowering stepsize, break out if "while !solved" loop
                         elseif !errored
@@ -401,15 +409,16 @@ function solve_transient!(
                             forced = true
                             solved = true
                         else
-                            err = "Convergence problem in first timestep"
+                            errmsg = "Convergence problem in first timestep"
                             if control.handle_exceptions
-                                _warn(err)
+                                _warn(errmsg)
                             else
-                                throw(ErrorException(err))
+                                throw(ErrorException(errmsg))
                             end
-
                             break
                         end
+                    elseif interrupted
+                        break
                     else
                         # reduce time step
                         Δλ = max(Δλ_min, Δλ * Δλ_decrease)
