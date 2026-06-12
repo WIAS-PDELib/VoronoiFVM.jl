@@ -53,7 +53,7 @@ end
 $(SIGNATURES)
 
 Calculate the mass matrix for use with [`SciMLBase.ODEFunction`](@ref).
-Return a Diagonal matrix if it occurs to be diagonal, otherwise return a SparseMatrixCSC.
+Return a Diagonal matrix if it occurs to be diagonal, otherwise return a sparse matrix
 """
 function mass_matrix(state::SystemState{Tv, TMatrix, TSolArray, TData}) where {Tv, TMatrix, TSolArray, TData}
     physics = state.system.physics
@@ -63,13 +63,11 @@ function mass_matrix(state::SystemState{Tv, TMatrix, TSolArray, TData}) where {T
     nspecies = num_species(state.system)
     ndof = num_dof(state.system)
     data = state.system.physics.data
-
     stor_eval = ResJacEvaluator(physics, data, :storage, zeros(Tv, nspecies), node, nspecies)
     bstor_eval = ResJacEvaluator(physics, data, :bstorage, zeros(Tv, nspecies), bnode, nspecies)
 
     U = unknowns(state.system; inival = 0)
     M = similar(state.matrix)
-
     asm_res(idof, ispec) = nothing
     asm_param(idof, ispec, iparam) = nothing
 
@@ -95,10 +93,9 @@ function mass_matrix(state::SystemState{Tv, TMatrix, TSolArray, TData}) where {T
             end
         end
     end
-    Mcsc = SparseMatrixCSC(M)
-    return isdiag(Mcsc) ? Diagonal([Mcsc[i, i] for i in 1:ndof]) : Mcsc
+    return isdiag(M) ? Diagonal([M[i, i] for i in 1:ndof]) : M
 end
-
+1
 """
 $(SIGNATURES)
 Prepare system for use with VoronoiFVMDiffEq.
@@ -113,7 +110,7 @@ function prepare_diffeq!(state, jacval, tjac)
     _complete!(state.system)
     _eval_res_jac!(state, jacval, tjac)
     flush!(state.matrix)
-    return state.matrix.cscmatrix
+    return state.matrix
 end
 
 ###################################################################################################
@@ -129,11 +126,13 @@ For more documentation, see [`SciMLBase.ODEFunction(state::VoronoiFVM.SystemStat
 Defined in VoronoiFVM.jl.
 """
 function SciMLBase.ODEFunction(state::SystemState; jacval = unknowns(sys, 0), tjac = 0)
+    massmatrix = mass_matrix(state)
+    jac_prototype = prepare_diffeq!(state, dofs(jacval), tjac)
     return SciMLBase.ODEFunction(
         eval_rhs!;
         jac = eval_jacobian!,
-        jac_prototype = prepare_diffeq!(state, dofs(jacval), tjac),
-        mass_matrix = mass_matrix(state)
+        jac_prototype,
+        mass_matrix = massmatrix
     )
 end
 
