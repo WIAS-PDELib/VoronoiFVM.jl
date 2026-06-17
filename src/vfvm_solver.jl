@@ -45,7 +45,11 @@ function solve_step!(
         damp = 1.0
         if !state.system.is_linear
             if doprint(control, 'n')
-                _info("  [n]ewton: #it(lin)  |update| cont3tion   |round| #rd")
+                if control.updatecontrol
+                    _info("  [n]ewton: #it(lin)  |update| cont3tion   |round| #rd")
+                else
+                    _info("  [n]ewton: #it(lin)  |r3dual| cont3tion   |round| #rd")
+                end
             end
             damp = control.damp_initial
             rnorm = control.rnorm(solution)
@@ -94,6 +98,10 @@ function solve_step!(
 
             reuse_precs = (!control.factorize_every_newtonstep && niter > 1) || (istep_factorize % control.factorize_every_timestep != 0)
 
+            if !control.updatecontrol
+                norm = control.unorm(residual)
+            end
+
             tlinsolve += @elapsed _solve_linear!(
                 dofs(update),
                 state,
@@ -113,7 +121,10 @@ function solve_step!(
             end
 
             damp = min(damp * control.damp_growth, 1.0)
-            norm = control.unorm(update)
+
+            if control.updatecontrol
+                norm = control.unorm(update)
+            end
             if tolx == 0.0
                 tolx = norm * control.reltol
             end
@@ -139,18 +150,28 @@ function solve_step!(
                 else
                     itstring = @sprintf("it=% 3d", niter)
                 end
+                if niter == 1
+                    cstring = "         "
+                else
+                    cstring = @sprintf("%.3e", norm / oldnorm)
+                end
                 if control.max_round > 0
                     out = @sprintf(
-                        "%s %.3e %.3e %.3e % 2d",
+                        "%s %.3e %s %.3e % 2d",
                         itstring,
                         norm,
-                        norm / oldnorm,
+                        cstring,
                         dnorm,
                         nround
                     )
                     _info(out)
                 else
-                    out = @sprintf("%s %.3e %.3e", itstring, norm, norm / oldnorm)
+                    out = @sprintf(
+                        "%s %.3e %s",
+                        itstring,
+                        norm,
+                        cstring
+                    )
                     _info(out)
                 end
             end

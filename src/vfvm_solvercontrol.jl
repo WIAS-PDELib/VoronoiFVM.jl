@@ -82,6 +82,13 @@ Base.@kwdef mutable struct SolverControl
     unorm::Function = (u) -> LinearAlgebra.norm(dofs(u), Inf) # norm for update calculation
 
     """
+    If true (default) use newton update for convergence rate control.
+    Otherwise, use the last residual. The latter may be the better choice if
+    iterative linear solvers are used.
+    """
+    updatecontrol::Bool = true
+
+    """
     Functional for roundoff error calculation
     """
     rnorm::Function = (u) -> LinearAlgebra.norm(dofs(u), 1)
