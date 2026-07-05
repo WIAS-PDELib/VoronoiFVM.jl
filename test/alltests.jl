@@ -42,7 +42,7 @@ function run_tests_from_directory(testdir, prefix; ignore = [])
 end
 
 @testset "basictest" begin
-    run_tests_from_directory(@__DIR__, "test_")
+    run_tests_from_directory(@__DIR__, "test")
 end
 
 @testset "Development Examples" begin
