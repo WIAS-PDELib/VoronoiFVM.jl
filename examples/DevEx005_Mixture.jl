@@ -297,9 +297,10 @@ function runtests()
                 for strategy in strategies
                     if dim in strategy.dims
                         for updatecontrol in [true, false]
-                            result = main(; dim, assembly, flux, strategy = strategy.method, verbose, updatecontrol) ≈ dimtestvals[dim]
+                            val = main(; dim, assembly, flux, strategy = strategy.method, verbose, updatecontrol)
+                            result = val ≈ dimtestvals[dim]
                             if !result
-                                println("Iteration failed:")
+                                println("Error: val=$(val), testval=$(dimtestvals[dim])")
                                 @show dim, assembly, flux, strategy, updatecontrol
                                 main(; dim, assembly, flux, strategy = strategy.method, verbose = "n", updatecontrol)
                             end
@@ -311,13 +312,15 @@ function runtests()
         end
     end
 
+    testval = 141.54097792523987
     for dim in [2]
         for assembly in [:edgewise, :cellwise]
             for flux in [:flux_marray, :flux_strided, :flux_diffcache]
                 for updatecontrol in [true, false]
-                    result = main(; dim, n = 100, assembly, flux, npart = 20, verbose, updatecontrol) ≈ 141.54097792523987
+                    val = main(; dim, n = 100, assembly, flux, npart = 20, verbose, updatecontrol)
+                    result = val ≈ testval
                     if !result
-                        println("Iteration failed:")
+                        println("Error: val=$(val), testval=$(testval)")
                         @show dim, assembly, flux, updatecontrol
                         main(; dim, assembly, flux, verbose = "n", updatecontrol)
                     end
