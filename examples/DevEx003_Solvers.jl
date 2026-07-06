@@ -22,7 +22,12 @@ using LinearAlgebra
 using Test
 
 
-function main(; n = 10, Plotter = nothing, assembly = :edgewise, kwargs...)
+function main(;
+        n = 10,
+        Plotter = nothing,
+        assembly = :edgewise,
+        kwargs...
+    )
     h = 1.0 / convert(Float64, n)
     X = collect(0.0:h:1.0)
     Y = collect(0.0:h:1.0)
@@ -173,11 +178,10 @@ function main(; n = 10, Plotter = nothing, assembly = :edgewise, kwargs...)
 end
 
 function runtests()
-    @testset "edgewise" begin
-        main(; assembly = :edgewise)
-    end
-    @testset "cellwise" begin
-        main(; assembly = :cellwise)
+    for assembly in [:edgewise, :cellwise]
+        for updatecontrol in [true, false]
+            main(; assembly, updatecontrol, verbose = "na")
+        end
     end
     return nothing
 end

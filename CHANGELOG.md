@@ -1,6 +1,16 @@
 # Changes
+## v3.5.0
+   - Allow for LinearSolve v4
+   - Add option `updatecontrol` to SolverControl (default true) to decide if  newton control
+     should use the newton update or the newton residual. Use of residual if 
+     `updatecontrol==false` is new and may be the better option with iterative linear solvers.
+   - Changed default round-off error tolerance: `tol_round=1.0e-10` to `tol_round=1.0e-15`
+   - Changed `max_round=1000` to `max_round=3`.
+   
+## v3.4.0 June 10, 2026
+    - Fix ctrl-c handling if handle_exceptions=true
 
-## v3.3.1 May 5, 2026
+## v3.3.1 May 5, 2026 
   - Fix bug handling parameters which prevented impedance calculation 
     from working in the multispecies case, added Example152
     
