@@ -41,26 +41,26 @@ function run_tests_from_directory(testdir, prefix; ignore = [])
     return nothing
 end
 
-@testset "basictest" begin
+@testset "basictests" begin
     run_tests_from_directory(@__DIR__, "test")
 end
 
-@testset "Development Examples" begin
+@testset "devexamples" begin
     run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "DevEx")
 end
 
-@testset "1D Examples" begin
+@testset "1dexamples" begin
     run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example1")
 end
-@testset "2D Examples" begin
+@testset "2dexamples" begin
     run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example2")
 end
 
-@testset "3D Examples" begin
+@testset "3dexamples" begin
     run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example3")
 end
 
-@testset "Misc Examples" begin
+@testset "miscexamples" begin
     run_tests_from_directory(joinpath(@__DIR__, "..", "examples"), "Example4")
 end
 
@@ -79,11 +79,11 @@ notebooks = [
     "nonlinear-solvers.jl",
     "heterogeneous-catalysis.jl",
 ]
-@testset "Notebooks" begin
+@testset "notebooks" begin
     @testscripts(joinpath(@__DIR__, "..", "pluto-examples"), notebooks)
 end
 
-@testset "ExplicitImports" begin
+@testset "explicitimports" begin
     @test ExplicitImports.check_no_implicit_imports(VoronoiFVM) === nothing
     @test ExplicitImports.check_all_explicit_imports_via_owners(VoronoiFVM) === nothing
     @static if VERSION >= v"1.11.0"
@@ -125,7 +125,7 @@ end
     @test ExplicitImports.check_no_self_qualified_accesses(VoronoiFVM) === nothing
 end
 
-@testset "Aqua" begin
+@testset "aqua" begin
     persistent_tasks = true
     if VERSION >= v"1.12.0" && VERSION < v"1.13.0-alpha1"
         persistent_tasks = false
@@ -133,7 +133,7 @@ end
     Aqua.test_all(VoronoiFVM; persistent_tasks)
 end
 
-@testset "UndocumentedNames" begin
+@testset "undocumentednames" begin
     if isdefined(Docs, :undocumented_names) # >=1.11
         @test isempty(Docs.undocumented_names(VoronoiFVM))
     end
