@@ -265,14 +265,13 @@ function main(;
     end
     control = SolverControl(; method_linear = strategy, updatecontrol, damp_initial = 0.5, tol_mono = 1.0e-10, tol_round = 1.0e-15, max_round = 3)
     control.maxiters = 500
-    @show control.updatecontrol, strategy
     u = solve(sys; verbose, control, log = true)
     return norm(u)
 end
 
 using Test
 function runtests()
-    verbose = "n"
+    verbose = ""
     if Sys.isapple()
         return nothing
         ## MacOS14 currently crashes here:
@@ -300,7 +299,9 @@ function runtests()
                         for updatecontrol in [true, false]
                             result = main(; dim, assembly, flux, strategy = strategy.method, verbose, updatecontrol) ≈ dimtestvals[dim]
                             if !result
-                                @show dim, assembly, flux, strategy
+                                println("Iteration failed:")
+                                @show dim, assembly, flux, strategy, updatecontrol
+                                main(; dim, assembly, flux, strategy = strategy.method, verbose = "n", updatecontrol)
                             end
                             @test result
                         end
@@ -314,8 +315,13 @@ function runtests()
         for assembly in [:edgewise, :cellwise]
             for flux in [:flux_marray, :flux_strided, :flux_diffcache]
                 for updatecontrol in [true, false]
-                    result = main(; dim, n = 100, assembly, flux, npart = 20, verbose, updatecontrol)
-                    @test  result ≈ 141.54097792523987
+                    result = main(; dim, n = 100, assembly, flux, npart = 20, verbose, updatecontrol) ≈ 141.54097792523987
+                    if !result
+                        println("Iteration failed:")
+                        @show dim, assembly, flux, updatecontrol
+                        main(; dim, assembly, flux, verbose = "n", updatecontrol)
+                    end
+                    @test  result
                 end
             end
         end
