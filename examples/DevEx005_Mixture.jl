@@ -263,9 +263,9 @@ function main(;
             strategy.precs.blocksize = nspec
         end
     end
-    control = SolverControl(; method_linear = strategy, updatecontrol, damp_initial = 0.5, tol_mono = 1.0e-10)
+    control = SolverControl(; method_linear = strategy, updatecontrol, damp_initial = 0.5, tol_mono = 1.0e-10, tol_round = 1.0e-15, max_round = 3)
     control.maxiters = 500
-    @show control.updatecontrol
+    @show control.updatecontrol, strategy
     u = solve(sys; verbose, control, log = true)
     return norm(u)
 end

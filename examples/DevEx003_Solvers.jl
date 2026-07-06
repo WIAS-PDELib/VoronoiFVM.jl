@@ -180,7 +180,7 @@ end
 function runtests()
     for assembly in [:edgewise, :cellwise]
         for updatecontrol in [true, false]
-            main(; assembly, updatecontrol, verbose = "na")
+            main(; assembly, updatecontrol, verbose = "na", max_round = 3, tol_round = 1.0e-15)
         end
     end
     return nothing

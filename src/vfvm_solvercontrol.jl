@@ -49,9 +49,8 @@ Base.@kwdef mutable struct SolverControl
     """
     Tolerance for roundoff error detection:
     terminate if   ``|\\;||u_{i+1}||_1 - ||u_{i}||_1\\;|/ ||u_{i}||_1<`` `tol_round` occurred `max_round` times in a row.
-    Default: 1.0e-15.
     """
-    tol_round::Float64 = 1.0e-15
+    tol_round::Float64 = 1.0e-10
 
     """
     Tolerance for monotonicity test:
@@ -72,9 +71,10 @@ Base.@kwdef mutable struct SolverControl
     damp_growth::Float64 = 1.2
 
     """
-    Maximum number of consecutive iterations within roundoff error tolerance. Default: 3
+    Maximum number of consecutive iterations within roundoff error tolerance
+    The default effectively disables this criterion.
     """
-    max_round::Int = 3
+    max_round::Int = 1000
 
     """
     Calculation of Newton update norm
