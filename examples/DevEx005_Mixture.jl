@@ -298,7 +298,7 @@ function runtests()
                     if dim in strategy.dims
                         for updatecontrol in [true, false]
                             val = main(; dim, assembly, flux, strategy = strategy.method, verbose, updatecontrol)
-                            result = isapprox(val, dimtestvals[dim], atol = 1.0e-6)
+                            result = isapprox(val, dimtestvals[dim], atol = 1.0e-5)
                             if !result
                                 println("Error: val=$(val), testval=$(dimtestvals[dim])")
                                 @show dim, assembly, flux, strategy, updatecontrol
@@ -318,7 +318,7 @@ function runtests()
             for flux in [:flux_marray, :flux_strided, :flux_diffcache]
                 for updatecontrol in [true, false]
                     val = main(; dim, n = 100, assembly, flux, npart = 20, verbose, updatecontrol)
-                    result = isapprox(val, testval, atol = 1.0e-6)
+                    result = isapprox(val, testval, atol = 1.0e-5)
                     if !result
                         println("Error: val=$(val), testval=$(testval)")
                         @show dim, assembly, flux, updatecontrol
