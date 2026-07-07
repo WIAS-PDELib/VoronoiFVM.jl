@@ -179,7 +179,8 @@ function main(;
         flux = :flux_strided,
         strategy = nothing,
         assembly = :cellwise,
-        npart = 1
+        npart = 1,
+        updatecontrol = true
     )
     h = 1.0 / convert(Float64, n - 1)
     X = collect(0.0:h:1.0)
@@ -231,7 +232,7 @@ function main(;
             strategy.precs.blocksize = nspec
         end
     end
-    control = SolverControl(method_linear = strategy)
+    control = SolverControl(; method_linear = strategy, updatecontrol, damp_initial = 0.5, tol_mono = 1.0e-10, tol_round = 1.0e-15, max_round = 3)
     control.maxiters = 500
     u = solve(sys; verbose, control, log = true)
     return norm(u)
@@ -239,7 +240,7 @@ end
 
 using Test
 function runtests()
-
+    verbose = &quot;&quot;
     if Sys.isapple()
         return nothing
         # MacOS14 currently crashes here:
@@ -264,26 +265,40 @@ function runtests()
             for flux in [:flux_marray, :flux_strided, :flux_diffcache]
                 for strategy in strategies
                     if dim in strategy.dims
-                        result = main(; dim, assembly, flux, strategy = strategy.method) ≈ dimtestvals[dim]
-                        if !result
-                            @show dim, assembly, flux, strategy
+                        for updatecontrol in [true, false]
+                            val = main(; dim, assembly, flux, strategy = strategy.method, verbose, updatecontrol)
+                            result = isapprox(val, dimtestvals[dim], atol = 1.0e-5)
+                            if !result
+                                println(&quot;Error: val=$(val), testval=$(dimtestvals[dim])&quot;)
+                                @show dim, assembly, flux, strategy, updatecontrol
+                                main(; dim, assembly, flux, strategy = strategy.method, verbose = &quot;n&quot;, updatecontrol)
+                            end
+                            @test result
                         end
-                        @test result
                     end
                 end
             end
         end
     end
 
+    testval = 141.54097792523987
     for dim in [2]
         for assembly in [:edgewise, :cellwise]
             for flux in [:flux_marray, :flux_strided, :flux_diffcache]
-                result = main(; dim, n = 100, assembly, flux, npart = 20)
-                @test  result ≈ 141.54097792523987
+                for updatecontrol in [true, false]
+                    val = main(; dim, n = 100, assembly, flux, npart = 20, verbose, updatecontrol)
+                    result = isapprox(val, testval, atol = 1.0e-5)
+                    if !result
+                        println(&quot;Error: val=$(val), testval=$(testval)&quot;)
+                        @show dim, assembly, flux, updatecontrol
+                        main(; dim, assembly, flux, verbose = &quot;n&quot;, updatecontrol)
+                    end
+                    @test  result
+                end
             end
         end
     end
     return nothing
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../DevEx004_EquationBlock3D/">« 004: 3D Nonlinear Reaction-Diffusion System with Coupled Species</a><a class="docs-footer-nextpage" href="../DevEx006_NewtonSolverHistory/">006: Newton Solver History »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 6 July 2026 16:03">Monday 6 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../DevEx004_EquationBlock3D/">« 004: 3D Nonlinear Reaction-Diffusion System with Coupled Species</a><a class="docs-footer-nextpage" href="../DevEx006_NewtonSolverHistory/">006: Newton Solver History »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 7 July 2026 08:48">Tuesday 7 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

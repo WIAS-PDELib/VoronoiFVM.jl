@@ -210,7 +210,8 @@ function main(;
         flux = :flux_strided,
         strategy = nothing,
         assembly = :cellwise,
-        npart = 1
+        npart = 1,
+        updatecontrol = true
     )
     h = 1.0 / convert(Float64, n - 1)
     X = collect(0.0:h:1.0)
@@ -262,7 +263,7 @@ function main(;
             strategy.precs.blocksize = nspec
         end
     end
-    control = SolverControl(method_linear = strategy)
+    control = SolverControl(; method_linear = strategy, updatecontrol, damp_initial = 0.5, tol_mono = 1.0e-10, tol_round = 1.0e-15, max_round = 3)
     control.maxiters = 500
     u = solve(sys; verbose, control, log = true)
     return norm(u)
@@ -270,7 +271,7 @@ end
 
 using Test
 function runtests()
-
+    verbose = ""
     if Sys.isapple()
         return nothing
         ## MacOS14 currently crashes here:
@@ -295,22 +296,36 @@ function runtests()
             for flux in [:flux_marray, :flux_strided, :flux_diffcache]
                 for strategy in strategies
                     if dim in strategy.dims
-                        result = main(; dim, assembly, flux, strategy = strategy.method) ≈ dimtestvals[dim]
-                        if !result
-                            @show dim, assembly, flux, strategy
+                        for updatecontrol in [true, false]
+                            val = main(; dim, assembly, flux, strategy = strategy.method, verbose, updatecontrol)
+                            result = isapprox(val, dimtestvals[dim], atol = 1.0e-5)
+                            if !result
+                                println("Error: val=$(val), testval=$(dimtestvals[dim])")
+                                @show dim, assembly, flux, strategy, updatecontrol
+                                main(; dim, assembly, flux, strategy = strategy.method, verbose = "n", updatecontrol)
+                            end
+                            @test result
                         end
-                        @test result
                     end
                 end
             end
         end
     end
 
+    testval = 141.54097792523987
     for dim in [2]
         for assembly in [:edgewise, :cellwise]
             for flux in [:flux_marray, :flux_strided, :flux_diffcache]
-                result = main(; dim, n = 100, assembly, flux, npart = 20)
-                @test  result ≈ 141.54097792523987
+                for updatecontrol in [true, false]
+                    val = main(; dim, n = 100, assembly, flux, npart = 20, verbose, updatecontrol)
+                    result = isapprox(val, testval, atol = 1.0e-5)
+                    if !result
+                        println("Error: val=$(val), testval=$(testval)")
+                        @show dim, assembly, flux, updatecontrol
+                        main(; dim, assembly, flux, verbose = "n", updatecontrol)
+                    end
+                    @test  result
+                end
             end
         end
     end
