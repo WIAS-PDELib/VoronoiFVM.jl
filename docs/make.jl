@@ -1,5 +1,7 @@
-using Documenter, ExampleJuggler, PlutoStaticHTML, VoronoiFVM, DocumenterCitations
+using Documenter, ExampleJuggler, PlutoStaticHTML, VoronoiFVM
+using DocumenterCitations, DocumenterCodeBlocks
 using ExtendableGrids, GridVisualize, LinearAlgebra, RecursiveArrayTools, SciMLBase
+using CairoMakie
 
 using ExtendableFEMBase
 using ExtendableFEM
@@ -9,11 +11,6 @@ using OrdinaryDiffEqBDF, OrdinaryDiffEqLowOrderRK, OrdinaryDiffEqRosenbrock, Ord
 function make(;
         with_examples = true,
         with_notebooks = true
-    )
-
-    bib = CitationBibliography(
-        joinpath(@__DIR__, "..", "CITATIONS.bib");
-        style = :numeric
     )
 
     ExampleJuggler.verbose!(true)
@@ -49,16 +46,17 @@ function make(;
         modules = filter(
             ex -> splitext(ex)[2] == ".jl"
                 && occursin("Example", ex)
+                && occursin("101", ex)
                 && !occursin("Disabled", ex),
             basename.(readdir(exampledir))
         )
-        module_examples = @docmodules(exampledir, modules, use_module_titles = true)
+        module_examples = @docmodules(exampledir, modules, use_module_titles = true, Plotter = CairoMakie)
         module_examples = vcat(["About the examples" => "runexamples.md"], module_examples)
         push!(pages, "Examples" => module_examples)
 
-        devmodules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("DevEx", ex), basename.(readdir(exampledir)))
-        dev_examples = @docmodules(exampledir, devmodules, use_module_titles = true)
-        push!(pages, "Development Examples" => dev_examples)
+        #        devmodules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("DevEx", ex), basename.(readdir(exampledir)))
+        #        dev_examples = @docmodules(exampledir, devmodules, use_module_titles = true)
+        #        push!(pages, "Development Examples" => dev_examples)
         @info "Example evaluation finished"
         GC.gc()
     end
@@ -96,7 +94,13 @@ function make(;
             # define extension modules manually: https://github.com/JuliaDocs/Documenter.jl/issues/2124#issuecomment-1557473415
             Base.get_extension(VoronoiFVM, :VoronoiFVMExtendableFEMBaseExt),
         ],
-        plugins = [bib],
+        plugins = [
+            CitationBibliography(
+                joinpath(@__DIR__, "..", "CITATIONS.bib");
+                style = :numeric
+            ),
+            CodeBlocks(),
+        ],
         checkdocs = :all,
         clean = false,
         doctest = false,
