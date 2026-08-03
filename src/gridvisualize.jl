@@ -1,14 +1,14 @@
 """
-    $(TYPEDSIGNATURES)
+    gridplot(sys; kwargs...)
 
-Plot grid behind system
+Plot grid behind system.
 """
 GridVisualize.gridplot(sys::AbstractSystem; kwargs...) = GridVisualize.gridplot(sys.grid; kwargs...)
 
 """
-    $(TYPEDSIGNATURES)
+    gridplot!(vis, sys; kwargs...)
 
-Plot grid behind system
+Plot grid behind system in visualizer `vis`.
 """
 GridVisualize.gridplot!(vis, sys::AbstractSystem; kwargs...) = GridVisualize.gridplot!(vis, sys.grid; kwargs...)
 
