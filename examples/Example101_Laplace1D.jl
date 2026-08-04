@@ -98,8 +98,9 @@ statement.
 
 module Example101_Laplace1D
 
-using VoronoiFVM, ExtendableGrids
-using GridVisualize
+using VoronoiFVM: VoronoiFVM, solve, boundary_dirichlet!
+using ExtendableGrids: simplexgrid
+using GridVisualize: GridVisualizer, gridplot!, scalarplot!, reveal
 
 function main(; Plotter = nothing, n = 6)
     ispec = 1    ## Index of species we are working with
@@ -137,19 +138,18 @@ function main(; Plotter = nothing, n = 6)
     return isnothing(Plotter) ? sum(solution) : reveal(vis)
 end
 
-using Test  #hide
-
-function runtests() #hide
-    @test main() ≈ 3.0 #hide
-    return nothing #hide
-end #hide
-
-function generateplots(dir; Plotter = nothing, kwargs...)    #hide
-    if ismakie(Plotter)                                      #hide
-        Plotter.activate!(; type = "svg", visible = false)   #hide
-        p = main(; Plotter)                                     #hide
-        Plotter.save(joinpath(dir, "Example101_Laplace1D.svg"), p)  #hide
-    end                                                      #hide
+using Test                                                          #hide
+function runtests()                                                 #hide
+    @test main() ≈ 3.0                                              #hide
     return nothing                                                  #hide
-end                                                          #hide
+end                                                                 #hide
+using GridVisualize: ismakie                                        #hide
+function generateplots(dir; Plotter = nothing, kwargs...)           #hide
+    if ismakie(Plotter)                                             #hide
+        Plotter.activate!(; type = "svg", visible = false)          #hide
+        p = main(; Plotter)                                         #hide
+        Plotter.save(joinpath(dir, "Example101_Laplace1D.svg"), p)  #hide
+    end                                                             #hide
+    return nothing                                                  #hide
+end                                                                 #hide
 end
