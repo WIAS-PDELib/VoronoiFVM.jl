@@ -46,7 +46,7 @@ function make(;
         modules = filter(
             ex -> splitext(ex)[2] == ".jl"
                 && occursin("Example", ex)
-                && occursin("101", ex)
+                && occursin("102", ex)
                 && !occursin("Disabled", ex),
             basename.(readdir(exampledir))
         )

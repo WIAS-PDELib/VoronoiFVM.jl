@@ -14,7 +14,7 @@ of a moving medium or the gradient of an electric field.
 
 This is a convection dominant second order boundary value problem which obeys
 a local and a global maximum principle:
-the solution which is bounded by the values at the boundary and has no local extrema in the
+the solution is bounded by the values at the boundary and has no local extrema in the
 interior.
 If $v$ is large compared to $D$, a boundary layer is observed.
 
@@ -25,20 +25,18 @@ and monotonically decrease in the second argument.
 The example describes three possible ways to define the flux function and demonstrates
 the impact on the qualitative properties of the solution.
 
+#
+# ![](Example102.svg)
+#
+
 =#
 
 module Example102_StationaryConvectionDiffusion1D
-using Printf
-using VoronoiFVM
-using ExtendableGrids
-using GridVisualize
 
-## Mutable struct to hold problem parameters
-## This encapsulates physical parameters for the convection-diffusion problem
-mutable struct ProblemData
-    D::Float64           ## Diffusion coefficient
-    v::Vector{Float64}   ## Velocity vector
-end
+using VoronoiFVM: VoronoiFVM, solve, boundary_dirichlet!, unknowns, project
+using ExtendableGrids: simplexgrid
+using GridVisualize: GridVisualizer, gridplot!, scalarplot!, reveal
+
 
 ## Central difference flux. The velocity term is discretized using the
 ## average of the solution in the endpoints of the grid. If the local Peclet
@@ -88,11 +86,9 @@ function exponential_flux!(f, u, edge, data)
     return nothing
 end
 
-function calculate(grid, data, flux, verbose)
-    sys = VoronoiFVM.System(grid, VoronoiFVM.Physics(; flux = flux, data = data))
+function calculate(grid, data, flux)
+    sys = VoronoiFVM.System(grid; flux, data, species = [1])
 
-    ## Add species 1 to region 1
-    enable_species!(sys, 1, [1])
 
     ## Set boundary conditions
     boundary_dirichlet!(sys, 1, 1, 0.0)
@@ -100,45 +96,56 @@ function calculate(grid, data, flux, verbose)
 
     ## Create a solution array
     inival = unknowns(sys; inival = 0.5)
-    solution = unknowns(sys)
-
-    ## Create solver control info
-    control = VoronoiFVM.SolverControl()
-    control.verbose = verbose
 
     ## Stationary solution of the problem
-    solution = solve(sys; inival, verbose)
+    solution = solve(sys; inival)
     return solution
 end
 
-function main(; n = 10, Plotter = nothing, verbose = false, D = 0.01, v = 1.0)
+function main(;
+        n = 11,            ## Number of grid points
+        Plotter = nothing, ## Plotter
+        D = 0.01,          ## Diffusion coefficient
+        v = 1.0            ## Velocity
+    )
 
     ## Create a one-dimensional discretization
-    h = 1.0 / convert(Float64, n)
-    grid = simplexgrid(collect(0:h:1))
+    grid = simplexgrid(range(0, 1; length = n))
 
     data = (v = [v], D = D)
 
     ## Calculate three stationary solutions with different ways to calculate flux
-    solution_exponential = calculate(grid, data, exponential_flux!, verbose)
-    solution_upwind = calculate(grid, data, upwind_flux!, verbose)
-    solution_central = calculate(grid, data, central_flux!, verbose)
+    solution_exponential = calculate(grid, data, exponential_flux!)
+    solution_upwind = calculate(grid, data, upwind_flux!)
+    solution_central = calculate(grid, data, central_flux!)
 
     ## Visualize solutions using GridVisualize.jl
-    p = GridVisualizer(; Plotter = Plotter, layout = (3, 1))
-    scalarplot!(p[1, 1], grid, solution_exponential[1, :]; title = "exponential")
-    scalarplot!(p[2, 1], grid, solution_upwind[1, :]; title = "upwind")
-    scalarplot!(p[3, 1], grid, solution_central[1, :]; title = "centered", show = true)
+    vis = GridVisualizer(; Plotter = Plotter, size = (600, 200), legend = :lt)
+    scalarplot!(vis[1, 1], grid, solution_exponential[1, :]; label = "exponential", color = :blue)
+    scalarplot!(vis[1, 1], grid, solution_upwind[1, :]; label = "upwind", color = :orange, clear = false)
+    scalarplot!(vis[1, 1], grid, solution_central[1, :]; label = "centered", color = :green, clear = false)
 
     ## Return test value
-    return sum(solution_exponential) + sum(solution_upwind) + sum(solution_central)
+    testval = sum(solution_exponential) + sum(solution_upwind) + sum(solution_central)
+
+    ## Return test value or graphic
+    return isnothing(Plotter) ? testval : reveal(vis)
 end
 
-using Test
-function runtests()
-    testval = 2.523569744561089
-    @test main() ≈ testval
-    return nothing
-end
+using Test                                                 #hide
+function runtests()                                        #hide
+    testval = 2.523569744561089                            #hide
+    @test main() ≈ testval                                 #hide
+    return nothing                                         #hide
+end                                                        #hide
+using GridVisualize: ismakie                               #hide
+function generateplots(dir; Plotter = nothing, kwargs...)  #hide
+    if ismakie(Plotter)                                    #hide
+        Plotter.activate!(; type = "svg", visible = false) #hide
+        p = main(; Plotter)                                #hide
+        Plotter.save(joinpath(dir, "Example102.svg"), p)   #hide
+    end                                                    #hide
+    return nothing                                         #hide
+end                                                        #hide
 
 end

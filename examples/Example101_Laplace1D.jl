@@ -84,7 +84,7 @@ With these data, we solve the system. When passing e.g. 'Plotter=GLMakie' or 'Pl
 `main()' function, we can vsisualize the grid.
 
 #
-# ![](Example101_Laplace1D.svg)
+# ![](Example101.svg)
 #
 
 
@@ -138,18 +138,18 @@ function main(; Plotter = nothing, n = 6)
     return isnothing(Plotter) ? sum(solution) : reveal(vis)
 end
 
-using Test                                                          #hide
-function runtests()                                                 #hide
-    @test main() ≈ 3.0                                              #hide
-    return nothing                                                  #hide
-end                                                                 #hide
-using GridVisualize: ismakie                                        #hide
-function generateplots(dir; Plotter = nothing, kwargs...)           #hide
-    if ismakie(Plotter)                                             #hide
-        Plotter.activate!(; type = "svg", visible = false)          #hide
-        p = main(; Plotter)                                         #hide
-        Plotter.save(joinpath(dir, "Example101_Laplace1D.svg"), p)  #hide
-    end                                                             #hide
-    return nothing                                                  #hide
-end                                                                 #hide
+using Test                                                   #hide
+function runtests()                                          #hide
+    @test main() ≈ 3.0                                       #hide
+    return nothing                                           #hide
+end                                                          #hide
+using GridVisualize: ismakie                                 #hide
+function generateplots(dir; Plotter = nothing, kwargs...)    #hide
+    if ismakie(Plotter)                                      #hide
+        Plotter.activate!(; type = "svg", visible = false)   #hide
+        p = main(; Plotter)                                  #hide
+        Plotter.save(joinpath(dir, "Example101.svg"), p)     #hide
+    end                                                      #hide
+    return nothing                                           #hide
+end                                                          #hide
 end
