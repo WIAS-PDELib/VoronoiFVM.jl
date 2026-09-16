@@ -186,7 +186,7 @@ We denote by ``\gamma_{K,j}=\partial\omega_K\cap Γ_j, j = 1, 2`` the faces of `
 ```
 
 #### Interface  control volume, e.g. ``ω_{7}``
-This is the case we are interested to and where the magic happens. The control colume ``\omega_K`` is part of both domains ``\Omega_1, \Omega_2``. We can define ``\omega_{K,j} = \omega_K \cap \Omega_j, j = 1,2 `` as the part of ``\omega_K`` which is solely defined on one subdomain. Thus, we likewise introduce ``\sigma_{KL}^j = \partial \omega_{K,j} \cap \partial \omega_L`` as the respective face between a neighboring control volume and the sub-control volume. Lastly, we use the following notation for the face of ``\omega_{K,j}`` intersecting with the inner boundary ``Γ_{12}``, which is likewise the part of the interface intersecting ``\omega_K``: 
+This is the case we are interested to and where the magic happens. The control volume ``\omega_K`` is part of both domains ``\Omega_1, \Omega_2``. We can define ``\omega_{K,j} = \omega_K \cap \Omega_j, j = 1,2 `` as the part of ``\omega_K`` which is solely defined on one subdomain. Thus, we likewise introduce ``\sigma_{KL}^j = \partial \omega_{K,j} \cap \partial \omega_L`` as the respective face between a neighboring control volume and the sub-control volume. Lastly, we use the following notation for the face of ``\omega_{K,j}`` intersecting with the inner boundary ``Γ_{12}``, which is likewise the part of the interface intersecting ``\omega_K``: 
 ``\gamma_{K,12}=\omega_K\cap Γ_{12}``.
 
 

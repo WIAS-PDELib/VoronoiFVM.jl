@@ -1,5 +1,8 @@
 # Changes
-## v3.5.0
+## v3.5.3 2026-09-16
+   - Allow for LinearSolve v5 and OrdinaryDiffEq*.jl v2
+
+## v3.5.0 2026-07-07
    - Allow for LinearSolve v4
    - Add option `updatecontrol` to SolverControl (default true) to decide if  newton control
      should use the newton update or the newton residual. Use of residual if 

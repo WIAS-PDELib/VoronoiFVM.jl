@@ -160,17 +160,7 @@ function integrate(
         kwargs...
     )
     nsteps = length(U.t) - 1
-    integral = [
-        integrate(
-                sys,
-                T,
-                U.u[istep + 1],
-                U.u[istep],
-                U.t[istep + 1] - U.t[istep];
-                kwargs...
-            ) / (rate ? U.t[istep + 1] - U.t[istep] : 1)
-            for istep in 1:nsteps
-    ]
+    integral = [ integrate(sys, T, U.u[istep + 1], U.u[istep], U.t[istep + 1] - U.t[istep]; kwargs...) / (rate ? U.t[istep + 1] - U.t[istep] : 1) for istep in 1:nsteps ]
     return DiffEqArray(integral, U.t[2:end])
 end
 
