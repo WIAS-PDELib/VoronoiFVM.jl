@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.23
+# v1.0.3
 
 using Markdown
 using InteractiveUtils
@@ -442,7 +442,7 @@ time: $(@bind t2 PlutoUI.Slider(0:0.01:10; default=5,show_value=true))
 # ╔═╡ 783618f8-2470-4c7c-afc1-9800586625c1
 let
     s = sol2(t2)
-    scalarplot!(vis2, grid1, s[1, :]; color = :red, label = "species1")
+    scalarplot!(vis2, grid1, s[1, :]; color = :red, label = "species1", clear = true)
     scalarplot!(
         vis2,
         grid1,
@@ -456,7 +456,7 @@ let
 end
 
 # ╔═╡ 4cbea340-9c02-4e69-8f5e-62bf45312bdd
-@test isapprox(sum(sol2) / length(sol2), 2.4921650158811794, rtol = 1.0e-14)
+@test isapprox(sum(sol2) / length(sol2.t), 2.4921650158811794, rtol = 1.0e-14)
 
 # ╔═╡ 1c18b5a0-cca6-46a1-bb9f-b3d65b8043c5
 md"""
@@ -618,9 +618,9 @@ html"""<hr>"""
 # ╠═ec188c81-3374-4eed-9b7e-e22350886df2
 # ╠═c86e8a0f-299f-42ab-96f8-0cd62d50f196
 # ╠═b3d936fe-69ab-4013-b787-2f0b5410638a
-# ╟─17749697-d5d8-4629-a625-e96590a5f0ac
+# ╠═17749697-d5d8-4629-a625-e96590a5f0ac
 # ╠═0c916da5-2d6e-42df-ac4b-4a062f931ccd
-# ╟─783618f8-2470-4c7c-afc1-9800586625c1
+# ╠═783618f8-2470-4c7c-afc1-9800586625c1
 # ╠═4cbea340-9c02-4e69-8f5e-62bf45312bdd
 # ╟─1c18b5a0-cca6-46a1-bb9f-b3d65b8043c5
 # ╟─47280b56-e5ec-4345-b4a1-7c3c92536b2e
