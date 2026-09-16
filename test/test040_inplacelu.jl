@@ -175,7 +175,7 @@ function runtests()
     if VoronoiFVM.check_allocs()
         @test m4 == 0
     else
-        @test_broken m4 == 0
+        @test m4 == 0
     end
     return true
 end
