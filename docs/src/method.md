@@ -91,7 +91,14 @@ tends to the Dirichlet bundary condition
 ```
 Therefore, a Dirichlet boundary condition can be approximated by choosing a small value of $\varepsilon$ and implying
 the aforementioned Robin boundary conditions. This approach  called _penalty method_  is chosen for the implementation
-of Dirichlet boundary conditions in this package.
+of Dirichlet boundary conditions in this package. For an analysis of this method in the case of finite elements, see 
+[J. W. Barrett & Ch. M. Elliott,  https://doi.org/10.1007/BF01389536](https://doi.org/10.1007/BF01389536).
+In practice, the use of a very small value of $\varepsilon$ in finite precision 
+floating point arithmetic leads to the cancellation of the contribution of the normal flux in the penalty approximation, effectively calculating
+```math
+\frac{1}{\varepsilon}u = \frac{1}{\varepsilon}g.
+```
+This approach significantly simplifies the handling of the Dirichlet boundary conditions in multispecies problems on unstructured meshes with varying boundary conditions.
 
 ### Time dependent problems, reaction terms
 This approach easily generalizes to time dependent nonlinear transport-reaction problems

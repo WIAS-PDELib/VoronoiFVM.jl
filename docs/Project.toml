@@ -9,6 +9,8 @@ DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
+DocumenterCodeBlocks = "b6400b83-267f-4b55-9fd8-bffc853bdfd8"
+DocumenterInterLinks = "d12716ef-a0f6-4df4-a9f1-a5a34e75c656"
 ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
 ExtendableFEM = "a722555e-65e0-4074-a036-ca7ce79a4aed"
 ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
@@ -50,6 +52,7 @@ UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 VoronoiFVM = "82b139dc-5afc-11e9-35da-9b9bdfd336f3"
 
 [sources]
+DocumenterCodeBlocks = {url = "https://github.com/fredrikekre/DocumenterCodeBlocks.jl", rev="external-interlinks"}
 VoronoiFVM = {path = ".."}
 
 [compat]

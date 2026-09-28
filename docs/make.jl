@@ -1,5 +1,8 @@
-using Documenter, ExampleJuggler, PlutoStaticHTML, VoronoiFVM, DocumenterCitations
+using Documenter, DocumenterCitations, DocumenterInterLinks, DocumenterCodeBlocks
+using ExampleJuggler, PlutoStaticHTML
+using VoronoiFVM
 using ExtendableGrids, GridVisualize, LinearAlgebra, RecursiveArrayTools, SciMLBase
+using CairoMakie
 
 using ExtendableFEMBase
 using ExtendableFEM
@@ -11,11 +14,6 @@ function make(;
         with_notebooks = true
     )
 
-    bib = CitationBibliography(
-        joinpath(@__DIR__, "..", "CITATIONS.bib");
-        style = :numeric
-    )
-
     ExampleJuggler.verbose!(true)
 
     cleanexamples()
@@ -23,6 +21,12 @@ function make(;
     exampledir = joinpath(@__DIR__, "..", "examples")
 
     size_threshold_ignore = []
+
+    links = InterLinks(
+        "Julia" => "https://docs.julialang.org/en/v1/",
+        "ExtendableGrids" => "https://wias-pdelib.github.io/ExtendableGrids.jl/stable/",
+        "GridVisualize" => "https://wias-pdelib.github.io/GridVisualize.jl/stable/"
+    )
 
     pages = [
         "Home" => "index.md",
@@ -49,16 +53,17 @@ function make(;
         modules = filter(
             ex -> splitext(ex)[2] == ".jl"
                 && occursin("Example", ex)
+                #                && (occursin("101", ex) || occursin("102", ex))
                 && !occursin("Disabled", ex),
             basename.(readdir(exampledir))
         )
-        module_examples = @docmodules(exampledir, modules, use_module_titles = true)
+        module_examples = @docmodules(exampledir, modules, use_module_titles = true, Plotter = CairoMakie)
         module_examples = vcat(["About the examples" => "runexamples.md"], module_examples)
         push!(pages, "Examples" => module_examples)
 
-        devmodules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("DevEx", ex), basename.(readdir(exampledir)))
-        dev_examples = @docmodules(exampledir, devmodules, use_module_titles = true)
-        push!(pages, "Development Examples" => dev_examples)
+        #        devmodules = filter(ex -> splitext(ex)[2] == ".jl" && occursin("DevEx", ex), basename.(readdir(exampledir)))
+        #        dev_examples = @docmodules(exampledir, devmodules, use_module_titles = true)
+        #        push!(pages, "Development Examples" => dev_examples)
         @info "Example evaluation finished"
         GC.gc()
     end
@@ -81,7 +86,7 @@ function make(;
             #            "API Updates" => "api-update.jl",
         ]
         ENV["PLUTO_PROJECT"] = @__DIR__
-        notebook_examples = @docplutonotebooks(notebookdir, notebooks, iframe = false, append_build_context = false)
+        notebook_examples = @docplutonotebooks(notebookdir, notebooks, iframe = false, append_build_context = false, documenter_code_blocks = true)
         notebook_examples = vcat(["About the notebooks" => "notebooks.md"], notebook_examples)
         size_threshold_ignore = last.(notebook_examples)
         push!(pages, "Tutorial Notebooks" => notebook_examples)
@@ -96,7 +101,14 @@ function make(;
             # define extension modules manually: https://github.com/JuliaDocs/Documenter.jl/issues/2124#issuecomment-1557473415
             Base.get_extension(VoronoiFVM, :VoronoiFVMExtendableFEMBaseExt),
         ],
-        plugins = [bib],
+        plugins = [
+            CitationBibliography(
+                joinpath(@__DIR__, "..", "CITATIONS.bib");
+                style = :numeric
+            ),
+            links,
+            CodeBlocks(),
+        ],
         checkdocs = :all,
         clean = false,
         doctest = false,

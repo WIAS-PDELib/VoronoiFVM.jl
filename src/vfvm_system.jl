@@ -149,7 +149,7 @@ Create structure of type [`VoronoiFVM.System{Tv,Ti, Tm, TSpecMat<:AbstractMatrix
 
 Parameters: 
 
-- `grid::ExtendableGrid`: 1, 2 or 3D computational grid
+- `grid`: 1, 2 or 3D computational grid of type [`ExtendableGrids.ExtendableGrid`](@extref)
 
 Keyword arguments:
 - `species`: vector of integer species indices. Added to all grid regions, avoiding the need to call [`enable_species!`](@ref) for this default case.
