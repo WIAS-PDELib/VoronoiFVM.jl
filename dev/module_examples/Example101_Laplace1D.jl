@@ -8,18 +8,21 @@ This is the simplest second order boundary value problem (BVP)
 for a partial differential equation  (PDE):
 
 ```math
--\Delta u =0\\
-u(\gamma_1)=g_1\\
-u(\gamma_2)=g_2.
+\begin{aligned}
+-\Delta u &=0\\
+u(\gamma_1)&=g_1\\
+u(\gamma_2)&=g_2.
+\end{aligned}
 ```
 
 We replace the Dirichlet boundary condition by a Robin boundary
 condition with a penalty parameter $\frac{1}{\varepsilon}$:
 
 ```math
-\nabla u(\gamma_1) + \frac{1}{\varepsilon}(u(\gamma_1)-g_1)=0  \\
--\nabla u(\gamma_2) + \frac{1}{\varepsilon}(u(\gamma_2)-g_2)
-=0  
+\begin{aligned}
+\nabla u(\gamma_1) + \frac{1}{\varepsilon}(u(\gamma_1)-g_1)&=0  \\
+-\nabla u(\gamma_2) + \frac{1}{\varepsilon}(u(\gamma_2)-g_2) &=0  
+\end{aligned}
 ```
 
 This penalty method for the implementation of Dirichlet
@@ -71,13 +74,19 @@ In the example below, we fix a number of species and  write a Julia function des
 we create a physics record, and a finite volume system with one unknown species and
 a dense matrix to describe it's degrees of freedom
 (the matrix used  to calculate the solution is sparse).
-We give the species the number 1 and enable it for grid region number one 1.
+We give the species the number 1 and enable it for grid region number 1.
 Then, we set boundary conditions for species 1 at $\gamma_1, \gamma_2$.
 
 We create a zero initial value and a solution vector
 and initialize them.
 
-With these data, we solve the system.
+With these data, we solve the system. When passing e.g. 'Plotter=GLMakie' or 'Plotter=PythonPlot' to the
+`main()' function, we can vsisualize the grid.
+
+#
+# ![](Example101.svg)
+#
+
 
 We wrap this example and all later ones
 into a module structure. This allows to load
@@ -89,9 +98,11 @@ statement.
 
 module Example101_Laplace1D
 
-using VoronoiFVM, ExtendableGrids
+using VoronoiFVM: VoronoiFVM, solve, boundary_dirichlet!
+using ExtendableGrids: simplexgrid
+using GridVisualize: GridVisualizer, gridplot!, scalarplot!, reveal
 
-function main()
+function main(; Plotter = nothing, n = 6)
     ispec = 1    ## Index of species we are working with
 
     ## Flux function which describes the flux
@@ -110,7 +121,7 @@ function main()
     ## Create a one dimensional discretization grid
     ## Each grid cell belongs to a region marked by a region number
     ## By default, there is only one region numbered with 1
-    grid = simplexgrid(0:0.2:1)
+    grid = simplexgrid(range(0, 1; length = n))
 
     ## Create a finite volume system
     sys = VoronoiFVM.System(grid; flux = flux!, breaction = bcond!, species = ispec)
@@ -118,14 +129,27 @@ function main()
     ## Solve stationary problem
     solution = solve(sys; inival = 0)
 
-    ## Return test value
-    return sum(solution)
+    ## Visualize grid and solution using GridVisualize.jl
+    vis = GridVisualizer(; Plotter, size = (600, 400), layout = (2, 1))
+    gridplot!(vis[1, 1], sys, legend = :best)
+    scalarplot!(vis[2, 1], sys, solution, species = ispec)
+
+    ## Return test value or graphic
+    return isnothing(Plotter) ? sum(solution) : reveal(vis)
 end
 
-using Test
-function runtests()
-    @test main() ≈ 3.0
-    return nothing
-end
-
+using Test                                                   #hide
+function runtests()                                          #hide
+    @test main() ≈ 3.0                                       #hide
+    return nothing                                           #hide
+end                                                          #hide
+using GridVisualize: ismakie                                 #hide
+function generateplots(dir; Plotter = nothing, kwargs...)    #hide
+    if ismakie(Plotter)                                      #hide
+        Plotter.activate!(; type = "svg", visible = false)   #hide
+        p = main(; Plotter)                                  #hide
+        Plotter.save(joinpath(dir, "Example101.svg"), p)     #hide
+    end                                                      #hide
+    return nothing                                           #hide
+end                                                          #hide
 end
