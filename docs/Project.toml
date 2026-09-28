@@ -52,7 +52,7 @@ UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 VoronoiFVM = "82b139dc-5afc-11e9-35da-9b9bdfd336f3"
 
 [sources]
-DocumenterCodeBlocks = {path = "/home/fuhrmann/Wias/work/julia/dev/DocumenterCodeBlocks"}
+DocumenterCodeBlocks = {url = "https://github.com/fredrikekre/DocumenterCodeBlocks.jl", rev="external-interlinks"}
 VoronoiFVM = {path = ".."}
 
 [compat]
