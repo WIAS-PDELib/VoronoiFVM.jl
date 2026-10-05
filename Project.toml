@@ -37,10 +37,6 @@ TextWrap = "b718987f-49a8-5099-9789-dcd902bef87d"
 ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
 PreallocationTools = "d236fae5-4411-538c-8e31-a6e3d9e00b46"
 
-[sources]
-ExtendableGrids = {path = "/home/fuhrmann/Wias/work/julia/dev/ExtendableGrids"}
-SparseArrays = {path = "/home/fuhrmann/Wias/work/julia/dev/SparseArrays"}
-
 [extensions]
 VoronoiFVMExtendableFEMBaseExt = "ExtendableFEMBase"
 VoronoiFVMPreallocationToolsExt = "PreallocationTools"
