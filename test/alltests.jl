@@ -126,15 +126,17 @@ end
 end
 
 @testset "aqua" begin
-    persistent_tasks = true
-    if VERSION >= v"1.12.0" && VERSION < v"1.13.0-alpha1"
-        persistent_tasks = false
-    end
-    Aqua.test_all(VoronoiFVM; persistent_tasks)
+    Aqua.test_all(VoronoiFVM)
 end
 
 @testset "undocumentednames" begin
     if isdefined(Docs, :undocumented_names) # >=1.11
         @test isempty(Docs.undocumented_names(VoronoiFVM))
+    end
+end
+
+@testset "closureboxes" begin
+    if isdefined(Test, :detect_closure_boxes) # >=1.14
+        @test isempty(Test.detect_closure_boxes(VoronoiFVM))
     end
 end

@@ -1,4 +1,8 @@
 # Changes
+## v3.5.4 2026-10-05
+   - Added detect_closure_boxes test (for Julia 1.14) 
+   - Fixed closure box occurrences detected by test
+   
 ## v3.5.3 2026-09-16
    - Allow for LinearSolve v5 and OrdinaryDiffEq*.jl v2
 

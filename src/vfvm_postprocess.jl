@@ -41,8 +41,10 @@ function integrate(
                 _fill!(bnode, system.boundary_assembly_data, ibnode, item)
                 res .= zero(Tu)
                 @views F(rhs(bnode, res), unknowns(bnode, U[:, bnode.index]), bnode, data)
-                asm_res(idof, ispec) = integral[ispec, bnode.region] += bnode.fac * res[ispec]
-                assemble_res(bnode, system, asm_res)
+                let integral = integral
+                    asm_res(idof, ispec) = integral[ispec, bnode.region] += bnode.fac * res[ispec]
+                    assemble_res(bnode, system, asm_res)
+                end
             end
         end
     else
@@ -57,8 +59,10 @@ function integrate(
                 _fill!(node, system.assembly_data, inode, item)
                 res .= zero(Tu)
                 @views F(rhs(node, res), unknowns(node, U[:, node.index]), node, data)
-                asm_res(idof, ispec) = integral[ispec, node.region] += node.fac * res[ispec]
-                assemble_res(node, system, asm_res)
+                let integral = integral
+                    asm_res(idof, ispec) = integral[ispec, node.region] += node.fac * res[ispec]
+                    assemble_res(node, system, asm_res)
+                end
             end
         end
     end
@@ -133,12 +137,14 @@ function edgeintegrate(
                 @views UKL[(nspecies + 1):(2 * nspecies)] .= U[:, edge.node[2]]
                 res .= zero(Tv)
                 @views F(rhs(edge, res), unknowns(edge, UKL), edge, data)
-                function asm_res(idofK, idofL, ispec)
-                    h = meas(edge)
-                    # This corresponds to the multiplication with the diamond volume.
-                    return integral[ispec, edge.region] += h^2 * edge.fac * res[ispec] / dim
+                let integral = integral
+                    function asm_res(idofK, idofL, ispec)
+                        h = meas(edge)
+                        # This corresponds to the multiplication with the diamond volume.
+                        return integral[ispec, edge.region] += h^2 * edge.fac * res[ispec] / dim
+                    end
+                    assemble_res(edge, system, asm_res)
                 end
-                assemble_res(edge, system, asm_res)
             end
         end
     end
