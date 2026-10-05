@@ -45,15 +45,7 @@ function assemble_nodes(
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
-    node::Union{Nothing, Node{Tc, Ti}} = nothing
-    lock(system.gridaccesslock)
-    try
-        # this may trigger building infrastructure in the grid, so this
-        # cannot be run in multithreaded code
-        node = Node(system, time, λ; partition = part)
-    finally
-        unlock(system.gridaccesslock)
-    end
+    node = Node(system, time, λ; partition = part)
 
 
     UK = Array{Tv, 1}(undef, nspecies + nparams)
@@ -72,7 +64,7 @@ function assemble_nodes(
     stor_evaluator = ResJacEvaluator(physics, data, :storage, UK, node, nspecies)
     oldstor_evaluator = ResEvaluator(physics, data, :storage, UK, node, nspecies)
 
-    ncalloc = @allocations for item in nodebatch(system.assembly_data, part)
+    ncalloc::Int = @allocations for item in nodebatch(system.assembly_data, part)
         for inode in noderange(system.assembly_data, item)
             _fill!(node, system.assembly_data, inode, item)
             @views UK[1:nspecies] .= U[:, node.index]
@@ -135,16 +127,8 @@ function assemble_edges(
     physics = system.physics
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
-    edge::Union{Nothing, Edge{Tc, Ti}} = nothing
-    lock(system.gridaccesslock)
-    try
-        # this may trigger building infrastructure in the grid, so this
-        # cannot be run in multithreaded code
-        edge = Edge(system, time, λ; partition = part)
-    finally
-        unlock(system.gridaccesslock)
-    end
 
+    edge = Edge(system, time, λ; partition = part)
 
     UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
     if nparams > 0
@@ -155,7 +139,7 @@ function assemble_edges(
     erea_evaluator = ResJacEvaluator(physics, data, :edgereaction, UKL, edge, nspecies)
     outflow_evaluator = ResJacEvaluator(physics, data, :boutflow, UKL, edge, nspecies)
 
-    return @allocations for item in edgebatch(system.assembly_data, part)
+    ncalloc::Int = @allocations for item in edgebatch(system.assembly_data, part)
         for iedge in edgerange(system.assembly_data, item)
             _fill!(edge, system.assembly_data, iedge, item)
 
@@ -313,6 +297,7 @@ function assemble_edges(
             end
         end
     end
+    return ncalloc
 end
 
 function assemble_bnodes(
@@ -329,26 +314,20 @@ function assemble_bnodes(
     has_legacy_bc = !iszero(boundary_factors) || !iszero(boundary_values)
     UK = Array{Tv, 1}(undef, nspecies + nparams)
     UKOld = Array{Tv, 1}(undef, nspecies + nparams)
-    bnode::Union{Nothing, BNode{Tc, Tc, Ti}} = nothing
 
     if nparams > 0
         UK[(nspecies + 1):end] .= params
         UKOld[(nspecies + 1):end] .= params
     end
-    lock(system.gridaccesslock)
-    try
-        # this may trigger building infrastructure in the grid, so this
-        # cannot be run in multithreaded code
-        bnode = BNode(system, time, λ; partition = part)
-    finally
-        unlock(system.gridaccesslock)
-    end
+
+    bnode = BNode(system, time, λ; partition = part)
+
     bsrc_evaluator = ResEvaluator(physics, data, :bsource, UK, bnode, nspecies)
     brea_evaluator = ResJacEvaluator(physics, data, :breaction, UK, bnode, nspecies)
     bstor_evaluator = ResJacEvaluator(physics, data, :bstorage, UK, bnode, nspecies)
     oldbstor_evaluator = ResEvaluator(physics, data, :bstorage, UK, bnode, nspecies)
 
-    return @allocations for item in nodebatch(system.boundary_assembly_data, part)
+    nballoc::Int = @allocations for item in nodebatch(system.boundary_assembly_data, part)
         for ibnode in noderange(system.boundary_assembly_data, item)
             _fill!(bnode, system.boundary_assembly_data, ibnode, item)
 
@@ -439,6 +418,7 @@ function assemble_bnodes(
             end
         end # ibnode=1:nbn
     end
+    return nballoc
 end
 
 function assemble_bedges(
@@ -449,15 +429,7 @@ function assemble_bedges(
         F::AbstractMatrix{Tv}
     ) where {Tv, Tc, Ti, Tm, Tp}
     physics = system.physics
-    bedge::Union{Nothing, BEdge{Tc, Ti}} = nothing
-    lock(system.gridaccesslock)
-    try
-        # this may trigger building infrastructure in the grid, so this
-        # cannot be run in multithreaded code
-        bedge = BEdge(system, time, λ; partition = part)
-    finally
-        unlock(system.gridaccesslock)
-    end
+    bedge = BEdge(system, time, λ; partition = part)
     nspecies::Int = num_species(system)
     nparams::Int = system.num_parameters
     UKL = Array{Tv, 1}(undef, 2 * nspecies + nparams)
@@ -560,10 +532,12 @@ function eval_and_assemble(
 
     if num_partitions(system.assembly_data) == 1
         part = 1
-        ncalloc = assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+        local ncalloc = 0
+        local nballoc = 0
+        ncalloc += assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
         ncalloc += assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
         ncallocs[part] = ncalloc
-        nballoc = assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+        nballoc += assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
         if hasbflux
             nballoc += assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
         end
@@ -571,20 +545,23 @@ function eval_and_assemble(
     elseif system.assembly_type == :edgewise
         for color in pcolors(system.assembly_data)
             Threads.@threads for part in pcolor_partitions(system.assembly_data, color)
-                ncalloc = assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+                local ncalloc = 0
+                ncalloc += assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
                 ncallocs[part] = ncalloc
             end
             # If we want to have just one parallel loop we need to ensure that no edge has
             # nodes from a different partition with the same color
             Threads.@threads for part in pcolor_partitions(system.assembly_data, color)
-                ncalloc = assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+                local ncalloc = 0
+                ncalloc += assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
                 ncallocs[part] += ncalloc
             end
         end
 
         for color in pcolors(system.boundary_assembly_data)
             Threads.@threads for part in pcolor_partitions(system.boundary_assembly_data, color)
-                nballoc = assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+                local nballoc = 0
+                nballoc += assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
                 if hasbflux
                     nballoc += assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
                 end
@@ -594,7 +571,8 @@ function eval_and_assemble(
     else # system.assembly_type == :cellwise
         for color in pcolors(system.assembly_data)
             Threads.@threads for part in pcolor_partitions(system.assembly_data, color)
-                ncalloc = assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+                local ncalloc = 0
+                ncalloc += assemble_nodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
                 ncalloc += assemble_edges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
                 ncallocs[part] = ncalloc
             end
@@ -602,7 +580,8 @@ function eval_and_assemble(
 
         for color in pcolors(system.boundary_assembly_data)
             Threads.@threads for part in pcolor_partitions(system.boundary_assembly_data, color)
-                nballoc = assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
+                local nballoc = 0
+                nballoc += assemble_bnodes(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
                 if hasbflux
                     nballoc += assemble_bedges(system, matrix, dudp, time, tstepinv, λ, data, params, part, U, UOld, F)
                 end

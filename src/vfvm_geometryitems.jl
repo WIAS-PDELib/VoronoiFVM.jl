@@ -1,44 +1,44 @@
 """
-    time(edge_or_node)
+time(edge_or_node)
 
 Return actual simulation time stored in node or edge
 """
 time(item::AbstractGeometryItem) = item.time
 
 """
-    embedparam(edge_or_node)
+embedparam(edge_or_node)
 
 Return embedding parameter stored in node or edge
 """
 embedparam(item::AbstractGeometryItem) = item.embedparam
 
 """
-   region(edge_or_node)
+region(edge_or_node)
 
 Return region number node or edge is belonging to
 """
 region(item::AbstractGeometryItem) = item.region
 
 """
-   partition(edge_or_node)
+partition(edge_or_node)
 
 Return partition number node or edge is belonging to
 """
 ExtendableGrids.partition(item::AbstractGeometryItem) = item.partition
 
 """
-   $(TYPEDEF)
+$(TYPEDEF)
 
-Abstract type for nodes. 
+  Abstract type for nodes.
 
-`node[idim]` gives the the corresponding coordinate.
-"""
+  `node[idim]` gives the the corresponding coordinate.
+  """
 abstract type AbstractNode{Tc <: Number, Ti <: Integer} <: AbstractGeometryItem{Tc, Ti} end
 Base.size(node::AbstractNode) = (size(node.coord)[1],)
 Base.getindex(node::AbstractNode, idim) = @inbounds node.coord[idim, node.index]
 
 """
-    $(TYPEDEF)
+$(TYPEDEF)
 
 Abstract type for data on nodes.
 `u[ispec]` accesses value of species at this node.
@@ -57,9 +57,9 @@ Base.size(p::DParameters) = (length(p.val) - p.offset, 1)
 Base.getindex(p::DParameters, i) = @inbounds p.val[p.offset + i]
 
 """
-    parameters(edge_or_node)
+parameters(edge_or_node)
 
-Return abstract vector of parameters passed via vector of unknowns. 
+Return abstract vector of parameters passed via vector of unknowns.
 This allows differentiation with respect to these parameters.
 """
 function parameters(u::AbstractNodeData)
@@ -67,18 +67,18 @@ function parameters(u::AbstractNodeData)
 end
 
 """
-   $(TYPEDEF)
+$(TYPEDEF)
 
-Abstract type for edges 
+  Abstract type for edges
 
-`edge[idim,inode]` gives coordinate of node.
-"""
+  `edge[idim,inode]` gives coordinate of node.
+  """
 abstract type AbstractEdge{Tv <: Number, Ti <: Integer} <: AbstractGeometryItem{Tv, Ti} end
 Base.size(edge::AbstractEdge) = (size(edge.coord)[1], 2)
 Base.getindex(edge::AbstractEdge, idim, inode) = @inbounds edge.coord[idim, edge.node[inode]]
 
 """
-    $(TYPEDEF)
+$(TYPEDEF)
 
 Abstract type for data on edges.
 `u[ispec,inode]` accesses value of species at corresponding node.
@@ -95,16 +95,16 @@ end
 """
 $(TYPEDEF)
 
-Structure holding local node information.
+  Structure holding local node information.
 
 $(TYPEDFIELDS)
 """
 mutable struct Node{Tc, Ti} <: AbstractNode{Tc, Ti}
     """
     Index in grid
-
     """
     index::Ti
+
     """
     Inner region number
     """
@@ -160,21 +160,34 @@ mutable struct Node{Tc, Ti} <: AbstractNode{Tc, Ti}
     """
     _idx::Ti
 
-    function Node{Tc, Ti}(
-            sys::AbstractSystem{Tv, Tc, Ti, Tm},
-            time, embedparam;
-            partition = 1
-        ) where {Tv, Tc, Ti, Tm}
-        return new(
-            zero(Ti), 0,
-            partition,
-            num_species(sys), 0,
-            sys.grid[Coordinates],
-            sys.grid[CellNodes],
-            sys.grid[CellRegions],
-            time, embedparam, 0.0, 0
-        )
+    Node{Tc, Ti}(::Nothing) where {Tc, Ti} = new()
+
+end
+
+function Node{Tc, Ti}(
+        sys::AbstractSystem{Tv, Tc, Ti, Tm},
+        time, embedparam;
+        partition = 1
+    ) where {Tv, Tc, Ti, Tm}
+    node = Node{Tc, Ti}(nothing)
+    lock(sys.gridaccesslock)
+    try
+        node.index = zero(Ti)
+        node.region = 0
+        node.partition = partition
+        node.nspec = num_species(sys)
+        node.icell = 0
+        node.coord = sys.grid[Coordinates]
+        node.cellnodes = sys.grid[CellNodes]
+        node.cellregions = sys.grid[CellRegions]
+        node.time = time
+        node.embedparam = embedparam
+        node.fac = 0.0
+        node._idx = 0
+    finally
+        unlock(sys.gridaccesslock)
     end
+    return node
 end
 
 function Node(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition = 1) where {Tv, Tc, Ti, Tm}
@@ -184,10 +197,10 @@ end
 Node(sys) = Node(sys, 0, 0)
 
 """
-    $(TYPEDEF)
+$(TYPEDEF)
 
-Unknown data on node. 
-"""
+  Unknown data on node.
+  """
 struct NodeUnknowns{Tv, Tc, Ti} <: AbstractNodeData{Tv}
     val::Vector{Tv}
     nspec::Ti
@@ -199,9 +212,9 @@ end
 end
 
 """
-    $(TYPEDEF)
+$(TYPEDEF)
 
-RHS data on node. 
+RHS data on node.
 """
 struct NodeRHS{Tv, Tc, Ti} <: AbstractNodeData{Tv}
     val::Vector{Tv}
@@ -215,7 +228,7 @@ end
 """
 $(TYPEDEF)
 
-Structure holding local boundary  node information.
+  Structure holding local boundary  node information.
 
 $(TYPEDFIELDS)
 """
@@ -281,22 +294,41 @@ mutable struct BNode{Td, Tc, Ti} <: AbstractNode{Tc, Ti}
 
     fac::Float64
 
-    function BNode{Td, Tc, Ti}(
-            sys::Ts, time, embedparam;
-            partition = 1
-        ) where {Td, Tc, Ti, Ts <: AbstractSystem}
-        return new(
-            0, 0, 0, 0, partition, zeros(Ti, 2),
-            num_species(sys),
-            sys.grid[Coordinates],
-            sys.grid[BFaceNodes],
-            sys.grid[BFaceRegions],
-            sys.grid[CellRegions],
-            sys.grid[BFaceCells],
-            Dirichlet(Td), time, embedparam,
-            zeros(Td, num_species(sys)), 0.0
-        )
+    BNode{Td, Tc, Ti}(::Nothing) where {Td, Tc, Ti} = new()
+end
+
+
+function BNode{Td, Tc, Ti}(
+        sys::Ts, time, embedparam;
+        partition = 1
+    ) where {Td, Tc, Ti, Ts <: AbstractSystem}
+
+    bnode = BNode{Td, Tc, Ti}(nothing)
+
+    lock(sys.gridaccesslock)
+    try
+        bnode.index = 0
+        bnode.ibface = 0
+        bnode.ibnode = 0
+        bnode.region = 0
+        bnode.partition = partition
+        bnode.cellregions = zeros(Ti, 2)
+        bnode.nspec = num_species(sys)
+        bnode.coord = sys.grid[Coordinates]
+        bnode.bfacenodes = sys.grid[BFaceNodes]
+        bnode.bfaceregions = sys.grid[BFaceRegions]
+        bnode.allcellregions = sys.grid[CellRegions]
+        bnode.bfacecells = sys.grid[BFaceCells]
+        bnode.Dirichlet = Dirichlet(Td)
+        bnode.time = time
+        bnode.embedparam = embedparam
+        bnode.dirichlet_value = zeros(Td, num_species(sys))
+        bnode.fac = 0.0
+    finally
+        unlock(sys.gridaccesslock)
     end
+
+    return bnode
 end
 
 # JF: We need to be able to distinguish bwetween dirichlet type and value type.
@@ -330,7 +362,7 @@ end
 """
 $(TYPEDEF)
 
-Structure holding local edge information.
+  Structure holding local edge information.
 
 $(TYPEDFIELDS)
 """
@@ -341,7 +373,7 @@ mutable struct Edge{Tc, Ti} <: AbstractEdge{Tc, Ti}
     index::Ti
 
     """
-    Index 
+    Index
     """
     node::Vector{Ti}
 
@@ -410,30 +442,35 @@ Edge(sys) = Edge(sys, 0, 0)
 function Edge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition = 1) where {Tv, Tc, Ti, Tm}
     edge = Edge{Tc, Ti}(nothing)
 
-    edge.index = 0
-    edge.node = [0, 0]
-    edge.region = 0
-    edge.partition = partition
-    edge.nspec = num_species(sys)
-    edge.icell = 0
-    edge.coord = sys.grid[Coordinates]
-    geom = sys.grid[CellGeometries][1]
-    if haskey(sys.grid, CellEdges)
-        edge.cellx = sys.grid[CellEdges]
-        edge.edgenodes = sys.grid[EdgeNodes]
-        edge.has_celledges = true
-    else
-        edge.cellx = sys.grid[CellNodes]
-        edge.edgenodes = local_celledgenodes(geom)
-        edge.has_celledges = false
+    lock(sys.gridaccesslock)
+    try
+        edge.index = 0
+        edge.node = [0, 0]
+        edge.region = 0
+        edge.partition = partition
+        edge.nspec = num_species(sys)
+        edge.icell = 0
+        edge.coord = sys.grid[Coordinates]
+        geom = sys.grid[CellGeometries][1]
+        if haskey(sys.grid, CellEdges)
+            edge.cellx = sys.grid[CellEdges]
+            edge.edgenodes = sys.grid[EdgeNodes]
+            edge.has_celledges = true
+        else
+            edge.cellx = sys.grid[CellNodes]
+            edge.edgenodes = local_celledgenodes(geom)
+            edge.has_celledges = false
+        end
+        edge.cellregions = sys.grid[CellRegions]
+        edge.time = time
+        edge.embedparam = embedparam
+        edge.fac = 0
+        edge.outflownode = 0
+        edge._idx = 0
+        edge.outflownoderegions = sys.outflownoderegions
+    finally
+        unlock(sys.gridaccesslock)
     end
-    edge.cellregions = sys.grid[CellRegions]
-    edge.time = time
-    edge.embedparam = embedparam
-    edge.fac = 0
-    edge.outflownode = 0
-    edge._idx = 0
-    edge.outflownoderegions = sys.outflownoderegions
     return edge
 end
 
@@ -456,36 +493,36 @@ end
 @inline rhs(edge::Edge{Tc, Ti}, f::AbstractVector{Tv}) where {Tv, Tc, Ti} = EdgeRHS{Tv, Tc, Ti}(f, edge.nspec, edge)
 
 """
-    hasoutflownode(edge)
+hasoutflownode(edge)
 
 Check if one node of the edge is situated on a boundary region listed in `outflowboundaries`, see
-[`struct Physics`].
+  [`struct Physics`].
 """
 hasoutflownode(edge) = isoutflownode(edge, 1) || isoutflownode(edge, 2)
 
 """
-    isoutflownode(edge,inode)
+isoutflownode(edge,inode)
 
 Check if inode (1 or 2) is an outflow node.
 """
 isoutflownode(edge, inode) = length(nzrange(edge.outflownoderegions, edge.node[inode])) > 0
 
 """
-    isoutflownode(edge,inode,irefgion)
+isoutflownode(edge,inode,irefgion)
 
 Check if inode (1 or 2) is an outflow node on boundary region `iregion`.
 """
 isoutflownode(edge, inode, iregion) = edge.outflownoderegions[iregion, edge.node[inode]]
 
 """
-    outflownode(edge)
+outflownode(edge)
 
 Return outflow node of edge (1 or 2).
 """
 outflownode(edge) = edge.outflownode
 
 """
-    outflownode!(edge)
+outflownode!(edge)
 Set `edge.outflownode` entry.
 """
 function outflownode!(edge)
@@ -497,7 +534,7 @@ end
 """
 $(TYPEDEF)
 
-Structure holding local edge information.
+  Structure holding local edge information.
 
 $(TYPEDFIELDS)
 """
@@ -508,7 +545,7 @@ mutable struct BEdge{Tc, Ti} <: AbstractEdge{Tc, Ti}
     index::Ti
 
     """
-    Index 
+    Index
     """
     node::Vector{Ti}
 
@@ -552,6 +589,7 @@ mutable struct BEdge{Tc, Ti} <: AbstractEdge{Tc, Ti}
     embedparam::Float64
 
     fac::Float64
+
     BEdge{Tc, Ti}(::Nothing) where {Tc, Ti} = new()
 end
 
@@ -560,20 +598,25 @@ BEdge(sys) = BEdge(sys, 0, 0)
 function BEdge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition = 1) where {Tv, Tc, Ti, Tm}
     bedge = BEdge{Tc, Ti}(nothing)
 
-    bedge.index = 0
-    bedge.node = [0, 0]
-    bedge.region = 0
-    bedge.partition = 1
-    bedge.nspec = num_species(sys)
-    bedge.icell = 0
-    bedge.coord = sys.grid[Coordinates]
+    lock(sys.gridaccesslock)
+    try
+        bedge.index = 0
+        bedge.node = [0, 0]
+        bedge.region = 0
+        bedge.partition = 1
+        bedge.nspec = num_species(sys)
+        bedge.icell = 0
+        bedge.coord = sys.grid[Coordinates]
 
-    bedge.bfaceedges = sys.grid[BFaceEdges] # !!! another bug in ExtendableGrids
-    bedge.bedgenodes = sys.grid[BEdgeNodes]
-    bedge.bfaceregions = sys.grid[BFaceRegions]
-    bedge.time = time
-    bedge.embedparam = embedparam
-    bedge.fac = 0.0
+        bedge.bfaceedges = sys.grid[BFaceEdges] # !!! another bug in ExtendableGrids
+        bedge.bedgenodes = sys.grid[BEdgeNodes]
+        bedge.bfaceregions = sys.grid[BFaceRegions]
+        bedge.time = time
+        bedge.embedparam = embedparam
+        bedge.fac = 0.0
+    finally
+        unlock(sys.gridaccesslock)
+    end
     return bedge
 end
 
@@ -599,15 +642,15 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Return number of species for edge
-"""
+  Return number of species for edge
+  """
 @inline num_species(edge::AbstractEdge) = edge.nspec
 
 ##################################################################
 """
 $(TYPEDSIGNATURES)
-   
-Calculate the length of an edge. 
+
+Calculate the length of an edge.
 """
 function meas(edge::AbstractEdge)
     l = 0.0
@@ -619,14 +662,14 @@ function meas(edge::AbstractEdge)
 end
 
 """
-    edgelength(edge)
+edgelength(edge)
 
 Return length of edge
 """
 edgelength(edge::AbstractEdge) = meas(edge)
 
 """
-    project(edge, vector)
+project(edge, vector)
 
 Project d-vector onto d-dimensional vector, i.e. calculate the dot product
 of `vector` with the difference of the edge end coordinates.
