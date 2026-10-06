@@ -1,0 +1,30 @@
+name: Downgrade
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        downgrade_mode: ['deps', 'alldeps']
+        julia-version: ['lts', '1']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: ${{ matrix.julia-version }}
+      - uses: julia-actions/julia-downgrade-compat@v2
+        with:
+          mode: ${{ matrix.downgrade_mode }}
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+        with:
+          allow_reresolve: false
+          force_latest_compatible_version: false
+        env:
+          JULIA_NUM_THREADS: 4
