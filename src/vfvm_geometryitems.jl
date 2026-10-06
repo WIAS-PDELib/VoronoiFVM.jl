@@ -3,7 +3,7 @@ time(edge_or_node)
 
 Return actual simulation time stored in node or edge
 """
-time(item::AbstractGeometryItem) = item.time
+Base.time(item::AbstractGeometryItem) = item.time
 
 """
 embedparam(edge_or_node)

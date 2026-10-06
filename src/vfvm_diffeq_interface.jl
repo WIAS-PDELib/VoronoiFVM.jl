@@ -43,8 +43,7 @@ jacobi matrix calculation function for [`SciMLBase.ODEFunction`](@ref)
 """
 function eval_jacobian!(J, u, state, t)
     _eval_res_jac!(state, u, t)
-    # Need to implement broadcast for ExtendableSparse.
-    J .= -state.matrix.cscmatrix
+    J .= -canonical_matrix(state.matrix)
     state.history.njac += 1
     return nothing
 end
