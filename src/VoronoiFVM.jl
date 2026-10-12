@@ -43,8 +43,8 @@ using GridVisualize: GridVisualize, GridVisualizer
 using InteractiveUtils: InteractiveUtils
 using JLD2: JLD2, jldopen
 using LinearAlgebra: LinearAlgebra, Diagonal, Tridiagonal, isdiag, ldiv!, norm
-using LinearSolve: LinearSolve, LinearProblem,
-    SparspakFactorization, UMFPACKFactorization, init, reinit!
+using LinearSolve: LinearSolve, LinearProblem, SupernodalLUFactorization,
+    UMFPACKFactorization, init, reinit!
 using Printf: Printf, @sprintf
 using Random: Random
 using RecursiveArrayTools: RecursiveArrayTools, AbstractDiffEqArray, DiffEqArray

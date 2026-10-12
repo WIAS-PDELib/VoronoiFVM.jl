@@ -34,7 +34,7 @@ function solve_step!(
         method_linear = state.system.matrixtype == :sparse ? control.method_linear : nothing
         if isnothing(method_linear) && state.system.matrixtype == :sparse
             if Tv != Float64
-                method_linear = SparspakFactorization()
+                method_linear = SupernodalLUFactorization()
             else
                 method_linear = UMFPACKFactorization() # seems to do the best pivoting
             end
