@@ -157,15 +157,8 @@ function main(; nref = 0, Plotter = nothing, npart = 20, assembly = :edgewise, t
         species = [1, 2, 3],
     )
 
-    # Choose platform-appropriate direct solver for reference solution
-    # UMFPACK on macOS, MKL Pardiso on other platforms
-    if Sys.isapple()
-        direct_solver = LinearSolve.UMFPACKFactorization()
-        println("Direct solver: UMFPACK")
-    else
-        direct_solver = LinearSolve.MKLPardisoFactorize()
-        println("Direct solver: MKL Pardiso")
-    end
+
+    direct_solver = LinearSolve.SupernodalLUFactorization()
 
     # Solve with direct method to obtain reference solution
     @time "Direct solution" direct_sol = solve(sys; inival = 0.5, method_linear = direct_solver, kwargs...)
