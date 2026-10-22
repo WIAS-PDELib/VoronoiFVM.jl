@@ -26,7 +26,7 @@
     ]
   },
   {
-    "number": 289,
+    "number": 206,
     "repo": "WIAS-PDELib/VoronoiFVM.jl",
     "open": [],
     "fixed": [
@@ -39,7 +39,7 @@
     ]
   },
   {
-    "number": 206,
+    "number": 289,
     "repo": "WIAS-PDELib/VoronoiFVM.jl",
     "open": [],
     "fixed": [
