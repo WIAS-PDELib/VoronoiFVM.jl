@@ -1,4 +1,10 @@
 # Changes
+## v3.6.0 2026-10-28
+   - Depend on ExtendableGrids v1.19 which fixed a bug consisting in the fact that
+     creation of some adjacencies could rearrange BFaceNodes. 
+   - num_edges now reports the right number of edges even if grid[EdgeNodes] is not called, allowing to
+     remove the corresponding band-aid
+
 ## v3.5.4 2026-10-05
    - Added detect_closure_boxes test (for Julia 1.14) 
    - Fixed closure box occurrences detected by test

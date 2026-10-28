@@ -1,6 +1,6 @@
 name = "VoronoiFVM"
 uuid = "82b139dc-5afc-11e9-35da-9b9bdfd336f3"
-version = "3.5.5"
+version = "3.6.0"
 authors = ["Jürgen Fuhrmann <juergen.fuhrmann@wias-berlin.de>", "Patrick Jaap", "Daniel Runge", "Dilara Abdel", "Benoît Gaudeul", "Marieke Osewold", "Jan Weidner", "Alexander Seiler", "Patricio Farrell", "Matthias Liero"]
 
 [deps]
@@ -59,7 +59,7 @@ ExampleJuggler = "2"
 ExplicitImports = "1.11.1"
 ExtendableFEM = "0.9.1, 1"
 ExtendableFEMBase = "0.7,0.8,1"
-ExtendableGrids = "1.11.0"
+ExtendableGrids = "1.19.0"
 ExtendableSparse = "1.6,2"
 ForwardDiff = "0.10.35, 1"
 GridVisualize = "0.5.2,0.6.1,1"
