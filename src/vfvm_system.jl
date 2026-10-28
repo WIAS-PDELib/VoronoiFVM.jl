@@ -700,7 +700,6 @@ function update_grid_edgewise!(system::AbstractSystem{Tv, Tc, Ti, Tm}, grid) whe
     ncells = num_cells(grid)
 
     celledges = grid[CellEdges]
-    grid[EdgeNodes] # !!!workaround for bug in extendablegrids: sets num_edges right.
     bfacenodefactors = zeros(Tc, num_nodes(bgeom), nbfaces)
     bfaceedgefactors = zeros(Tc, num_edges(bgeom), nbfaces)
     cnf = ExtendableSparseMatrix{Tc, Ti}(num_cellregions(grid), num_nodes(grid))

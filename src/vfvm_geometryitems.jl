@@ -608,7 +608,7 @@ function BEdge(sys::AbstractSystem{Tv, Tc, Ti, Tm}, time, embedparam; partition 
         bedge.icell = 0
         bedge.coord = sys.grid[Coordinates]
 
-        bedge.bfaceedges = sys.grid[BFaceEdges] # !!! another bug in ExtendableGrids
+        bedge.bfaceedges = sys.grid[BFaceEdges]
         bedge.bedgenodes = sys.grid[BEdgeNodes]
         bedge.bfaceregions = sys.grid[BFaceRegions]
         bedge.time = time
