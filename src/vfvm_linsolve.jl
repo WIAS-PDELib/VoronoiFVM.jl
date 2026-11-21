@@ -1,7 +1,11 @@
-# TODO: these may be not anymore needed but require
-# that preconditioners work with AbstractSparseMatrixCSC.
+#
+# Handle older versions of SciML which miss full compatibility
+# with the AbstractSparseMatrixCSC interface
+#
 canonical_matrix(A) = A
-canonical_matrix(A::AbstractExtendableSparseMatrixCSC) = SparseMatrixCSC(A)
+@static if pkgversion(SciMLBase) < v"3.0"
+    canonical_matrix(A::AbstractExtendableSparseMatrixCSC) = SparseMatrixCSC(A)
+end
 
 function _solve_linear!(u, state, nlhistory, control, method_linear, A, b, reuse_precs)
 
