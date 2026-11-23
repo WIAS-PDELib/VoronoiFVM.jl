@@ -97,7 +97,7 @@ Base.@kwdef mutable struct SolverControl
     Solver method for linear systems (see LinearSolve.jl). If given `nothing`, as default
     are chosen: 
     - `UMFPACKFactorization()` for sparse matrices with Float64 
-    - `SparspakFactorization()` for sparse matrices with  general number types.
+    - `SupernodalLUFactorization()` for sparse matrices with  general number types.
     -  Defaults from LinearSolve.jl for tridiagonal and banded matrices 
 
     Any sparse direct and iterative solver available via [LinearSolve.jl](https://docs.sciml.ai/LinearSolve/stable/solvers/solvers/#Sparse-Matrices) can be chosen.

@@ -93,6 +93,10 @@ function main(;
     sol = solve(sys; inival = 0.5, method_linear = LinearSolve.SparspakFactorization(), kwargs...)
     @test norm(sol - umf_sol, Inf) < 1.0e-7
 
+    @info "SuperNodalLU:"
+    sol = solve(sys; inival = 0.5, method_linear = LinearSolve.SupernodalLUFactorization(), kwargs...)
+    @test norm(sol - umf_sol, Inf) < 1.0e-7
+
     @info "Krylov-ilu0:"
     sol = solve(
         sys;

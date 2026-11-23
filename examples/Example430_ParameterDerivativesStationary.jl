@@ -21,7 +21,7 @@ using DifferentiationInterface, SparseConnectivityTracer, SparseMatrixColorings
 
 Parameter dependent function which creates system and solves it
 """
-function f(P; n = 10, method_linear = SparspakFactorization())
+function f(P; n = 10, method_linear = SupernodalLUFactorization())
     p = P[1]
 
     valuetype = typeof(p)
@@ -62,7 +62,7 @@ end
 Run parameter series, plot f(p), df(p).
 For each p,create a new system. Use VoronoiFVM with dual numbers. Pass parameters via closure.
 """
-function runf(; Plotter = nothing, n = 10, method_linear = SparspakFactorization())
+function runf(; Plotter = nothing, n = 10, method_linear = SupernodalLUFactorization())
     P = 0.1:0.05:2
     dresult = DiffResults.JacobianResult(ones(1))
     F = zeros(0)
@@ -104,7 +104,7 @@ end
 
 Same as runf, but keep one system pass parameters via data.
 """
-function rung(; Plotter = nothing, n = 10, method_linear = SparspakFactorization())
+function rung(; Plotter = nothing, n = 10, method_linear = SupernodalLUFactorization())
     X = collect(0:(1.0 / n):1)
     grid = simplexgrid(X, X)
 
@@ -178,7 +178,7 @@ main assembly loop.
 This needs quite a bit of additional implementation + corresponding API and still lacks local assembly of the 
 measurement derivative (when using testfunction based calculation) when calculating current.
 """
-function runh(; Plotter = nothing, n = 10, method_linear = SparspakFactorization())
+function runh(; Plotter = nothing, n = 10, method_linear = SupernodalLUFactorization())
     X = collect(0:(1.0 / n):1)
     grid = simplexgrid(X, X)
 
@@ -252,7 +252,7 @@ end
 using Test
 function runtests()
     testval = 489.3432830184927
-    for method_linear in [UMFPACKFactorization(), SparspakFactorization()]
+    for method_linear in [UMFPACKFactorization(), SparspakFactorization(), SupernodalLUFactorization()]
         @test runf(; method_linear) ≈ testval
         @test rung(; method_linear) ≈ testval
         @test runh(; method_linear) ≈ testval
